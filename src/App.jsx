@@ -44,19 +44,12 @@ export default function App() {
               {/* Profile */}
               <Route path="profile" element={<Profile />} />
               <Route path="change-password" element={<ChangePassword />} />
-
               {/* Subjects list */}
               <Route path="subjects" element={<Subjects />} />
 
-              {/* ===== ASSIGNMENTS (specific first) ===== */}
-              <Route
-                path="subjects/:subjectId/assignments/:assignmentId"
-                element={<AssignmentDetail />}
-              />
-              <Route
-                path="subjects/:subjectId/assignments"
-                element={<SubjectsAssignments />}
-              />
+              {/* ===== ASSIGNMENTS ===== */}
+              <Route path="assignments" element={<SubjectsAssignments />} />
+              <Route path="assignments/:assignmentId" element={<AssignmentDetail />} />
 
               {/* ===== QUIZ ===== */}
               <Route path="subjects/quiz" element={<SubjectsQuiz />} />

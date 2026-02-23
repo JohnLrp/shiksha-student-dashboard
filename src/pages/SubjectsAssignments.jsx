@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import api from "../api/apiClient";
 import AssignmentPendingCard from "../components/AssignmentPendingCard";
 import AssignmentCompletedCard from "../components/AssignmentCompletedCard";
 import "../styles/assignmentPending.css";
+import { useCourse } from "../contexts/CourseContext";
 
 export default function SubjectsAssignments() {
-  const { subjectId } = useParams();
   const navigate = useNavigate();
+  const { activeCourse } = useCourse();   // ✅ INSIDE component
 
   const [activeTab, setActiveTab] = useState("pending");
   const [pendingData, setPendingData] = useState([]);
@@ -16,7 +17,10 @@ export default function SubjectsAssignments() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!subjectId) return;
+    if (!activeCourse) {
+      setLoading(false);
+      return;
+    }
 
     async function fetchAssignments() {
       try {
@@ -24,7 +28,7 @@ export default function SubjectsAssignments() {
         setError(null);
 
         const res = await api.get(
-          `/assignments/subjects/${subjectId}/`
+          `/assignments/courses/${activeCourse.id}/`
         );
 
         const pending = [];
@@ -33,13 +37,14 @@ export default function SubjectsAssignments() {
         res.data.forEach((assignment) => {
           if (assignment.status === "SUBMITTED") {
             completed.push(assignment);
-          } else {
+          } else if (assignment.status === "PENDING") {
             pending.push(assignment);
           }
         });
 
         setPendingData(pending);
         setCompletedData(completed);
+
       } catch (err) {
         console.error("Assignment fetch error:", err);
         setError("Failed to load assignments.");
@@ -49,7 +54,10 @@ export default function SubjectsAssignments() {
     }
 
     fetchAssignments();
-  }, [subjectId]);
+  }, [activeCourse]);
+
+  if (!activeCourse)
+    return <div>Select a course first.</div>;
 
   if (loading) return <div>Loading assignments...</div>;
   if (error) return <div>{error}</div>;

@@ -46,7 +46,7 @@ export default function Sidebar() {
         {/* submenu appears only if subject is active */}
         {isSubjectsActive && (
           <div className="sidebar__subMenu">
-            <NavLink className="sidebar__subLink" to="/subjects/assignments">
+            <NavLink className="sidebar__subLink" to="/assignments">
               <FaClipboardList /> <span>Assignment</span>
             </NavLink>
 
