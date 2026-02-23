@@ -4,52 +4,51 @@ import "../styles/assignmentDetail.css";
 
 export default function AssignmentDetail() {
   const navigate = useNavigate();
-  const { assignmentId } = useParams(); // 👈 dynamic assignment id from URL
-
-  /* ===============================
-     STATE
-  =============================== */
+  const { assignmentId } = useParams();
 
   const [assignment, setAssignment] = useState(null);
   const [uploadedFile, setUploadedFile] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedAt, setSubmittedAt] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   /* ===============================
-     FETCH ASSIGNMENT (BACKEND READY)
+     FETCH ASSIGNMENT
   =============================== */
 
   useEffect(() => {
-    // 🔹 MOCK BACKEND RESPONSE (remove later)
-    const mockAssignment = {
-      id: assignmentId,
-      subject: "Subject Name",
-      assignmentNo: "Assignment No. X",
-      teacher: "Miss Ruaifeli",
-      assignedAt: "21 Jan 2026",
-      dueDate: "24 Jan 2026",
-      title: "Biology chapter 1",
-      description: "Answer all the questions on the attached file",
-      attachmentName: "Science biology assignment.pdf",
+    const fetchAssignment = async () => {
+      try {
+        const res = await fetch(
+          `/api/assignments/${assignmentId}/`,
+          {
+            credentials: "include", // important for cookie auth
+          }
+        );
 
-      // submission will come from backend
-      submission: null, 
-      // submission example:
-      // {
-      //   submittedAt: "2026-01-22T10:45:00",
-      //   fileUrl: "https://server/file.pdf"
-      // }
+        if (!res.ok) {
+          throw new Error("Failed to load assignment");
+        }
+
+        const data = await res.json();
+        setAssignment(data);
+
+        if (data.submission_status === "SUBMITTED") {
+          setIsSubmitted(true);
+          setSubmittedAt(
+            data.submitted_at ? new Date(data.submitted_at) : null
+          );
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Unable to load assignment.");
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setAssignment(mockAssignment);
-
-    if (mockAssignment.submission) {
-      setIsSubmitted(true);
-      setSubmittedAt(new Date(mockAssignment.submission.submittedAt));
-    }
-
-    setLoading(false);
+    fetchAssignment();
   }, [assignmentId]);
 
   /* ===============================
@@ -62,32 +61,43 @@ export default function AssignmentDetail() {
   };
 
   /* ===============================
-     SUBMIT TO BACKEND
+     SUBMIT ASSIGNMENT
   =============================== */
 
   const handleSubmit = async () => {
     if (!uploadedFile) return;
 
-    // Backend upload format
-    const formData = new FormData();
-    formData.append("file", uploadedFile);
-    formData.append("assignmentId", assignment.id);
+    try {
+      const formData = new FormData();
+      formData.append("file", uploadedFile);
 
-    // REAL API (uncomment later)
-    /*
-    await fetch(`/api/assignments/${assignment.id}/submit`, {
-      method: "POST",
-      body: formData,
-    });
-    */
+      const res = await fetch(
+        `/api/assignments/${assignment.id}/submit/`,
+        {
+          method: "POST",
+          body: formData,
+          credentials: "include",
+        }
+      );
 
-    const now = new Date();
-    setSubmittedAt(now);
-    setIsSubmitted(true);
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.detail || "Submission failed");
+      }
+
+      const now = new Date();
+      setIsSubmitted(true);
+      setSubmittedAt(now);
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    }
   };
 
   const handleOpenFile = () => {
-    alert("Open file from backend URL");
+    if (assignment?.submitted_file) {
+      window.open(assignment.submitted_file, "_blank");
+    }
   };
 
   /* ===============================
@@ -118,10 +128,16 @@ export default function AssignmentDetail() {
     });
   };
 
+  /* ===============================
+     LOADING & ERROR STATES
+  =============================== */
+
   if (loading) return <div>Loading...</div>;
+  if (error) return <div>{error}</div>;
+  if (!assignment) return <div>Assignment not found.</div>;
 
   /* ===============================
-     UI (UNCHANGED)
+     UI
   =============================== */
 
   return (
@@ -135,13 +151,8 @@ export default function AssignmentDetail() {
       <div className="assignmentDetailBox">
         <div className="assignmentDetailHeader">
           <h2 className="assignmentDetailSubject">
-            {assignment.subject}
+            {assignment.title}
           </h2>
-
-          <div className="assignmentSearch">
-            <input placeholder="Search..." />
-            <span className="assignmentSearchIcon">🔍</span>
-          </div>
         </div>
 
         <div className="assignmentDetailContent">
@@ -149,7 +160,7 @@ export default function AssignmentDetail() {
           <div className="assignmentDetailLeft">
             <div className="assignmentTitleRow">
               <h3 className="assignmentDetailTitle">
-                {assignment.assignmentNo}
+                Assignment
               </h3>
 
               {isSubmitted && (
@@ -159,12 +170,9 @@ export default function AssignmentDetail() {
               )}
             </div>
 
-            <p className="assignmentDetailMeta">
-              {assignment.teacher} - {assignment.assignedAt}
-            </p>
-
             <p className="assignmentDetailDue">
-              Due Date: {assignment.dueDate}
+              Due Date:{" "}
+              {new Date(assignment.due_date).toLocaleDateString("en-GB")}
             </p>
 
             <div className="assignmentDetailDivider"></div>
@@ -177,18 +185,22 @@ export default function AssignmentDetail() {
               Description: {assignment.description}
             </p>
 
-            <div className="fileStrip">
-              <div className="fileStripIcon">📄</div>
-              <div className="fileStripName">
-                {assignment.attachmentName}
+            {assignment.attachment && (
+              <div className="fileStrip">
+                <div className="fileStripIcon">📄</div>
+                <div className="fileStripName">
+                  {assignment.attachment.split("/").pop()}
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* RIGHT */}
           <div className="assignmentDetailRight">
             <div className="yourWorkTop">
-              <h4 className="assignmentDetailWorkTitle">Your Work</h4>
+              <h4 className="assignmentDetailWorkTitle">
+                Your Work
+              </h4>
 
               {isSubmitted && (
                 <span className="yourWorkDate">
@@ -214,7 +226,10 @@ export default function AssignmentDetail() {
               </>
             ) : (
               <>
-                <button className="openFileBtn" onClick={handleOpenFile}>
+                <button
+                  className="openFileBtn"
+                  onClick={handleOpenFile}
+                >
                   [Open File]
                 </button>
 
@@ -229,5 +244,3 @@ export default function AssignmentDetail() {
     </div>
   );
 }
-
-
