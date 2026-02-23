@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import "../styles/sidebar.css";
 import logo from "../assets/Vector.svg";
@@ -13,14 +14,13 @@ import { AiOutlineFileDone } from "react-icons/ai";
 export default function Sidebar() {
   const location = useLocation();
 
-  // detect if inside a specific subject
+  const [subjectOpen, setSubjectOpen] = useState(false);
+
   const subjectMatch = location.pathname.match(
     /^\/subjects\/([^/]+)/
   );
 
   const subjectId = subjectMatch ? subjectMatch[1] : null;
-
-  const isSubjectsActive = location.pathname.startsWith("/subjects");
 
   return (
     <aside className="sidebar">
@@ -34,6 +34,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="sidebar__nav">
+        {/* Dashboard */}
         <NavLink className="sidebar__link" to="/" end>
           <span className="sidebar__icon">
             <MdDashboardCustomize />
@@ -41,14 +42,20 @@ export default function Sidebar() {
           Dashboard
         </NavLink>
 
-        <NavLink className="sidebar__link" to="/subjects">
+        {/* SUBJECT DROPDOWN TOGGLE */}
+        <div
+          className="sidebar__link"
+          onClick={() => setSubjectOpen(!subjectOpen)}
+          style={{ cursor: "pointer" }}
+        >
           <span className="sidebar__icon">
             <BsBook />
           </span>
           Subject
-        </NavLink>
+        </div>
 
-        {isSubjectsActive && subjectId && (
+        {/* SUBMENU */}
+        {subjectOpen && subjectId && (
           <div className="sidebar__subMenu">
             <NavLink
               className="sidebar__subLink"
@@ -80,6 +87,7 @@ export default function Sidebar() {
           </div>
         )}
 
+        {/* Live Sessions */}
         <NavLink className="sidebar__link" to="/live-sessions">
           <span className="sidebar__icon">
             <RiLiveLine />
