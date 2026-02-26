@@ -1,110 +1,101 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import api from "../api";
 import "../styles/liveSessions.css";
 
 export default function LiveSessions() {
   const navigate = useNavigate();
+  const [sessions, setSessions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const sessions = [
-    {
-      id: 1,
-      image:
-        "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600",
-      title: "Session Title/Topic",
-      teacher: "Teacher Name",
-      date: "Date & Time",
-      status: "Live Indicator (Live now or Starts at 5:00 PM)",
-    },
-    {
-      id: 2,
-      image:
-        "https://images.unsplash.com/photo-1454165205744-3b78555e5572?w=600",
-      title: "Session Title/Topic",
-      teacher: "Teacher Name",
-      date: "Date & Time",
-      status: "Live Indicator (Live now or Starts at 5:00 PM)",
-    },
-    {
-      id: 3,
-      image:
-        "https://images.unsplash.com/photo-1513258496099-48168024aec0?w=600",
-      title: "Session Title/Topic",
-      teacher: "Teacher Name",
-      date: "Date & Time",
-      status: "Live Indicator (Live now or Starts at 5:00 PM)",
-    },
-    {
-      id: 4,
-      image:
-        "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600",
-      title: "Session Title/Topic",
-      teacher: "Teacher Name",
-      date: "Date & Time",
-      status: "Live Indicator (Live now or Starts at 5:00 PM)",
-    },
-    {
-      id: 5,
-      image:
-        "https://images.unsplash.com/photo-1513258496099-48168024aec0?w=600",
-      title: "Session Title/Topic",
-      teacher: "Teacher Name",
-      date: "Date & Time",
-      status: "Live Indicator (Live now or Starts at 5:00 PM)",
-    },
-    {
-      id: 6,
-      image:
-        "https://images.unsplash.com/photo-1553877522-43269d4ea984?w=600",
-      title: "Session Title/Topic",
-      teacher: "Teacher Name",
-      date: "Date & Time",
-      status: "Live Indicator (Live now or Starts at 5:00 PM)",
-    },
-    {
-      id: 7,
-      image:
-        "https://images.unsplash.com/photo-1454165205744-3b78555e5572?w=600",
-      title: "Session Title/Topic",
-      teacher: "Teacher Name",
-      date: "Date & Time",
-      status: "Live Indicator (Live now or Starts at 5:00 PM)",
-    },
-  ];
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        // 🔐 Change this endpoint if this is teacher dashboard
+        const res = await api.get("/livestream/student/sessions/");
+
+        // Optional: sort by start_time ascending
+        const sorted = res.data.sort(
+          (a, b) => new Date(a.start_time) - new Date(b.start_time)
+        );
+
+        setSessions(sorted);
+      } catch (err) {
+        console.error(err);
+        setError("Unable to load sessions.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSessions();
+  }, []);
+
+  const formatStatus = (session) => {
+    if (session.status === "LIVE") return "🔴 Live Now";
+
+    if (session.status === "SCHEDULED") {
+      return `Starts at ${new Date(session.start_time).toLocaleTimeString()}`;
+    }
+
+    if (session.status === "COMPLETED") return "Completed";
+
+    return session.status;
+  };
+
+  if (loading)
+    return <div style={{ padding: 20 }}>Loading sessions...</div>;
+
+  if (error)
+    return <div style={{ padding: 20, color: "red" }}>{error}</div>;
+
+  if (sessions.length === 0)
+    return (
+      <div style={{ padding: 20 }}>
+        No live sessions available.
+      </div>
+    );
 
   return (
     <div className="liveSessionsPage">
-      {/* Back button OUTSIDE white box */}
       <button className="liveBackBtnHeader" onClick={() => navigate(-1)}>
         &lt; Back
       </button>
 
-      {/* White box */}
       <div className="liveSessionsBox">
-        {/* Title + Search row */}
         <div className="liveTitleRow">
-          <h2 className="liveTitle">Subject Name - Session List</h2>
-
-          <div className="liveSearch">
-            <input placeholder="Search..." />
-            <span className="liveSearchIcon">🔍</span>
-          </div>
+          <h2 className="liveTitle">Live Sessions</h2>
         </div>
 
-        {/* Sessions grid */}
         <div className="liveGrid">
           {sessions.map((s) => (
             <div
               key={s.id}
-              className="liveCard"
-              onClick={() => navigate("/live-sessions/detail")}
+              className={`liveCard ${s.can_join ? "" : "disabledCard"}`}
+              onClick={() => {
+                if (s.can_join) navigate(`/live/${s.id}`);
+              }}
+              style={{
+                cursor: s.can_join ? "pointer" : "not-allowed",
+                opacity: s.can_join ? 1 : 0.6,
+              }}
             >
-              <img src={s.image} alt={s.title} className="liveCardImg" />
+              <img
+                src="https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600"
+                alt={s.title}
+                className="liveCardImg"
+              />
 
               <div className="liveCardBody">
                 <p className="liveCardText">{s.title}</p>
                 <p className="liveCardText">{s.teacher}</p>
-                <p className="liveCardText">{s.date}</p>
-                <p className="liveCardText">{s.status}</p>
+                <p className="liveCardText">
+                  {new Date(s.start_time).toLocaleString()}
+                </p>
+                <p className="liveCardText">
+                  {formatStatus(s)}
+                </p>
               </div>
             </div>
           ))}
