@@ -1,77 +1,49 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "../styles/subjectDetails.css";
 
 export default function SubjectDetails() {
   const navigate = useNavigate();
-  const { subjectId } = useParams(); // 👈 future backend id
+  const { subjectId } = useParams();
 
-  /* ===============================
-     STATE
-  =============================== */
   const [subjectDetails, setSubjectDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTeacherIndex, setActiveTeacherIndex] = useState(0);
 
-  /* ===============================
-     FETCH SUBJECT DETAILS (BACKEND READY)
-  =============================== */
+  const touchStartX = useRef(null);
+
   useEffect(() => {
-    // 🔹 MOCK BACKEND RESPONSE (remove later)
+    // MOCK (replace with API)
     const mockSubjectDetails = {
-      name: "Subject Name",
-      teacher: {
-        name: "Ms. Ruatfeli",
-        subjects: "Maths & Science",
-        qualification: "M.Sc",
-        role: "Teaching/Lo pu tu",
-        rating: "TBA Letter",
-        about: "-",
-        photo:
-          "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
-      },
-      recordingsCount: 12,
-      upcomingSessions: [
+      name: "Biology",
+      teachers: [
         {
-          title: "Cell Division & Mitosis",
-          date: "Thursday, 28 Jan",
-          time: "10:00 am – 12:00 pm",
+          id: 1,
+          name: "Ms. Ruatfeli",
+          display_role: "Teacher",
+          qualification: "M.Sc",
+          bio: "Specialist in Genetics and Molecular Biology.",
+          rating: 4.6,
+          photo:
+            "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
         },
         {
-          title: "Genetics Basics",
-          date: "Friday, 29 Jan",
-          time: "11:00 am – 1:00 pm",
-        },
-        {
-          title: "Photosynthesis",
-          date: "Monday, 1 Feb",
-          time: "9:00 am – 11:00 am",
-        },
-        {
-          title: "Human Anatomy",
-          date: "Wednesday, 3 Feb",
-          time: "10:00 am – 12:00 pm",
+          id: 2,
+          name: "Mr. Lalrin",
+          display_role: "Assistant",
+          qualification: "B.Ed",
+          bio: "Supports lab and practical sessions.",
+          rating: 4.2,
+          photo:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400",
         },
       ],
+      recordingsCount: 12,
+      upcomingSessions: [],
       studyMaterialsCount: 8,
-      assignments: {
-        pending: 4,
-        completed: 12,
-        total: 16,
-      },
-      quizzes: {
-        pending: 6,
-        completed: 8,
-        total: 14,
-      },
+      assignments: { pending: 4, completed: 12, total: 16 },
+      quizzes: { pending: 6, completed: 8, total: 14 },
     };
-
-    /*
-    // 🔌 REAL BACKEND (use later)
-    fetch(`/api/subjects/${subjectId}`)
-      .then((res) => res.json())
-      .then((data) => setSubjectDetails(data))
-      .finally(() => setLoading(false));
-    */
 
     setSubjectDetails(mockSubjectDetails);
     setLoading(false);
@@ -80,170 +52,146 @@ export default function SubjectDetails() {
   if (loading) return <div>Loading...</div>;
   if (!subjectDetails) return <div>No data found</div>;
 
-  /* ===============================
-     UI (UNCHANGED STRUCTURE)
-  =============================== */
+  const teachers = subjectDetails.teachers || [];
+  const activeTeacher = teachers[activeTeacherIndex];
+
+  const nextTeacher = () => {
+    setActiveTeacherIndex((prev) =>
+      (prev + 1) % teachers.length
+    );
+  };
+
+  const prevTeacher = () => {
+    setActiveTeacherIndex((prev) =>
+      prev === 0 ? teachers.length - 1 : prev - 1
+    );
+  };
+
+  // Swipe logic
+  const handleTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e) => {
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+
+    if (diff > 50) nextTeacher(); // swipe left
+    if (diff < -50) prevTeacher(); // swipe right
+  };
+
   return (
     <div className="subjectDetailsPage">
       <div className="subjectDetailsBox">
-        {/* Top bar */}
         <div className="subjectDetailsTop">
           <button className="backBtn" onClick={() => navigate(-1)}>
             &larr; Back
           </button>
         </div>
 
-        {/* Title */}
-        <h1 className="subjectNameTitle">{subjectDetails.name}</h1>
+        <h1 className="subjectNameTitle">
+          {subjectDetails.name}
+        </h1>
 
-        {/* TOP GRID */}
-        <div className="topGrid">
-          {/* Teacher card */}
-          <div className="teacherDetailsCard">
-            <div className="teacherLeft">
-              <h3 className="teacherName">
-                {subjectDetails.teacher?.name}
-              </h3>
+        {/* ================= TEACHER CARD ================= */}
+        <div
+          className="teacherDetailsCard"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {teachers.length > 1 && (
+            <button
+              className="teacherArrow left"
+              onClick={prevTeacher}
+            >
+              ◀
+            </button>
+          )}
 
-              <div className="teacherInfoGrid">
-                <div className="teacherInfoRow">
-                  <span className="label">Subjects:</span>
-                  <span className="value">
-                    {subjectDetails.teacher?.subjects}
-                  </span>
-                </div>
+          <div className="teacherLeft">
+            <h3 className="teacherName">
+              {activeTeacher?.name}
+            </h3>
 
-                <div className="teacherInfoRow">
-                  <span className="label">Qualification:</span>
-                  <span className="value">
-                    {subjectDetails.teacher?.qualification}
-                  </span>
-                </div>
-
-                <div className="teacherInfoRow">
-                  <span className="label">Role:</span>
-                  <span className="value">
-                    {subjectDetails.teacher?.role}
-                  </span>
-                </div>
-
-                <div className="teacherInfoRow">
-                  <span className="label">Rating:</span>
-                  <span className="value">
-                    {subjectDetails.teacher?.rating}
-                  </span>
-                </div>
-
-                <div className="teacherInfoRow">
-                  <span className="label">About:</span>
-                  <span className="value">
-                    {subjectDetails.teacher?.about}
-                  </span>
-                </div>
-              </div>
+            <div className="teacherRoleBadge">
+              {activeTeacher?.display_role}
             </div>
 
-            <div className="teacherRight">
-              <img
-                src={subjectDetails.teacher?.photo}
-                alt={subjectDetails.teacher?.name}
-                className="teacherPhoto"
+            <div className="teacherInfoGrid">
+              <div className="teacherInfoRow">
+                <span className="label">Qualification:</span>
+                <span className="value">
+                  {activeTeacher?.qualification}
+                </span>
+              </div>
+
+              <div className="teacherInfoRow">
+                <span className="label">Rating:</span>
+                <span className="value">
+                  {activeTeacher?.rating ?? "—"}
+                </span>
+              </div>
+
+              <div className="teacherInfoRow">
+                <span className="label">About:</span>
+                <span className="value">
+                  {activeTeacher?.bio}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="teacherRight">
+            <img
+              src={activeTeacher?.photo}
+              alt={activeTeacher?.name}
+              className="teacherPhoto"
+            />
+          </div>
+
+          {teachers.length > 1 && (
+            <button
+              className="teacherArrow right"
+              onClick={nextTeacher}
+            >
+              ▶
+            </button>
+          )}
+        </div>
+
+        {/* Dots Indicator */}
+        {teachers.length > 1 && (
+          <div className="teacherDots">
+            {teachers.map((_, index) => (
+              <span
+                key={index}
+                className={`dot ${
+                  index === activeTeacherIndex
+                    ? "activeDot"
+                    : ""
+                }`}
               />
-            </div>
+            ))}
           </div>
+        )}
 
-          {/* Recordings */}
-          <div className="miniStatCard">
-            <h3 className="miniStatTitle">Session Recordings</h3>
-            <div className="miniStatNumber">
-              {subjectDetails.recordingsCount}
-            </div>
-            <div className="miniStatText">Recordings</div>
-          </div>
-        </div>
-
-        {/* SECOND GRID */}
-        <div className="secondGrid">
-          {/* Upcoming sessions */}
-          <div className="liveSessionsCard">
-            <h3 className="cardTitleMain">Upcoming Live Sessions</h3>
-
-            <div className="sessionsGridInside">
-              {subjectDetails.upcomingSessions.map((session, index) => (
-                <div className="sessionItem" key={index}>
-                  <h4 className="sessionItemTitle">{session.title}</h4>
-                  <p className="sessionItemText">{session.date}</p>
-                  <p className="sessionItemText">{session.time}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Study materials */}
-          <div className="miniStatCard">
-            <h3 className="miniStatTitle">Study Materials</h3>
-            <div className="miniStatNumber">
-              {subjectDetails.studyMaterialsCount}
-            </div>
-            <div className="miniStatText">Documents</div>
-          </div>
-        </div>
-
-        {/* BOTTOM GRID */}
+        {/* ================= STATS SECTION ================= */}
         <div className="bottomGrid">
-          {/* Assignments */}
           <div className="assignQuizCard">
-            <h2 className="assignQuizCardTitle">Assignments</h2>
-
+            <h2>Assignments</h2>
             <div className="metricsRow">
-              <div className="metricCol">
-                <div className="metricNum blueBig">
-                  {subjectDetails.assignments.pending}
-                </div>
-                <div className="metricText">Pending</div>
-              </div>
-
-              <div className="metricCol">
-                <div className="metricNum blueBig">
-                  {subjectDetails.assignments.completed}
-                </div>
-                <div className="metricText">Completed</div>
-              </div>
-
-              <div className="metricCol">
-                <div className="metricNum blueBig">
-                  {subjectDetails.assignments.total}
-                </div>
-                <div className="metricText">Total</div>
-              </div>
+              <div>{subjectDetails.assignments.pending}</div>
+              <div>{subjectDetails.assignments.completed}</div>
+              <div>{subjectDetails.assignments.total}</div>
             </div>
           </div>
 
-          {/* Quiz */}
           <div className="assignQuizCard">
-            <h2 className="assignQuizCardTitle">Quiz</h2>
-
+            <h2>Quiz</h2>
             <div className="metricsRow">
-              <div className="metricCol">
-                <div className="metricNum blueBig">
-                  {subjectDetails.quizzes.pending}
-                </div>
-                <div className="metricText">Pending</div>
-              </div>
-
-              <div className="metricCol">
-                <div className="metricNum blueBig">
-                  {subjectDetails.quizzes.completed}
-                </div>
-                <div className="metricText">Completed</div>
-              </div>
-
-              <div className="metricCol">
-                <div className="metricNum blueBig">
-                  {subjectDetails.quizzes.total}
-                </div>
-                <div className="metricText">Total</div>
-              </div>
+              <div>{subjectDetails.quizzes.pending}</div>
+              <div>{subjectDetails.quizzes.completed}</div>
+              <div>{subjectDetails.quizzes.total}</div>
             </div>
           </div>
         </div>
