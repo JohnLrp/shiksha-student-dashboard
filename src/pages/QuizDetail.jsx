@@ -13,36 +13,53 @@ export default function QuizDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
+  // ================================
+  // FETCH QUIZ
+  // ================================
   useEffect(() => {
     async function fetchQuiz() {
       try {
+        setLoading(true);
+        setError(null);
+
         const res = await api.get(`/quizzes/${quizId}/`);
         setQuizData(res.data);
       } catch (err) {
-        setError(err.response?.data?.detail || "Unable to load quiz.");
+        setError(
+          err.response?.data?.detail || "Unable to load quiz."
+        );
       } finally {
         setLoading(false);
       }
     }
 
-    fetchQuiz();
+    if (quizId) {
+      fetchQuiz();
+    }
   }, [quizId]);
 
-  const handleAnswerChange = (question_id, choice_id) => {
-    setAnswers(prev => ({
+  // ================================
+  // HANDLE ANSWER
+  // ================================
+  const handleAnswerChange = (questionId, choiceId) => {
+    setAnswers((prev) => ({
       ...prev,
-      [question_id]: choice_id
+      [questionId]: choiceId,
     }));
   };
 
+  // ================================
+  // SUBMIT
+  // ================================
   const handleSubmit = async () => {
     try {
       setSubmitting(true);
+      setError(null);
 
       const formattedAnswers = Object.entries(answers).map(
-        ([question_id, choice_id]) => ({
-          question: question_id,
-          selected_choice: choice_id,
+        ([questionId, choiceId]) => ({
+          question: questionId,
+          selected_choice: choiceId,
         })
       );
 
@@ -52,14 +69,23 @@ export default function QuizDetail() {
 
       navigate(`/subjects/quiz/result/${quizId}`);
     } catch (err) {
-      setError(err.response?.data?.detail || "Failed to submit quiz.");
+      setError(
+        err.response?.data?.detail || "Failed to submit quiz."
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) return <div>Loading quiz...</div>;
-  if (error) return <div>{error}</div>;
+  // ================================
+  // STATES
+  // ================================
+  if (loading)
+    return <div className="quizDetailPage">Loading quiz...</div>;
+
+  if (error)
+    return <div className="quizDetailPage">{error}</div>;
+
   if (!quizData) return null;
 
   const allAnswered =
@@ -67,36 +93,103 @@ export default function QuizDetail() {
       (q) => answers[q.id] !== undefined
     ) ?? false;
 
+  // ================================
+  // RENDER
+  // ================================
   return (
     <div className="quizDetailPage">
-      <h2>{quizData.title}</h2>
+      <div className="quizDetailBox">
 
-      {quizData.questions.map((q, index) => (
-        <div key={q.id}>
-          <p>{index + 1}. {q.text}</p>
+        {/* Back Button */}
+        <button
+          className="quizDetailBack"
+          onClick={() => navigate(-1)}
+        >
+          &lt; Back
+        </button>
 
-          {q.choices.map(choice => (
-            <label key={choice.id}>
-              <input
-                type="radio"
-                name={`question-${q.id}`}
-                checked={answers[q.id] === choice.id}
-                onChange={() =>
-                  handleAnswerChange(q.id, choice.id)
-                }
-              />
-              {choice.text}
-            </label>
-          ))}
+        {/* Header */}
+        <div className="quizDetailHeader">
+          <h2 className="quizDetailTitle">
+            {quizData.subject_name}
+          </h2>
         </div>
-      ))}
 
-      <button
-        onClick={handleSubmit}
-        disabled={!allAnswered || submitting}
-      >
-        {submitting ? "Submitting..." : "Submit"}
-      </button>
+        {/* Content */}
+        <div className="quizDetailContent">
+
+          {/* Quiz Info */}
+          <div className="quizDetailInfo">
+            <h3 className="quizDetailInfoTitle">
+              {quizData.title}
+            </h3>
+            <p className="quizDetailInfoMeta">
+              {quizData.teacher_name}
+            </p>
+            <p className="quizDetailInfoDue">
+              Due:{" "}
+              {new Date(quizData.due_date).toLocaleString()}
+            </p>
+          </div>
+
+          {/* Questions */}
+          <div className="quizDetailQuestions">
+            {quizData.questions.map((q, index) => (
+              <div
+                key={q.id}
+                className="quizDetailQuestion"
+              >
+                <p className="quizDetailQuestionText">
+                  {index + 1}. {q.text}
+                </p>
+
+                <div className="quizDetailOptions">
+                  {q.choices.map((choice) => (
+                    <label
+                      key={choice.id}
+                      className={`quizDetailOption ${
+                        answers[q.id] === choice.id
+                          ? "quizDetailOption--selected"
+                          : ""
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name={`question-${q.id}`}
+                        checked={
+                          answers[q.id] === choice.id
+                        }
+                        onChange={() =>
+                          handleAnswerChange(
+                            q.id,
+                            choice.id
+                          )
+                        }
+                      />
+                      <span className="quizDetailOptionRadio"></span>
+                      <span className="quizDetailOptionText">
+                        {choice.text}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Submit */}
+          <div className="quizDetailSubmitWrap">
+            <button
+              className="quizDetailSubmit"
+              onClick={handleSubmit}
+              disabled={!allAnswered || submitting}
+            >
+              {submitting ? "Submitting..." : "Submit"}
+            </button>
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
