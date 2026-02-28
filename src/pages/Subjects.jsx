@@ -64,7 +64,11 @@ export default function Subjects() {
                 key={item.id}
                 img="https://images.unsplash.com/photo-1513258496099-48168024aec0?w=600"
                 subject={item.name}
-                teacher={item.teacher_names?.join(", ") || "No teacher assigned"}
+                teacher={
+                  item.teachers?.length
+                  ? item.teachers.map(t => t.name).join(", ")
+                   : "No teacher assigned"
+    }
                 onClick={() => navigate(`/subjects/${item.id}`)}
               />
             ))
