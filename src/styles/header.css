@@ -5,6 +5,7 @@
   justify-content: space-between;
   padding: 10px 20px;
   position: relative;
+  z-index: 10;
 }
 
 .header__left {
@@ -23,15 +24,13 @@
   color: #444;
 }
 
-/* ✅ Wrapper for button + dropdown */
 .header__courseWrap {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  top: 18px; /* align like figma */
+  top: 18px;
 }
 
-/* ✅ Select course button */
 .header__btn {
   display: flex;
   align-items: center;
@@ -58,7 +57,6 @@
   transform: rotate(180deg);
 }
 
-/* ✅ Dropdown menu */
 .header__dropdown {
   margin-top: 6px;
   width: 100%;
@@ -85,6 +83,7 @@
   align-items: center;
   gap: 12px;
   position: relative;
+  margin-left: auto;
 }
 
 .header__avatar {
@@ -110,7 +109,6 @@
   line-height: 1;
 }
 
-/* Profile Dropdown */
 .header__profileDropdown {
   position: absolute;
   top: 50px;
@@ -196,4 +194,24 @@
 .header__logoutIcon {
   font-size: 16px;
   color: #666;
+}
+
+/* Hamburger (Mobile Only) */
+.header__hamburger {
+  display: none;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .header {
+    padding-left: 16px;
+  }
+
+  .header__hamburger {
+    display: block;
+  }
+
+  .header__courseWrap {
+    display: none;
+  }
 }

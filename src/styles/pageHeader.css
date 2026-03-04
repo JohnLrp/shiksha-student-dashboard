@@ -1,0 +1,50 @@
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid #222;
+}
+
+.pageHeaderTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #222;
+  margin: 0;
+}
+
+.pageHeaderSearch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f2f2f2;
+  padding: 6px 10px;
+  border-radius: 14px;
+  width: 220px;
+}
+
+.pageHeaderSearch input {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  font-size: 12px;
+}
+
+.pageHeaderSearchIcon {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .pageHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .pageHeaderSearch {
+    width: 100%;
+  }
+}

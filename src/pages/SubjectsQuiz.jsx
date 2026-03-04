@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import api from "../api/apiClient";
 import SubjectCard from "../components/SubjectCard";
+import PageHeader from "../components/PageHeader";
 import "../styles/subjects.css";
 
 export default function SubjectsQuiz() {
@@ -16,10 +17,7 @@ export default function SubjectsQuiz() {
       try {
         setLoading(true);
         setError(null);
-
-        // ✅ Uses your centralized axios instance
         const res = await api.get("/student/quiz-subjects/");
-
         setSubjectData(res.data);
       } catch (err) {
         console.error("Failed to fetch quiz subjects:", err);
@@ -38,16 +36,11 @@ export default function SubjectsQuiz() {
 
   return (
     <div className="subjectsPage">
-      <div className="subjectsBox">
-        <div className="subjectsHeader">
-          <h2 className="subjectsTitle">Subjects (Quiz)</h2>
+      <div className="subjectsHeaderBox">
+        <PageHeader title="Quiz" />
+      </div>
 
-          <div className="subjectsSearch">
-            <input placeholder="Search..." />
-            <span className="subjectsSearchIcon">🔍</span>
-          </div>
-        </div>
-
+      <div className="subjectsBodyBox">
         <div className="subjectsGrid">
           {subjectData.length === 0 ? (
             <div>No quiz subjects available.</div>
@@ -58,9 +51,7 @@ export default function SubjectsQuiz() {
                 img="https://images.unsplash.com/photo-1513258496099-48168024aec0?w=600"
                 subject={item.subject}
                 teacher={item.teacher}
-                onClick={() =>
-                  navigate(`/subjects/quiz/${item.id}`)
-                }
+                onClick={() => navigate(`/subjects/quiz/${item.id}`)}
               />
             ))
           )}

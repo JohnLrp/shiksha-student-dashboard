@@ -1,18 +1,16 @@
 import "../styles/quiz.css";
 
-export default function QuizCard({ img, title, teacher, deadline, onClick }) {
+export default function QuizCard({ title, teacher, deadline, isCompleted, onClick }) {
   return (
-    <div className="quizCard" onClick={onClick}>
-      <div className="quizCard__imgWrap">
-        <img src={img} alt={title} className="quizCard__img" />
+    <div className={`quizCard${isCompleted ? " quizCard--completed" : ""}`} onClick={onClick}>
+      {isCompleted && <span className="quizCard__badge">✓</span>}
+      <div className="quizCard__top">
+        <p className="quizCard__title">{title}</p>
       </div>
-      <div className="quizCard__info">
-        <h3 className="quizCard__title">{title}</h3>
-        <p className="quizCard__teacher">{teacher}</p>
+      <p className="quizCard__teacher">{teacher}</p>
+      <div className="quizCard__bottom">
         <p className="quizCard__deadline">{deadline}</p>
       </div>
     </div>
   );
 }
-
-

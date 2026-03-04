@@ -1,19 +1,14 @@
-/* Assignment Page */
+/* ===== PAGE WRAPPER ===== */
 .assignmentPage {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  background: #ecf0ef;
-  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.assignmentBox {
-  width: 100%;
-  background: white;
-  border-radius: 18px;
-  padding: 20px 24px;
-  min-height: 82vh;
-}
-
-/* Back Button */
+/* ===== BACK BUTTON (above the header box) ===== */
 .assignmentBack {
   background: #0a808a;
   color: white;
@@ -23,66 +18,71 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  margin-bottom: 16px;
+  align-self: flex-start;
+  margin-bottom: 4px;
 }
 
 .assignmentBack:hover {
   background: #097a83;
 }
 
-/* Subject Title */
-.assignmentSubjectTitle {
-  font-size: 16px;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-/* Header with Tabs and Search */
-.assignmentHeader {
+/* ===== HEADER BOX (fixed, does not scroll) ===== */
+.assignmentHeaderBox {
+  width: 100%;
+  background: white;
+  border-radius: 18px 18px 0 0;
+  padding: 16px 24px 0;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-/* Tabs */
+/* Top row: title | search */
+.assignmentHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Subject name */
+.assignmentSubjectTitle {
+  font-size: 14px;
+  font-weight: 800;
+  color: #222;
+  margin: 0;
+}
+
+/* ===== TABS ===== */
 .assignmentTabs {
   display: flex;
-  gap: 0;
+  gap: 8px;
 }
 
 .assignmentTab {
-  background: #f2f2f2;
+  background: #7BBEC7;
   border: none;
-  padding: 10px 24px;
+  padding: 8px 20px;
+  border-radius: 20px 20px 0 0;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  color: #666;
-  transition: all 0.2s ease;
-}
-
-.assignmentTab:first-child {
-  border-radius: 8px 0 0 8px;
-}
-
-.assignmentTab:last-child {
-  border-radius: 0 8px 8px 0;
+  color: white;
+  transition: background 0.2s ease;
 }
 
 .assignmentTab--active {
-  background: white;
-  color: #333;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #015865;
+  color: white;
+  z-index: 2;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
 }
 
 .assignmentTab:hover:not(.assignmentTab--active) {
-  background: #e8e8e8;
+  background: #6ab3bc;
 }
 
-/* Search */
+/* ===== SEARCH ===== */
 .assignmentSearch {
   display: flex;
   align-items: center;
@@ -91,6 +91,7 @@
   padding: 8px 12px;
   border-radius: 8px;
   width: 200px;
+  flex-shrink: 0;
 }
 
 .assignmentSearch input {
@@ -106,7 +107,18 @@
   opacity: 0.6;
 }
 
-/* Assignment Cards Grid */
+/* ===== BODY BOX (scrolls) ===== */
+.assignmentBodyBox {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  background: white;
+  border-radius: 0 0 18px 18px;
+  padding: 20px 24px;
+}
+
+/* ===== ASSIGNMENT CARDS GRID ===== */
 .assignmentGrid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -131,50 +143,77 @@
   }
 }
 
-/* Assignment Pending Card */
+/* ===== MOBILE HEADER ===== */
+@media (max-width: 768px) {
+  .assignmentHeaderRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .assignmentSubjectTitle {
+    text-align: center;
+  }
+
+  .assignmentSearch {
+    width: 100%;
+  }
+
+  .assignmentTabs {
+    width: 100%;
+  }
+
+  .assignmentTab {
+    flex: 1;
+    text-align: center;
+  }
+}
+
+/* ===== ASSIGNMENT PENDING CARD ===== */
 .assignmentPendingCard {
-  border-radius: 12px;
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #0a808a;
+  border-radius: 10px;
+  color: white;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  padding: 14px 16px;
+  height: 145px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: opacity 0.18s;
 }
 
 .assignmentPendingCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  opacity: 0.88;
 }
 
-.assignmentPendingCard__img {
-  width: 100%;
-  height: 100px;
-  object-fit: cover;
-}
-
-.assignmentPendingCard__info {
-  background: #0a808a;
-  padding: 12px 14px;
-  color: white;
+.assignmentPendingCard__top {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .assignmentPendingCard__title {
   font-size: 13px;
   font-weight: 700;
-  margin-bottom: 4px;
+  line-height: 1.2;
+  margin: 0;
 }
 
 .assignmentPendingCard__teacher {
   font-size: 11px;
-  font-weight: 400;
-  opacity: 0.9;
-  margin-bottom: 4px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.assignmentPendingCard__bottom {
+  text-align: right;
 }
 
 .assignmentPendingCard__deadline {
   font-size: 10px;
-  font-weight: 400;
-  opacity: 0.8;
+  font-weight: 500;
+  margin: 0;
 }
 
 /* Empty State */
@@ -186,70 +225,67 @@
   padding: 40px;
 }
 
-/* Assignment Completed Card */
+/* ===== ASSIGNMENT COMPLETED CARD ===== */
 .assignmentCompletedCard {
-  border-radius: 12px;
-  overflow: hidden;
-  background: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: #0a808a;
+  border-radius: 10px;
+  color: white;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.assignmentCompletedCard:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.assignmentCompletedCard__imgWrap {
+  padding: 14px 16px;
+  height: 145px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: opacity 0.18s;
   position: relative;
 }
 
-.assignmentCompletedCard__img {
-  width: 100%;
-  height: 100px;
-  object-fit: cover;
+.assignmentCompletedCard:hover {
+  opacity: 0.88;
 }
 
 .assignmentCompletedCard__badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #28a745;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.25);
   color: white;
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 10px;
   font-weight: bold;
 }
 
-.assignmentCompletedCard__info {
-  background: #2a9d8f;
-  padding: 12px 14px;
-  color: white;
+.assignmentCompletedCard__top {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 .assignmentCompletedCard__title {
   font-size: 13px;
   font-weight: 700;
-  margin-bottom: 4px;
+  line-height: 1.2;
+  margin: 0;
+  padding-right: 22px;
 }
 
 .assignmentCompletedCard__teacher {
   font-size: 11px;
-  font-weight: 400;
-  opacity: 0.9;
-  margin-bottom: 4px;
+  font-weight: 500;
+  margin: 0;
+}
+
+.assignmentCompletedCard__bottom {
+  text-align: right;
 }
 
 .assignmentCompletedCard__date {
   font-size: 10px;
-  font-weight: 400;
-  opacity: 0.8;
-
+  font-weight: 500;
+  margin: 0;
 }
-

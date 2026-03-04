@@ -1,101 +1,53 @@
+/* ===== PAGE WRAPPER ===== */
 .assignmentDetailPage {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  min-height: 100vh;
-  background: #e9e0df;
-  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-/* Top bar inside page (Back left, Select Course center, profile right) */
-.assignmentTopBar {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  align-items: center;
-  width: 100%;
-  max-width: 1180px;
-  margin: 0 auto 10px auto;
-}
-
-.assignmentBack {
-  justify-self: start;
-  background: #cfd4d8;
-  border: none;
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  cursor: pointer;
-  font-weight: 600;
-  color: #2d2d2d;
-}
-
-.selectCourseBtnTop {
-  justify-self: center;
-  background: #0c5f5f;
+/* ===== BACK BUTTON (above the header box) ===== */
+.assignmentDetailBack {
+  background: #0a808a;
   color: white;
   border: none;
-  padding: 6px 18px;
-  border-radius: 8px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
+  align-self: flex-start;
+  margin-bottom: 4px;
 }
 
-.profileCircle {
-  justify-self: end;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: white;
-  display: grid;
-  place-items: center;
-  font-size: 15px;
+.assignmentDetailBack:hover {
+  background: #097a83;
 }
 
-/* main white container */
-.assignmentDetailBox {
+/* ===== HEADER BOX ===== */
+.assignmentDetailHeaderBox {
   width: 100%;
-  max-width: 1180px;
-  margin: 0 auto;
   background: white;
-  border-radius: 18px;
-  padding: 16px 18px;
-  min-height: 78vh;
+  border-radius: 18px 18px 0 0;
+  padding: 20px 24px;
 }
 
-/* subject + search row */
-.assignmentDetailHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
+.assignmentDetailHeaderBox .pageHeader {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
-.assignmentDetailSubject {
-  font-size: 14px;
-  font-weight: 800;
-  color: #222;
-}
-
-/* search */
-.assignmentSearch {
-  display: flex;
-  align-items: center;
-  background: #f0f0f0;
-  padding: 6px 10px;
-  border-radius: 14px;
-  width: 200px;
-}
-
-.assignmentSearch input {
-  border: none;
-  outline: none;
-  background: transparent;
+/* ===== BODY BOX ===== */
+.assignmentDetailBodyBox {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  font-size: 12px;
-}
-
-.assignmentSearchIcon {
-  font-size: 13px;
-  opacity: 0.6;
+  background: white;
+  border-radius: 0 0 18px 18px;
+  padding: 20px 24px;
 }
 
 /* big grey box content */
@@ -195,7 +147,7 @@
 /* RIGHT: Your work card */
 .assignmentDetailRight {
   width: 220px;
-  background: white;
+  background: #C7E1ED;
   border-radius: 12px;
   padding: 16px;
   height: fit-content;
@@ -224,7 +176,7 @@
 /* Upload button */
 .assignmentDetailUploadBtn {
   width: 100%;
-  background: #e5e7eb;
+  background: #F0F0F0;
   border: none;
   padding: 9px 10px;
   border-radius: 8px;
@@ -240,7 +192,7 @@
 /* Submit button */
 .assignmentDetailSubmitBtn {
   width: 100%;
-  background: #0a7c86;
+  background: #0B7E58;
   border: none;
   padding: 9px 10px;
   border-radius: 8px;
@@ -251,7 +203,7 @@
 }
 
 .assignmentDetailSubmitBtn:disabled {
-  opacity: 0.5;
+  opacity: 0.9;
   cursor: not-allowed;
 }
 
@@ -280,4 +232,59 @@
   color: white;
   cursor: not-allowed;
   opacity: 0.8;
+}
+/* ================= MOBILE FIX ================= */
+@media (max-width: 768px) {
+  .assignmentDetailHeaderBox,
+  .assignmentDetailBodyBox {
+    padding: 14px;
+  }
+
+  /* Stack left + right */
+  .assignmentDetailContent {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  /* Make right card full width */
+  .assignmentDetailRight {
+    width: 100%;
+  }
+
+  /* Better file strip on small screen */
+  .fileStrip {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 460px) {
+  .assignmentTitleRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .assignmentDetailTitle {
+    font-size: 16px;
+  }
+
+  .submittedTopText {
+    margin-top: 0;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 945px) {
+  .assignmentTitleRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .assignmentDetailTitle {
+    font-size: 16px;
+  }
+
+  .submittedTopText {
+    margin-top: 0;
+  }
 }

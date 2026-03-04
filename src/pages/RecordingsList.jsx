@@ -1,99 +1,40 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import RecordingCard from "../components/RecordingCard";
+import PageHeader from "../components/PageHeader";
 import "../styles/recordings.css";
 
 export default function RecordingsList() {
   const navigate = useNavigate();
   const { id: subjectId } = useParams();
 
-  // State for data (future backend data)
   const [recordingsData, setRecordingsData] = useState([]);
 
-  // Mock data (simulates backend response)
   useEffect(() => {
     const mockRecordingsData = [
-    {
-      id: 1,
-      img: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600",
-      subject: "Subject Name",
-      sessionTitle: "Session Title/Topic",
-      teacher: "Teacher Name",
-      sessionDate: "Date & Time (Session date)",
-    },
-    {
-      id: 2,
-      img: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600",
-      subject: "Subject Name",
-      sessionTitle: "Session Title/Topic",
-      teacher: "Teacher Name",
-      sessionDate: "Date & Time (Session date)",
-    },
-    {
-      id: 3,
-      img: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600",
-      subject: "Subject Name",
-      sessionTitle: "Session Title/Topic",
-      teacher: "Teacher Name",
-      sessionDate: "Date & Time (Session date)",
-    },
-    {
-      id: 4,
-      img: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600",
-      subject: "Subject Name",
-      sessionTitle: "Session Title/Topic",
-      teacher: "Teacher Name",
-      sessionDate: "Date & Time (Session date)",
-    },
-    {
-      id: 5,
-      img: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600",
-      subject: "Subject Name",
-      sessionTitle: "Session Title/Topic",
-      teacher: "Teacher Name",
-      sessionDate: "Date & Time (Session date)",
-    },
-    {
-      id: 6,
-      img: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=600",
-      subject: "Subject Name",
-      sessionTitle: "Session Title/Topic",
-      teacher: "Teacher Name",
-      sessionDate: "Date & Time (Session date)",
-    },
-    {
-      id: 7,
-      img: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=600",
-      subject: "Subject Name",
-      sessionTitle: "Session Title/Topic",
-      teacher: "Teacher Name",
-      sessionDate: "Date & Time (Session date)",
-    },
-    {
-      id: 8,
-      img: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600",
-      subject: "Subject Name",
-      sessionTitle: "Session Title/Topic",
-      teacher: "Teacher Name",
-      sessionDate: "Date & Time (Session date)",
-    },
-  ];
-
+      { id: 1, subject: "Subject Name", sessionTitle: "Session Title/Topic", teacher: "Teacher Name", sessionDate: "Date & Time (Session date)" },
+      { id: 2, subject: "Subject Name", sessionTitle: "Session Title/Topic", teacher: "Teacher Name", sessionDate: "Date & Time (Session date)" },
+      { id: 3, subject: "Subject Name", sessionTitle: "Session Title/Topic", teacher: "Teacher Name", sessionDate: "Date & Time (Session date)" },
+      { id: 4, subject: "Subject Name", sessionTitle: "Session Title/Topic", teacher: "Teacher Name", sessionDate: "Date & Time (Session date)" },
+      { id: 5, subject: "Subject Name", sessionTitle: "Session Title/Topic", teacher: "Teacher Name", sessionDate: "Date & Time (Session date)" },
+      { id: 6, subject: "Subject Name", sessionTitle: "Session Title/Topic", teacher: "Teacher Name", sessionDate: "Date & Time (Session date)" },
+      { id: 7, subject: "Subject Name", sessionTitle: "Session Title/Topic", teacher: "Teacher Name", sessionDate: "Date & Time (Session date)" },
+      { id: 8, subject: "Subject Name", sessionTitle: "Session Title/Topic", teacher: "Teacher Name", sessionDate: "Date & Time (Session date)" },
+    ];
     setRecordingsData(mockRecordingsData);
   }, []);
 
   return (
     <div className="recordingsPage">
-      <div className="recordingsBox">
-        {/* Back Button */}
-        <button className="recordingsBack" onClick={() => navigate(-1)}>
-          &lt; Back
-        </button>
+      <button className="recordingsBack" onClick={() => navigate(-1)}>
+        &lt; Back
+      </button>
 
-        {/* Subject Title */}
-        <h2 className="recordingsSubjectTitle">Subject Name</h2>
+      <div className="recordingsHeaderBox">
+        <PageHeader title="Subject Name" />
+      </div>
 
-        {/* Recordings Grid */}
+      <div className="recordingsBodyBox">
         <div className="recordingsGrid">
           {recordingsData.map((item) => (
             <RecordingCard
@@ -106,6 +47,4 @@ export default function RecordingsList() {
       </div>
     </div>
   );
-
 }
-

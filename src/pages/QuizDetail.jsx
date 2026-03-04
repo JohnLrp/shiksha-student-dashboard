@@ -5,7 +5,7 @@ import "../styles/quiz.css";
 
 export default function QuizDetail() {
   const navigate = useNavigate();
-  const { subjectId, quizId } = useParams(); // IMPORTANT
+  const { subjectId, quizId } = useParams();
 
   const [quizData, setQuizData] = useState(null);
   const [answers, setAnswers] = useState({});
@@ -13,21 +13,15 @@ export default function QuizDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  // =========================
-  // FETCH QUIZ
-  // =========================
   useEffect(() => {
     async function fetchQuiz() {
       try {
         setLoading(true);
         setError(null);
-
         const res = await api.get(`/quizzes/${quizId}/`);
         setQuizData(res.data);
       } catch (err) {
-        setError(
-          err.response?.data?.detail || "Unable to load quiz."
-        );
+        setError(err.response?.data?.detail || "Unable to load quiz.");
       } finally {
         setLoading(false);
       }
@@ -36,19 +30,10 @@ export default function QuizDetail() {
     if (quizId) fetchQuiz();
   }, [quizId]);
 
-  // =========================
-  // ANSWER CHANGE
-  // =========================
   const handleAnswerChange = (questionId, choiceId) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: choiceId,
-    }));
+    setAnswers((prev) => ({ ...prev, [questionId]: choiceId }));
   };
 
-  // =========================
-  // SUBMIT
-  // =========================
   const handleSubmit = async () => {
     try {
       setSubmitting(true);
@@ -61,110 +46,79 @@ export default function QuizDetail() {
         })
       );
 
-      await api.post(`/quizzes/${quizId}/submit/`, {
-        answers: formattedAnswers,
-      });
-
+      await api.post(`/quizzes/${quizId}/submit/`, { answers: formattedAnswers });
       navigate(`/subjects/quiz/${subjectId}/result/${quizId}`);
     } catch (err) {
-      setError(
-        err.response?.data?.detail || "Failed to submit quiz."
-      );
+      setError(err.response?.data?.detail || "Failed to submit quiz.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading)
-    return <div className="quizDetailPage">Loading quiz...</div>;
-
-  if (error)
-    return <div className="quizDetailPage">{error}</div>;
-
+  if (loading) return <div className="quizActivePage">Loading quiz...</div>;
+  if (error) return <div className="quizActivePage">{error}</div>;
   if (!quizData) return null;
 
-  const allAnswered =
-    quizData.questions?.every(
-      (q) => answers[q.id] !== undefined
-    ) ?? false;
+  const allAnswered = quizData.questions?.every((q) => answers[q.id] !== undefined) ?? false;
 
   return (
-    <div className="quizDetailPage">
-      <div className="quizDetailBox">
+    <div className="quizActivePage">
+      <button className="quizBackHeader" onClick={() => navigate(-1)}>
+        &lt; Back
+      </button>
 
-        <button
-          className="quizDetailBack"
-          onClick={() => navigate(-1)}
-        >
-          &lt; Back
-        </button>
+      <div className="quizActiveHeaderBox">
+        <h2 className="quizPendingHeaderTitle">{quizData.subject_name}</h2>
+        <div className="quizSearch">
+          <input placeholder="Search..." />
+          <span className="quizSearchIcon">🔍</span>
+        </div>
+      </div>
 
-        <div className="quizDetailHeader">
-          <h2 className="quizDetailTitle">
-            {quizData.subject_name}
-          </h2>
+      <div className="quizActiveBodyBox">
+        <div className="quizDetailInfo">
+          <h3 className="quizDetailInfoTitle">{quizData.title}</h3>
+          <p className="quizDetailInfoMeta">{quizData.teacher_name}</p>
+          <p className="quizDetailInfoDue">Due: {new Date(quizData.due_date).toLocaleString()}</p>
         </div>
 
-        <div className="quizDetailContent">
-
-          <div className="quizDetailInfo">
-            <h3 className="quizDetailInfoTitle">
-              {quizData.title}
-            </h3>
-            <p className="quizDetailInfoMeta">
-              {quizData.teacher_name}
-            </p>
-            <p className="quizDetailInfoDue">
-              Due: {new Date(quizData.due_date).toLocaleString()}
-            </p>
-          </div>
-
-          <div className="quizDetailQuestions">
-            {quizData.questions.map((q, index) => (
-              <div key={q.id} className="quizDetailQuestion">
-                <p className="quizDetailQuestionText">
-                  {index + 1}. {q.text}
-                </p>
-
-                <div className="quizDetailOptions">
-                  {q.choices.map((choice) => (
-                    <label
-                      key={choice.id}
-                      className={`quizDetailOption ${
-                        answers[q.id] === choice.id
-                          ? "quizDetailOption--selected"
-                          : ""
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name={`question-${q.id}`}
-                        checked={answers[q.id] === choice.id}
-                        onChange={() =>
-                          handleAnswerChange(q.id, choice.id)
-                        }
-                      />
-                      <span className="quizDetailOptionRadio"></span>
-                      <span className="quizDetailOptionText">
-                        {choice.text}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+        <div className="quizDetailQuestions">
+          {quizData.questions.map((q, index) => (
+            <div key={q.id} className="quizDetailQuestion">
+              <p className="quizDetailQuestionText">
+                {index + 1}. {q.text}
+              </p>
+              <div className="quizDetailOptions">
+                {q.choices.map((choice) => (
+                  <label
+                    key={choice.id}
+                    className={`quizDetailOption ${
+                      answers[q.id] === choice.id ? "quizDetailOption--selected" : ""
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`question-${q.id}`}
+                      checked={answers[q.id] === choice.id}
+                      onChange={() => handleAnswerChange(q.id, choice.id)}
+                    />
+                    <span className="quizDetailOptionRadio" />
+                    <span className="quizDetailOptionText">{choice.text}</span>
+                  </label>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
 
-          <div className="quizDetailSubmitWrap">
-            <button
-              className="quizDetailSubmit"
-              onClick={handleSubmit}
-              disabled={!allAnswered || submitting}
-            >
-              {submitting ? "Submitting..." : "Submit"}
-            </button>
-          </div>
-
+        <div className="quizDetailSubmitWrap">
+          <button
+            className="quizDetailSubmit"
+            onClick={handleSubmit}
+            disabled={!allAnswered || submitting}
+          >
+            {submitting ? "Submitting..." : "Submit"}
+          </button>
         </div>
       </div>
     </div>

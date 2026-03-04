@@ -1,22 +1,14 @@
 import "../styles/subjectCard.css";
 
-export default function SubjectCard({
-  img,
-  subject,
-  teacher,
-  onClick,
-}) {
+export default function SubjectCard({ img, subject, teacher, onClick }) {
   return (
     <div
       className="subjectCard"
       onClick={onClick}
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
-      style={onClick ? { cursor: "pointer" } : undefined}
       onKeyDown={(e) => {
-        if (onClick && (e.key === "Enter" || e.key === " ")) {
-          onClick();
-        }
+        if (onClick && (e.key === "Enter" || e.key === " ")) onClick();
       }}
     >
       <img
@@ -25,7 +17,6 @@ export default function SubjectCard({
         alt={subject || "Subject"}
         loading="lazy"
       />
-
       <div className="subjectCard__body">
         <h4 className="subjectCard__title">{subject}</h4>
         <p className="subjectCard__teacher">{teacher}</p>
@@ -33,5 +24,3 @@ export default function SubjectCard({
     </div>
   );
 }
-
-

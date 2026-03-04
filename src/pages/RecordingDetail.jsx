@@ -1,53 +1,45 @@
 import { useNavigate, useParams } from "react-router-dom";
+import PageHeader from "../components/PageHeader";
 import "../styles/recordingDetail.css";
 
 export default function RecordingDetail() {
   const navigate = useNavigate();
   const { videoId } = useParams();
 
-  // Sample video data - in real app this would come from API
   const videoData = {
+    subject: "Subject Name",
     title: "Linear Equations",
     teacher: "Sir Zodina",
     dateRecorded: "22 Jan 2026",
     dayTime: "Wednesday, 1:00 pm (IST)",
     duration: "1:40:26",
-    videoUrl: "", // Would be actual video URL
+    videoUrl: "",
   };
 
   return (
     <div className="recordingDetailPage">
-      <div className="recordingDetailBox">
-        {/* Back Button */}
-        <button className="recordingDetailBack" onClick={() => navigate(-1)}>
-          &lt; Back
-        </button>
+      <button className="recordingDetailBack" onClick={() => navigate(-1)}>
+        &lt; Back
+      </button>
 
-        {/* Header with Title and Search */}
-        <div className="recordingDetailHeader">
-          <h2 className="recordingDetailTitle">Subject Name - Record ID</h2>
-          <div className="recordingDetailSearch">
-            <input placeholder="Search..." />
-            <span className="recordingDetailSearchIcon">🔍</span>
-          </div>
-        </div>
+      <div className="recordingDetailHeaderBox">
+        <PageHeader title={`${videoData.subject} - ${videoId}`} />
+      </div>
 
-        {/* Video Player */}
+      <div className="recordingDetailBodyBox">
         <div className="recordingDetailPlayer">
           <div className="recordingDetailVideo">
-            {/* Video element - replace with actual video player */}
             <video
               controls
               className="recordingDetailVideoElement"
               poster="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800"
             >
-              <source src={videoData.videoUrl} type="video/mp4" />
+              {videoData.videoUrl && <source src={videoData.videoUrl} type="video/mp4" />}
               Your browser does not support the video tag.
             </video>
           </div>
         </div>
 
-        {/* Video Info */}
         <div className="recordingDetailInfo">
           <div className="recordingDetailInfoLeft">
             <p className="recordingDetailInfoTitle">
@@ -73,6 +65,4 @@ export default function RecordingDetail() {
       </div>
     </div>
   );
-
 }
-

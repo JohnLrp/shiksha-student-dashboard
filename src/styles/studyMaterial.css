@@ -1,16 +1,34 @@
 /* Study Material List Page */
 .studyMaterialPage {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  background: #ecf0ef;
-  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.studyMaterialBox {
+.studyMaterialHeaderBox {
   width: 100%;
   background: white;
-  border-radius: 18px;
+  border-radius: 18px 18px 0 0;
   padding: 20px 24px;
-  min-height: 82vh;
+}
+
+.studyMaterialHeaderBox .pageHeader {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.studyMaterialBodyBox {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  background: white;
+  border-radius: 0 0 18px 18px;
+  padding: 20px 24px;
 }
 
 /* Back Button */
@@ -23,7 +41,7 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  margin-bottom: 16px;
+  align-self: flex-start;
 }
 
 .studyMaterialBack:hover {
@@ -185,4 +203,182 @@
   background: #3d7a9a;
 
 }
+/* ============================= */
+/* Responsive - Tablet */
+/* ============================= */
+@media (max-width: 1024px) {
+  .studyMaterialHeaderBox,
+  .studyMaterialBodyBox {
+    padding: 18px;
+  }
 
+  .studyMaterialHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .studyMaterialSearch {
+    width: 100%;
+  }
+
+  .studyMaterialTable th,
+  .studyMaterialTable td {
+    font-size: 12px;
+    padding: 12px;
+  }
+
+  /* Prevent Date + buttons from overlapping at 770–1046px */
+  .studyMaterialActions {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
+  }
+
+  .studyMaterialViewBtn,
+  .studyMaterialDownloadBtn {
+    padding: 6px 10px;
+    font-size: 11px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .studyMaterialTable th:first-child,
+  .studyMaterialTable td:first-child {
+    width: 35%;
+  }
+
+  .studyMaterialTable th:nth-child(2),
+  .studyMaterialTable td:nth-child(2) {
+    width: 20%;
+  }
+
+  .studyMaterialTable th:last-child,
+  .studyMaterialTable td:last-child {
+    width: 45%;
+  }
+}
+
+
+/* ============================= */
+/* Mobile View */
+/* ============================= */
+@media (max-width: 768px) {
+
+  .studyMaterialHeaderBox,
+  .studyMaterialBodyBox {
+    padding: 14px;
+    min-height: auto;
+  }
+
+  .studyMaterialHeader {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .studyMaterialSearch {
+    width: 100%;
+  }
+
+  /* Make table scrollable */
+  .studyMaterialTableWrap {
+    overflow-x: auto;
+  }
+
+  .studyMaterialTable {
+    min-width: 600px;
+  }
+
+  /* Buttons smaller */
+  .studyMaterialViewBtn,
+  .studyMaterialDownloadBtn {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .studyMaterialActions {
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-end;
+  }
+}
+
+/* Mobile container bg */
+@media (max-width: 768px) {
+
+  .studyMaterialContent {
+    background: #e8f4f4;
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+}
+/* ===== HIDE SEARCH ON MOBILE ===== */
+@media (max-width: 768px) {
+  .studyMaterialSearch {
+    display: none;
+  }
+}
+
+/* ===== TABLE / CARD SWITCH ===== */
+.studyMaterialMobile {
+  display: none;
+}
+
+@media (max-width: 768px) {
+
+  .studyMaterialTableWrap {
+    display: none;
+  }
+
+  .studyMaterialMobile {
+    display: block;
+  }
+
+}
+@media (max-width: 768px) {
+
+  .studyMaterialMobileHeader {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .studyMaterialCard {
+    background: #177e86;
+    color: white;
+    padding: 14px;
+    border-radius: 14px;
+    margin-bottom: 14px;
+  }
+
+  .studyMaterialCardTop {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .studyMaterialCardActions {
+    display: flex;
+    gap: 10px;
+    flex-direction: row-reverse;
+  }
+
+  .viewBtn {
+    background: #2ecc71;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 14px;
+    color: white;
+  }
+
+  .downloadBtn {
+    background: #6c8fa8;
+    border: none;
+    padding: 6px 16px;
+    border-radius: 14px;
+    color: white;
+  }
+
+}

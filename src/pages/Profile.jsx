@@ -15,16 +15,15 @@ export default function Profile() {
   const [courses, setCourses] = useState([]);
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editValues, setEditValues] = useState({
-    name: "",
-    phone: "",
-  });
+  const [editValues, setEditValues] = useState({ name: "", phone: "" });
 
-  const emojis = ["😀", "😎", "🤓", "😊", "🥳", "😇", "🤩", "😍"];
+  const emojis = [
+    "😀", "😎", "🤓", "😊", "🥳", "😇", "🤩", "😍",
+    "🦊", "🐱", "🐶", "🐼", "🦁", "🐯", "🐻", "🐨",
+    "👨‍🎓", "👩‍🎓", "👨‍💻", "👩‍💻", "🧑‍🎨", "👨‍🔬", "👩‍🔬", "🧑‍🚀",
+    "⭐", "🌟", "✨", "💫", "🔥", "💎", "🎯", "🎨",
+  ];
 
-  // ===============================
-  // FETCH PROFILE FROM BACKEND
-  // ===============================
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -51,14 +50,8 @@ export default function Profile() {
     }
   };
 
-  // ===============================
-  // PROFILE EDIT
-  // ===============================
   const handleEditClick = () => {
-    setEditValues({
-      name: studentInfo.name,
-      phone: studentInfo.phone,
-    });
+    setEditValues({ name: studentInfo.name, phone: studentInfo.phone });
     setIsEditing(true);
   };
 
@@ -66,10 +59,7 @@ export default function Profile() {
     try {
       const res = await api.patch("/accounts/me/", {
         username: editValues.name,
-        profile: {
-          full_name: editValues.name,
-          phone: editValues.phone,
-        },
+        profile: { full_name: editValues.name, phone: editValues.phone },
       });
 
       setStudentInfo({
@@ -85,9 +75,6 @@ export default function Profile() {
     }
   };
 
-  // ===============================
-  // AVATAR HANDLING
-  // ===============================
   const handleOpenPicker = () => {
     setTempAvatar(avatar);
     setTempAvatarType(avatarType);
@@ -97,7 +84,6 @@ export default function Profile() {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     setTempAvatarFile(file);
     setTempAvatar(URL.createObjectURL(file));
     setTempAvatarType("image");
@@ -116,10 +102,9 @@ export default function Profile() {
         });
       }
 
-      if (tempAvatarType === "image") {
+      if (tempAvatarType === "image" && tempAvatarFile) {
         const formData = new FormData();
         formData.append("avatar_image", tempAvatarFile);
-
         await api.patch("/accounts/me/", formData, {
           headers: { "Content-Type": "multipart/form-data" },
         });
@@ -127,9 +112,19 @@ export default function Profile() {
 
       await fetchProfile();
       setShowPicker(false);
+      setTempAvatar(null);
+      setTempAvatarType(null);
+      setTempAvatarFile(null);
     } catch (err) {
       console.error("Avatar update failed", err);
     }
+  };
+
+  const handlePickerCancel = () => {
+    setShowPicker(false);
+    setTempAvatar(null);
+    setTempAvatarType(null);
+    setTempAvatarFile(null);
   };
 
   if (loading) return <div>Loading...</div>;
@@ -143,15 +138,74 @@ export default function Profile() {
           <div className="profileCard__avatarWrap">
             <div className="profileCard__avatar" onClick={handleOpenPicker}>
               {avatar ? (
-                avatarType === "emoji" ? (
-                  <span className="profileCard__emoji">{avatar}</span>
-                ) : (
-                  <img src={avatar} alt="avatar" />
-                )
+                <>
+                  {avatarType === "emoji" ? (
+                    <span className="profileCard__emoji">{avatar}</span>
+                  ) : (
+                    <img src={avatar} alt={studentInfo?.name} />
+                  )}
+                  <div className="profileCard__avatarOverlay">
+                    <span className="profileCard__avatarEdit">Edit</span>
+                  </div>
+                </>
               ) : (
-                <span>+</span>
+                <div className="profileCard__addImage">
+                  <span className="profileCard__addIcon">+</span>
+                  <span className="profileCard__addText">Add Image</span>
+                </div>
               )}
             </div>
+
+            {showPicker && (
+              <div className="profileCard__picker">
+                <div className="profileCard__pickerHeader">
+                  <span>{avatar ? "Change Avatar" : "Choose Avatar"}</span>
+                  <button className="profileCard__pickerClose" onClick={handlePickerCancel}>×</button>
+                </div>
+
+                <div className="profileCard__pickerPreview">
+                  <div className="profileCard__previewCircle">
+                    {tempAvatar ? (
+                      tempAvatarType === "emoji" ? (
+                        <span className="profileCard__previewEmoji">{tempAvatar}</span>
+                      ) : (
+                        <img src={tempAvatar} alt="Preview" className="profileCard__previewImg" />
+                      )
+                    ) : (
+                      <span className="profileCard__previewPlaceholder">Preview</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="profileCard__pickerSection">
+                  <p className="profileCard__pickerLabel">Upload Image</p>
+                  <label className="profileCard__uploadBtn">
+                    <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
+                    Choose File
+                  </label>
+                </div>
+
+                <div className="profileCard__pickerSection">
+                  <p className="profileCard__pickerLabel">Or Select Emoji</p>
+                  <div className="profileCard__emojiGrid">
+                    {emojis.map((emoji, idx) => (
+                      <button
+                        key={idx}
+                        className={`profileCard__emojiBtn ${tempAvatar === emoji ? "profileCard__emojiBtn--selected" : ""}`}
+                        onClick={() => handleEmojiSelect(emoji)}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="profileCard__pickerActions">
+                  <button className="profileCard__cancelBtn" onClick={handlePickerCancel}>Cancel</button>
+                  <button className="profileCard__saveBtn" onClick={handleAvatarSave} disabled={!tempAvatar}>Save</button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* INFO */}
@@ -159,48 +213,77 @@ export default function Profile() {
             {isEditing ? (
               <>
                 <input
+                  type="text"
+                  className="profileCard__input profileCard__input--name"
                   value={editValues.name}
-                  onChange={(e) =>
-                    setEditValues({ ...editValues, name: e.target.value })
-                  }
+                  onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
+                  placeholder="Name"
                 />
-                <input
-                  value={editValues.phone}
-                  onChange={(e) =>
-                    setEditValues({ ...editValues, phone: e.target.value })
-                  }
-                />
+                <div className="profileCard__detail">
+                  <span className="profileCard__icon">✉</span>
+                  <span>{studentInfo?.email}</span>
+                </div>
+                <div className="profileCard__detail">
+                  <span className="profileCard__icon">◉</span>
+                  <span>Student ID- {studentInfo?.studentId}</span>
+                </div>
+                <div className="profileCard__detail">
+                  <span className="profileCard__icon">✆</span>
+                  <input
+                    type="tel"
+                    className="profileCard__input"
+                    value={editValues.phone}
+                    onChange={(e) => setEditValues({ ...editValues, phone: e.target.value })}
+                    placeholder="Phone"
+                  />
+                </div>
               </>
             ) : (
               <>
-                <h2>{studentInfo.name}</h2>
-                <p>{studentInfo.email}</p>
-                <p>Student ID - {studentInfo.studentId}</p>
-                <p>{studentInfo.phone}</p>
+                <h2 className="profileCard__name">{studentInfo?.name}</h2>
+                <div className="profileCard__detail">
+                  <span className="profileCard__icon">✉</span>
+                  <span>{studentInfo?.email}</span>
+                </div>
+                <div className="profileCard__detail">
+                  <span className="profileCard__icon">◉</span>
+                  <span>Student ID- {studentInfo?.studentId}</span>
+                </div>
+                <div className="profileCard__detail">
+                  <span className="profileCard__icon">✆</span>
+                  <span>{studentInfo?.phone}</span>
+                </div>
               </>
             )}
           </div>
         </div>
 
         {isEditing ? (
-          <>
-            <button onClick={() => setIsEditing(false)}>Cancel</button>
-            <button onClick={handleEditSave}>Save</button>
-          </>
+          <div className="profileCard__editActions">
+            <button className="profileCard__editCancelBtn" onClick={() => setIsEditing(false)}>Cancel</button>
+            <button className="profileCard__editSaveBtn" onClick={handleEditSave}>Save</button>
+          </div>
         ) : (
-          <button onClick={handleEditClick}>Edit</button>
+          <button className="profileCard__editBtn" onClick={handleEditClick}>EDIT</button>
         )}
       </div>
 
-      {/* COURSES */}
+      {/* Courses Enrolled */}
       <div className="coursesSection">
-        <h3>Courses Enrolled</h3>
-        {courses.map((item) => (
-          <div key={item.id} className="coursesSection__row">
-            <span>{item.course_title}</span>
-            <span>{item.batch_code}</span>
+        <div className="coursesSection__table">
+          <div className="coursesSection__header">
+            <span className="coursesSection__headerItem">COURSES ENROLLED</span>
+            <span className="coursesSection__headerItem">BATCH CODE</span>
           </div>
-        ))}
+          <div className="coursesSection__body">
+            {courses.map((item) => (
+              <div key={item.id} className="coursesSection__row">
+                <span className="coursesSection__course">{item.course_title}</span>
+                <span className="coursesSection__batch">{item.batch_code}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

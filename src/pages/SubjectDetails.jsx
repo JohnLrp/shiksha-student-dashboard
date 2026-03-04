@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import api from "../api/apiClient";
+import PageHeader from "../components/PageHeader";
 import "../styles/subjectDetails.css";
 
 export default function SubjectDetails() {
@@ -13,9 +14,7 @@ export default function SubjectDetails() {
   useEffect(() => {
     async function fetchSubjectDetails() {
       try {
-        const res = await api.get(
-          `/courses/subjects/${subjectId}/dashboard/`
-        );
+        const res = await api.get(`/courses/subjects/${subjectId}/dashboard/`);
         setSubjectDetails(res.data);
       } catch (err) {
         console.error("Failed to load subject details", err);
@@ -25,146 +24,134 @@ export default function SubjectDetails() {
       }
     }
 
-    if (subjectId) {
-      fetchSubjectDetails();
-    }
+    if (subjectId) fetchSubjectDetails();
   }, [subjectId]);
 
-  if (loading) {
-    return (
-      <div className="subjectDetailsPage">
-        <div className="subjectDetailsBox">
-          <p>Loading subject...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!subjectDetails) {
-    return (
-      <div className="subjectDetailsPage">
-        <div className="subjectDetailsBox">
-          <p>Subject not found.</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="subjectDetailsPage"><p>Loading subject...</p></div>;
+  if (!subjectDetails) return <div className="subjectDetailsPage"><p>Subject not found.</p></div>;
 
   const teachers = subjectDetails.teachers || [];
+  const primaryTeacher = teachers[0];
 
   return (
     <div className="subjectDetailsPage">
-      <div className="subjectDetailsBox">
-        <div className="subjectDetailsTop">
-          <button className="backBtn" onClick={() => navigate(-1)}>
-            &larr; Back
-          </button>
-        </div>
+      <button className="subjectDetailsBack" onClick={() => navigate(-1)}>
+        &lt; Back
+      </button>
 
-        <h1 className="subjectNameTitle">
-          {subjectDetails.name}
-        </h1>
+      <div className="subjectDetailsHeaderBox">
+        <PageHeader title={subjectDetails.name} />
+      </div>
 
-        {/* ================= TEACHERS ================= */}
-        {teachers.length === 0 ? (
-          <p>No teachers assigned.</p>
-        ) : (
-          <div className="teachersScrollWrapper">
-            {teachers.map((teacher) => (
-              <div
-                className="teacherDetailsCard"
-                key={teacher.id}
-              >
-                <div className="teacherLeft">
-                  <h3 className="teacherName">
-                    {teacher.name}
-                  </h3>
+      <div className="subjectDetailsBodyBox">
 
-                  <div className="teacherRoleBadge">
-                    {teacher.display_role}
+        {/* MAIN GRID: Teacher card + Recordings mini stat */}
+        <div className="topGrid">
+          {primaryTeacher && (
+            <div className="teacherDetailsCard">
+              <div className="teacherLeft">
+                <h3 className="teacherName">{primaryTeacher.name}</h3>
+
+                <div className="teacherInfoGrid">
+                  <div className="teacherInfoRow">
+                    <span className="label">Role:</span>
+                    <span className="value">{primaryTeacher.display_role || "—"}</span>
                   </div>
-
-                  <div className="teacherInfoGrid">
-                    <div className="teacherInfoRow">
-                      <span className="label">
-                        Qualification:
-                      </span>
-                      <span className="value">
-                        {teacher.qualification || "—"}
-                      </span>
-                    </div>
-
-                    <div className="teacherInfoRow">
-                      <span className="label">
-                        Rating:
-                      </span>
-                      <span className="value">
-                        {teacher.rating ?? "—"}
-                      </span>
-                    </div>
-
-                    <div className="teacherInfoRow">
-                      <span className="label">
-                        About:
-                      </span>
-                      <span className="value">
-                        {teacher.bio || "—"}
-                      </span>
-                    </div>
+                  <div className="teacherInfoRow">
+                    <span className="label">Qualification:</span>
+                    <span className="value">{primaryTeacher.qualification || "—"}</span>
                   </div>
-                </div>
-
-                <div className="teacherRight">
-                  <img
-                    src={
-                      teacher.photo ||
-                      "/default-teacher.png"
-                    }
-                    alt={teacher.name}
-                    className="teacherPhoto"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ================= OPTIONAL STATS (SAFE) ================= */}
-        {subjectDetails.assignments &&
-          subjectDetails.quizzes && (
-            <div className="bottomGrid">
-              <div className="assignQuizCard">
-                <h2>Assignments</h2>
-                <div className="metricsRow">
-                  <div>
-                    {subjectDetails.assignments.pending}
+                  <div className="teacherInfoRow">
+                    <span className="label">Rating:</span>
+                    <span className="value">{primaryTeacher.rating ?? "—"}</span>
                   </div>
-                  <div>
-                    {subjectDetails.assignments.completed}
-                  </div>
-                  <div>
-                    {subjectDetails.assignments.total}
+                  <div className="teacherInfoRow">
+                    <span className="label">About:</span>
+                    <span className="value">{primaryTeacher.bio || "—"}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="assignQuizCard">
-                <h2>Quiz</h2>
-                <div className="metricsRow">
-                  <div>
-                    {subjectDetails.quizzes.pending}
-                  </div>
-                  <div>
-                    {subjectDetails.quizzes.completed}
-                  </div>
-                  <div>
-                    {subjectDetails.quizzes.total}
-                  </div>
-                </div>
+              <div className="teacherRight">
+                <img
+                  src={primaryTeacher.photo || "/default-teacher.png"}
+                  alt={primaryTeacher.name}
+                  className="teacherPhoto"
+                  loading="lazy"
+                />
               </div>
             </div>
           )}
+
+          <div
+            className="miniStatCard"
+            onClick={() => navigate(`/subjects/recordings/${subjectId}`)}
+            style={{ cursor: "pointer" }}
+          >
+            <h3 className="miniStatTitle">Session Recordings</h3>
+            <div className="miniStatNumber">{subjectDetails.recordings_count ?? "—"}</div>
+            <div className="miniStatText">Recordings</div>
+          </div>
+        </div>
+
+        {/* Study Materials mini stat */}
+        <div className="secondGrid">
+          <div className="liveSessionsCard">
+            <h3 className="cardTitleMain">Upcoming Live Sessions</h3>
+            <p className="sessionItemText">See the Live Sessions page for upcoming classes.</p>
+          </div>
+
+          <div
+            className="miniStatCard"
+            onClick={() => navigate(`/subjects/study-material/${subjectId}`)}
+            style={{ cursor: "pointer" }}
+          >
+            <h3 className="miniStatTitle">Study Materials</h3>
+            <div className="miniStatNumber">{subjectDetails.study_materials_count ?? "—"}</div>
+            <div className="miniStatText">Documents</div>
+          </div>
+        </div>
+
+        {/* Bottom grid: Assignments + Quiz */}
+        {subjectDetails.assignments && subjectDetails.quizzes && (
+          <div className="bottomGrid">
+            <div className="assignQuizCard">
+              <h2 className="assignQuizCardTitle">Assignments</h2>
+              <div className="metricsRow">
+                <div className="metricCol" onClick={() => navigate(`/subjects/${subjectId}/assignments`)}>
+                  <div className="metricNum blueBig">{subjectDetails.assignments.pending}</div>
+                  <div className="metricText">Pending</div>
+                </div>
+                <div className="metricCol" onClick={() => navigate(`/subjects/${subjectId}/assignments`)}>
+                  <div className="metricNum blueBig">{subjectDetails.assignments.completed}</div>
+                  <div className="metricText">Completed</div>
+                </div>
+                <div className="metricCol">
+                  <div className="metricNum blueBig">{subjectDetails.assignments.total}</div>
+                  <div className="metricText">Total</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="assignQuizCard">
+              <h2 className="assignQuizCardTitle">Quiz</h2>
+              <div className="metricsRow">
+                <div className="metricCol" onClick={() => navigate(`/subjects/quiz/${subjectId}?tab=pending`)}>
+                  <div className="metricNum blueBig">{subjectDetails.quizzes.pending}</div>
+                  <div className="metricText">Pending</div>
+                </div>
+                <div className="metricCol" onClick={() => navigate(`/subjects/quiz/${subjectId}?tab=completed`)}>
+                  <div className="metricNum blueBig">{subjectDetails.quizzes.completed}</div>
+                  <div className="metricText">Completed</div>
+                </div>
+                <div className="metricCol">
+                  <div className="metricNum blueBig">{subjectDetails.quizzes.total}</div>
+                  <div className="metricText">Total</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

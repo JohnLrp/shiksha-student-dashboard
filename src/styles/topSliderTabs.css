@@ -1,0 +1,189 @@
+/* MOBILE DASHBOARD */
+@media (max-width: 768px) {
+.studentLayout__page {
+padding: 10px 8px;
+}
+
+/* HEADER  */
+.header {
+height: 56px;
+padding: 0 12px;
+display: flex;
+align-items: center;
+justify-content: space-between;
+position: relative;
+background-color: #015865;
+color: white;
+}
+
+.header__welcome,
+.header__subtitle {
+display: none !important;
+}
+
+.header__dash {
+position: absolute;
+left: 50%;
+transform: translateX(-50%);
+font-size: 16px;
+font-weight: 600;
+}
+
+/* SLIDER CONTAINER  */
+.topSliderTabs {
+position: sticky;
+top: 56px;
+z-index: 20;
+background: #ffffff;
+padding: 6px 10px;
+}
+
+/* SLIDER BAR */
+.topSingleSlider {
+display: flex;
+width: 100%;
+height: 40px;
+padding: 0 10px;
+align-items: center;
+justify-content: space-between;
+background: #015865;
+border-radius: 0;
+margin-bottom: 14px;
+}
+
+/* Slider title */
+.singleTitle {
+flex: 1;
+text-align: center;
+color: #ffffff;
+font-size: 15px;
+font-weight: 600;
+letter-spacing: 0.2px;
+}
+
+/* Slider arrows */
+.singleArrow {
+width: 32px;
+height: 32px;
+display: flex;
+align-items: center;
+justify-content: center;
+background: transparent;
+border: none;
+border-radius: 50%;
+color: #ffffff;
+font-size: 20px;
+cursor: pointer;
+transition: 0.2s;
+}
+
+.singleArrow:disabled {
+opacity: 0.35;
+cursor: not-allowed;
+}
+
+.singleArrow:hover:not(:disabled) {
+background: rgba(255,255,255,0.12);
+}
+
+/*  UPCOMING BAR  */
+.upcomingBar {
+height: 42px;
+border-radius: 20px;
+font-size: 15px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+
+/*  SESSION CARDS  */
+.sessionCard {
+border-radius: 14px;
+padding: 14px;
+margin-bottom: 12px;
+}
+
+.sessionCard h3 {
+font-size: 15px;
+margin-bottom: 6px;
+}
+
+.sessionCard p {
+font-size: 12px;
+margin: 2px 0;
+line-height: 1.3;
+}
+
+}
+
+/*  MOBILE / DESKTOP  */
+
+.mobileOnly {
+display: none;
+}
+
+.desktopOnly {
+display: block;
+}
+
+@media (max-width: 768px) {
+
+.desktopOnly {
+display: none;
+}
+
+.mobileOnly {
+display: block;
+}
+
+}
+/*center card for mobile*/
+
+@media (max-width: 768px) {
+
+
+  .topSliderTabs__content,
+  .sessionsContainer,
+  .upcomingClasses,
+  .topSlider__content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px){
+  .sessionCard {
+    width: 85%;
+    max-width: auto;
+    margin-left: auto;
+    margin-right: auto;
+  }
+ .notifItem{
+    width: 85%;
+    max-width: auto;
+    margin-left: auto;
+    margin-right: auto;
+
+  }
+  .listItem{
+    width: 85%;
+    max-width: auto;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .calendarBox{
+    width: 85%;
+    max-width: auto;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .whiteCard{
+    width: 85%;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+ }

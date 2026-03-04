@@ -1,19 +1,16 @@
 import "../styles/recordings.css";
 
-export default function RecordingCard({ img, subject, sessionTitle, teacher, sessionDate, onClick }) {
+export default function RecordingCard({ subject, sessionTitle, teacher, sessionDate, onClick }) {
   return (
     <div className="recordingCard" onClick={onClick}>
-      <img className="recordingCard__img" src={img} alt={subject} />
-      <div className="recordingCard__info">
-        <h4 className="recordingCard__subject">{subject}</h4>
+      <div className="recordingCard__top">
+        <p className="recordingCard__subject">{subject}</p>
         <p className="recordingCard__session">{sessionTitle}</p>
-        <p className="recordingCard__teacher">{teacher}</p>
+      </div>
+      <p className="recordingCard__teacher">{teacher}</p>
+      <div className="recordingCard__bottom">
         <p className="recordingCard__date">{sessionDate}</p>
       </div>
     </div>
   );
-
 }
-
-
-

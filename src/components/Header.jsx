@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { HiOutlineMenu, HiOutlineX } from "react-icons/hi";
 import { useCourse } from "../contexts/CourseContext";
 import { useAuth } from "../contexts/AuthContext";
 import "../styles/header.css";
@@ -7,21 +8,21 @@ import "../styles/header.css";
 const DEFAULT_AVATAR =
   "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100";
 
-export default function Header() {
+export default function Header({ toggleMenu, menuOpen }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isDashboard = pathname === "/";
+
   const dropdownRef = useRef(null);
   const profileRef = useRef(null);
 
-  // ✅ FIXED — use activeCourse instead of selectedCourseId
   const { courses, activeCourse, selectCourse } = useCourse();
   const { user, logout } = useAuth();
 
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // ===============================
-  // OUTSIDE CLICK HANDLER
-  // ===============================
+  // Outside click handler
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -31,20 +32,20 @@ export default function Header() {
         setProfileOpen(false);
       }
     };
-
     document.addEventListener("mousedown", handleOutsideClick);
-    return () =>
-      document.removeEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
-  // ===============================
-  // HELPERS
-  // ===============================
+  const handleLogout = async () => {
+    await logout();
+  };
 
-  const renderAvatar = () => {
+  const renderAvatar = (size = "small") => {
+    const isSmall = size === "small";
+
     if (user?.profile?.avatar_type === "emoji") {
       return (
-        <span className="header__avatarEmoji">
+        <span className={isSmall ? "header__avatarEmoji" : "header__profileEmoji"}>
           {user.profile.avatar}
         </span>
       );
@@ -55,7 +56,7 @@ export default function Header() {
         <img
           src={user.profile.avatar}
           alt="Profile"
-          className="header__avatarImg"
+          className={isSmall ? "header__avatarImg" : "header__profileImg"}
         />
       );
     }
@@ -64,43 +65,39 @@ export default function Header() {
       <img
         src={DEFAULT_AVATAR}
         alt="Profile"
-        className="header__avatarImg"
+        className={isSmall ? "header__avatarImg" : "header__profileImg"}
       />
     );
   };
 
-  const handleLogout = async () => {
-    await logout();
-  };
-
-  // ===============================
-  // RENDER
-  // ===============================
+  const displayName = user?.profile?.full_name || user?.email || "Student";
 
   return (
     <header className="header">
-      <div className="header__left">
-        <h3 className="header__title">
-          Welcome Back {user?.profile?.full_name || user?.email}
-        </h3>
-        <p className="header__subtitle">
-          Let's learn something new today
-        </p>
+
+      {/* Hamburger (Mobile Only) */}
+      <div className="header__hamburger" onClick={toggleMenu}>
+        {menuOpen ? <HiOutlineX size={26} /> : <HiOutlineMenu size={26} />}
       </div>
 
-      {/* COURSE DROPDOWN */}
+      {isDashboard && (
+        <div className="header__left">
+          <h3 className="header__title">Welcome Back {displayName}</h3>
+          <p className="header__subtitle">Let's learn something new today</p>
+        </div>
+      )}
+
+      {/* Course Dropdown */}
       <div className="header__courseWrap" ref={dropdownRef}>
         <button
           className="header__btn"
           onClick={() => setOpen((prev) => !prev)}
         >
           {activeCourse?.title || "Select Course"}
-          <span
-            className={`header__chevron ${
-              open ? "header__chevron--up" : ""
-            }`}
-          >
-            ▼
+          <span className={`header__chevron ${open ? "header__chevron--up" : ""}`}>
+            <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+              <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
           </span>
         </button>
 
@@ -122,37 +119,53 @@ export default function Header() {
         )}
       </div>
 
-      {/* PROFILE */}
+      {/* Profile */}
       <div className="header__right" ref={profileRef}>
         <div
           className="header__avatar"
           onClick={() => setProfileOpen((prev) => !prev)}
         >
-          {renderAvatar()}
+          {renderAvatar("small")}
         </div>
 
         {profileOpen && (
           <div className="header__profileDropdown">
+            <div className="header__profileHeader">
+              <p className="header__profileName">{displayName}</p>
+              <div className="header__profileImgWrap">
+                {renderAvatar("large")}
+              </div>
+            </div>
+            <div className="header__profileDivider" />
             <div className="header__profileMenu">
               <div
                 className="header__profileItem"
-                onClick={() => navigate("/profile")}
+                onClick={() => { setProfileOpen(false); navigate("/profile"); }}
               >
-                Profile
+                <span>Profile</span>
+                <span className="header__profileArrow">
+                  <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
+                    <path d="M1.5 1L6.5 6L1.5 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
               </div>
-
               <div
                 className="header__profileItem"
-                onClick={() => navigate("/change-password")}
+                onClick={() => { setProfileOpen(false); navigate("/change-password"); }}
               >
-                Change Password
+                <span>Change Password</span>
+                <span className="header__profileArrow">
+                  <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
+                    <path d="M1.5 1L6.5 6L1.5 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </span>
               </div>
-
               <div
                 className="header__profileItem header__profileLogout"
                 onClick={handleLogout}
               >
-                Logout
+                <span>Logout</span>
+                <span className="header__logoutIcon">⊳</span>
               </div>
             </div>
           </div>

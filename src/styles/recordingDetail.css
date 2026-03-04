@@ -1,19 +1,14 @@
 /* Recording Detail Page */
 .recordingDetailPage {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  background: #ecf0ef;
-  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.recordingDetailBox {
-  width: 100%;
-  background: white;
-  border-radius: 18px;
-  padding: 20px 24px;
-  min-height: 82vh;
-}
-
-/* Back Button */
+/* Back button — above the header box */
 .recordingDetailBack {
   background: #0a808a;
   color: white;
@@ -23,48 +18,37 @@
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  margin-bottom: 16px;
+  align-self: flex-start;
+  margin-bottom: 4px;
 }
 
 .recordingDetailBack:hover {
   background: #097a83;
 }
 
-/* Header with Title and Search */
-.recordingDetailHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
+/* Header box */
+.recordingDetailHeaderBox {
+  width: 100%;
+  background: white;
+  border-radius: 18px 18px 0 0;
+  padding: 20px 24px;
 }
 
-.recordingDetailTitle {
-  font-size: 16px;
-  font-weight: 700;
-  color: #333;
+.recordingDetailHeaderBox .pageHeader {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
-.recordingDetailSearch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #f2f2f2;
-  padding: 8px 12px;
-  border-radius: 8px;
-  width: 200px;
-}
-
-.recordingDetailSearch input {
-  border: none;
-  outline: none;
-  background: transparent;
+/* Body box */
+.recordingDetailBodyBox {
   flex: 1;
-  font-size: 12px;
-}
-
-.recordingDetailSearchIcon {
-  font-size: 14px;
-  opacity: 0.6;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  background: white;
+  border-radius: 0 0 18px 18px;
+  padding: 20px 24px;
 }
 
 /* Video Player */
@@ -131,4 +115,9 @@
   line-height: 1.5;
 
 }
-
+@media (max-width: 768px) {
+  .recordingDetailHeaderBox,
+  .recordingDetailBodyBox {
+    padding: 14px;
+  }
+}

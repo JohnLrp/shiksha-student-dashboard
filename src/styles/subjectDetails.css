@@ -1,79 +1,64 @@
-/* Page background */
+/* ===== PAGE WRAPPER ===== */
 .subjectDetailsPage {
-  min-height: 100vh;
-  background: #e9e0df;
-  padding: 22px;
-  display: flex;
-  justify-content: center;
-}
-
-/* White big container */
-.subjectDetailsBox {
+  flex: 1;
+  min-height: 0;
   width: 100%;
-  max-width: 1180px;
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 18px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-/* top row: back + select course center + profile right */
-.subjectDetailsTop {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.backBtn {
-  justify-self: start;
-  background: #d1d5db;
+/* ===== BACK BUTTON (above the header box) ===== */
+.subjectDetailsBack {
+  background: #0a808a;
+  color: white;
   border: none;
   padding: 6px 14px;
   border-radius: 6px;
   font-size: 12px;
-  cursor: pointer;
-  color: #374151;
   font-weight: 600;
-}
-
-.selectCourseBtn {
-  justify-self: center;
-  background: #0c5f5f;
-  color: white;
-  border: none;
-  padding: 7px 22px;
-  border-radius: 8px;
-  font-size: 12px;
   cursor: pointer;
-  font-weight: 700;
+  align-self: flex-start;
+  margin-bottom: 4px;
 }
 
-.profileCircle {
-  justify-self: end;
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: #f3f4f6;
-  display: grid;
-  place-items: center;
-  font-size: 16px;
+.subjectDetailsBack:hover {
+  background: #097a83;
 }
 
-/* title */
-.subjectNameTitle {
-  font-size: 14px;
-  font-weight: 800;
-  color: #111827;
-  margin: 6px 0 14px 0;
+/* ===== HEADER BOX (fixed, does not scroll) ===== */
+.subjectDetailsHeaderBox {
+  width: 100%;
+  background: white;
+  border-radius: 18px 18px 0 0;
+  padding: 20px 24px;
 }
 
-/* TOP GRID */
+.subjectDetailsHeaderBox .pageHeader {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+/* ===== BODY BOX (scrolls) ===== */
+.subjectDetailsBodyBox {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  background: white;
+  border-radius: 0 0 18px 18px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ===== TOP GRID ===== */
 .topGrid {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 16px;
-  margin-bottom: 14px;
 }
 
 /* Teacher big card (horizontal) */
@@ -146,30 +131,39 @@
   font-size: 12px;
   font-weight: 800;
   color: #111827;
+  text-align: center;
 }
 
 .miniStatNumber {
   font-size: 34px;
   font-weight: 900;
-  color: #0a7c86;
+  color: #7BBEC7;
   line-height: 1;
+  text-align: center;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.miniStatNumber:hover {
+  transform: scale(1.15);
+  color: #0a7c86;
 }
 
 .miniStatText {
   font-size: 12px;
   font-weight: 700;
   color: #0a7c86;
+  text-align: center;
 }
 
-/* second row grid */
+/* ===== SECOND GRID ===== */
 .secondGrid {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 16px;
-  margin-bottom: 14px;
 }
 
-/* upcoming live sessions wide */
+/* Upcoming live sessions wide */
 .liveSessionsCard {
   background: #eef2f3;
   border-radius: 12px;
@@ -207,7 +201,7 @@
   margin: 2px 0;
 }
 
-/* bottom cards */
+/* ===== BOTTOM GRID ===== */
 .bottomGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -238,13 +232,25 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  cursor: pointer;
+}
+
+.metricCol:hover {
+  transform: scale(1.05);
 }
 
 .blueBig {
-  color: #0a7c86;
+  color: #7BBEC7;
   font-size: 34px;
   font-weight: 900;
   line-height: 1;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+.blueBig:hover {
+  transform: scale(1.15);
+  color: #0a7c86;
 }
 
 .metricText {
@@ -253,7 +259,7 @@
   color: #0a7c86;
 }
 
-/* responsive */
+/* ===== RESPONSIVE ===== */
 @media (max-width: 950px) {
   .topGrid,
   .secondGrid,
@@ -275,69 +281,35 @@
   }
 }
 
-.teacherArrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
-}
+@media (max-width: 768px) {
+  .subjectDetailsHeaderBox,
+  .subjectDetailsBodyBox {
+    padding: 14px;
+  }
 
-.teacherArrow.left {
-  left: -30px;
-}
+  .teacherDetailsCard {
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
 
-.teacherArrow.right {
-  right: -30px;
-}
+  .teacherInfoGrid {
+    display: block;
+    flex: 1;
+  }
 
-.teacherRoleBadge {
-  font-weight: 600;
-  margin-bottom: 10px;
-  color: #4a6cf7;
-}
+  .teacherRight {
+    width: auto;
+    display: flex;
+    justify-content: flex-end;
+  }
 
-.teacherDots {
-  text-align: center;
-  margin-top: 10px;
-}
-
-.dot {
-  display: inline-block;
-  height: 8px;
-  width: 8px;
-  margin: 0 4px;
-  background-color: #ccc;
-  border-radius: 50%;
-}
-
-.activeDot {
-  background-color: #4a6cf7;
-}
-
-.teachersScrollWrapper {
-  display: flex;
-  gap: 20px;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  padding-bottom: 10px;
-}
-
-.teachersScrollWrapper::-webkit-scrollbar {
-  height: 8px;
-}
-
-.teachersScrollWrapper::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
-}
-
-.teacherDetailsCard {
-  min-width: 360px;
-  flex-shrink: 0;
-  scroll-snap-align: start;
-  display: flex;
-  justify-content: space-between;
+  .teacherRight img {
+    width: 90px;
+    height: 90px;
+    border-radius: 16px;
+    object-fit: cover;
+  }
 }

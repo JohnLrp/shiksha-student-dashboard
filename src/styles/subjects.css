@@ -1,80 +1,56 @@
 .subjectsPage {
-  width: 100%;
-}
-
-.subjectsBox {
-  width: 100%;
-  background: #ffffff;
-  border-radius: 18px;
-  padding: 20px;
-  min-height: 82vh;
-}
-
-/* top row: title + search */
-.subjectsHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-}
-
-.subjectsTitle {
-  font-size: 14px;
-  font-weight: 800;
-  color: #111;
-}
-
-/* Search like figma */
-.subjectsSearch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #f2f2f2;
-  padding: 6px 10px;
-  border-radius: 14px;
-  width: 220px;
-}
-
-.subjectsSearch input {
-  border: none;
-  outline: none;
-  background: transparent;
   flex: 1;
-  font-size: 12px;
-  color: #333;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.subjectsSearch input::placeholder {
-  color: #888;
+.subjectsHeaderBox {
+  width: 100%;
+  background: white;
+  border-radius: 18px 18px 0 0;
+  padding: 20px 24px;
 }
 
-/* optional focus polish */
-.subjectsSearch:focus-within {
-  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.06);
+/* Remove the internal divider line — the two boxes are already separate */
+.subjectsHeaderBox .pageHeader {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
-.subjectsSearchIcon {
-  font-size: 14px;
-  opacity: 0.7;
+.subjectsBodyBox {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  width: 100%;
+  background: white;
+  border-radius: 0 0 18px 18px;
+  padding: 24px;
 }
 
-/* ✅ exact responsive grid */
 .subjectsGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: 12px;
-  align-items: stretch;
+  grid-template-columns: repeat(auto-fill, 212px);
+  gap: 24px;
 }
 
-/* ✅ small-screen polish */
-@media (max-width: 600px) {
-  .subjectsHeader {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  .subjectsHeaderBox {
+    padding: 14px 16px;
+    border-radius: 0;
   }
 
-  .subjectsSearch {
-    width: 100%;
+  .subjectsBodyBox {
+    padding: 16px;
+    border-radius: 0;
+  }
+
+  .subjectsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
   }
 }

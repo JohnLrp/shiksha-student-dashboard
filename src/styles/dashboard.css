@@ -1,36 +1,60 @@
+/* ===== DASHBOARD LAYOUT ===== */
+
 .dashExact {
   display: flex;
   flex-direction: column;
-  gap: 18px;
 }
 
-/* top row: sessions + calendar */
+/* Sessions + Calendar */
 .dashExact__top {
   display: grid;
   grid-template-columns: 2.2fr 1fr;
-  gap: 18px;
+  gap: 16px;
+  align-items: stretch;
 }
 
-/* bottom row: assignment+quiz | notification | schedule */
+/* Assignment+Quiz | Notification | Schedule */
 .dashExact__bottom {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 18px;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  gap: 16px;
+  align-items: stretch;
+  height: 520px;
 }
 
-/* left col contains assignment + quiz stacked */
+/* Left stacked column (Assignment + Quiz) */
 .dashExact__leftCol {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
+  height: 100%;
 }
 
-/* common white card */
-.whiteCard {
-  background: white;
-  border-radius: 18px;
-  padding: 14px;
+.dashExact__leftCol > .whiteCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
+
+.dashExact__bottom > .whiteCard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+/* ===== WHITE CARD ===== */
+
+.whiteCard {
+  background: #ffffff;
+  border-radius: 16px;
+  margin-top: 10px;
+  padding: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* ===== CARD HEADER ===== */
 
 .cardHeader {
   display: flex;
@@ -53,7 +77,14 @@
   opacity: 0.8;
 }
 
-/* upcoming arrow */
+.sessionCount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #222;
+}
+
+/* ===== ARROW TOGGLE BUTTON ===== */
+
 .arrowBtn {
   border: none;
   background: transparent;
@@ -79,132 +110,321 @@
   transform: rotate(180deg);
 }
 
-/* small arrow in assignment + quiz */
-.miniArrow {
-  display: flex;
-  align-items: center;
-  opacity: 0.7;
-}
-
-/* sessions collapsed */
-.sessionsGridCollapsed {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-}
-
-/* sessions expanded */
-.sessionsGridExpanded {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  max-height: 64vh;
-  overflow-y: auto;
-  padding-right: 6px;
-}
-
-/* assignment/quiz list */
-.listBody {
+.dashExact__top > .whiteCard {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
+
+/* ===== SESSION GRID ===== */
+
+.sessionsGrid {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.sessionsGrid::-webkit-scrollbar { display: none; }
+
+.sessionsGrid > * {
+  flex: 0 0 calc((100% - 24px) / 3);
+  scroll-snap-align: start;
+}
+
+/* ===== LIST / NOTIFICATION BODY ===== */
+
+.listBody {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.listBody::-webkit-scrollbar { display: none; }
 
 .notifBody {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
+.notifBody::-webkit-scrollbar { display: none; }
 
-/* calendar */
+/* ===== CALENDAR ===== */
+
 .calendarBox {
-  background: white;
-  border-radius: 18px;
+  background: #ffffff;
+  border-radius: 16px;
+  margin-top: 10px;
   padding: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  box-sizing: border-box;
 }
 
 .calendarHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
-  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.calNavBtn {
+  cursor: pointer;
+  font-size: 18px;
+  color: #555;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+  user-select: none;
+}
+
+.calNavBtn:hover {
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .calendarHeader__mid {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
 .calendarSelect {
   border: 1px solid #ddd;
-  padding: 4px 8px;
+  padding: 3px 6px;
   border-radius: 8px;
-  font-size: 12px;
+  font-size: 11px;
   outline: none;
+  background: #fff;
+  cursor: pointer;
 }
 
 .calendarGrid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 8px;
+  gap: 3px;
   font-size: 12px;
 }
 
 .calDayName {
   text-align: center;
-  font-weight: 800;
-  opacity: 0.7;
+  font-weight: 700;
+  opacity: 0.6;
+  font-size: 11px;
+  padding: 4px 0;
 }
 
 .calDate {
-  text-align: center;
-  padding: 6px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
   border-radius: 50%;
   cursor: pointer;
+  transition: background 0.15s ease;
+  font-size: 11px;
+  overflow: hidden;
+  padding: 2px;
 }
 
 .calDate:hover {
+  background: #e0f2f1;
+}
+
+.calToday {
+  background: #ff5b5b !important;
+  color: white;
+  font-weight: 700;
+}
+
+.calToday:hover {
+  background: #e53935 !important;
+}
+
+.calSelected {
   background: #0a808a;
   color: white;
+  font-weight: 700;
 }
 
-.calRed {
-  background: #ff5b5b;
-  color: white;
+.calSelected:hover {
+  background: #086f78 !important;
 }
 
-/* schedule */
-.scheduleList {
+.calDate__dots {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 390px;
-  overflow-y: auto;
-  padding-right: 6px;
+  gap: 2px;
+  justify-content: center;
+  margin-top: 2px;
+  flex-shrink: 0;
 }
+
+.calDate__dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.calDate__dot--livesessions { background: #FDD835; }
+.calDate__dot--assignments  { background: #4CAF50; }
+.calDate__dot--quiz         { background: #9C27B0; }
+
+.calDate.calToday    .calDate__dots,
+.calDate.calSelected .calDate__dots {
+  display: none;
+}
+
+/* ===== SCHEDULE LIST ===== */
+
+.scheduleList {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+.scheduleList::-webkit-scrollbar { display: none; }
 
 .scheduleItem {
-  background: #f1f6f6;
-  border-radius: 12px;
-  padding: 10px;
+  position: relative;
+  background: #f8fafb;
+  border-radius: 10px;
+  padding: 9px 10px 9px 14px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  overflow: clip;
+  margin-bottom: 8px;
+}
+
+.scheduleItem:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.scheduleItem * {
+  pointer-events: none;
+}
+
+.scheduleItem::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-radius: 10px 0 0 10px;
+}
+
+.scheduleItem--livesessions { background: #FFFDE7; }
+.scheduleItem--assignments  { background: #F1F8E9; }
+.scheduleItem--quiz         { background: #F3E5F5; }
+
+.scheduleItem--livesessions::before { background: #FDD835; }
+.scheduleItem--assignments::before  { background: #4CAF50; }
+.scheduleItem--quiz::before         { background: #9C27B0; }
+
+.scheduleItem__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3px;
+}
+
+.scheduleDayBadge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: #4a4a4a;
+  color: #fff;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .scheduleDate {
   font-size: 10px;
   font-weight: 800;
-  opacity: 0.7;
-  margin-bottom: 4px;
+  color: #555;
 }
 
 .scheduleTitle {
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
+  color: #111;
 }
 
 .scheduleSub {
   font-size: 11px;
-  opacity: 0.85;
+  color: #555;
   margin-top: 2px;
+}
+
+.emptyState {
+  font-size: 13px;
+  color: #888;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (min-width: 769px) and (max-width: 1100px) {
+  .dashExact__top {
+    grid-template-columns: 1.4fr 1fr;
+    gap: 12px;
+  }
+
+  .sessionsGrid {
+    gap: 10px;
+  }
+
+  .sessionsGrid > * {
+    flex: 0 0 calc((100% - 10px) / 2);
+  }
+
+  .dashExact__bottom {
+    grid-template-columns: 1fr 1fr;
+    height: auto;
+    gap: 12px;
+  }
+
+  .dashExact__leftCol {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    height: 260px;
+  }
+
+  .dashExact__leftCol > .whiteCard {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dashExact__bottom > .whiteCard {
+    height: 300px;
+  }
+
+  .whiteCard {
+    padding: 11px;
+  }
+
+  .calendarBox {
+    padding: 11px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 908px) {
+  .dashExact__top {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .dashExact__top > .whiteCard {
+    height: auto;
+  }
+
+  .sessionsGrid > * {
+    flex: 0 0 calc((100% - 10px) / 2);
+  }
 }

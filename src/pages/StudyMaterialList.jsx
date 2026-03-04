@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import PageHeader from "../components/PageHeader";
 import "../styles/studyMaterial.css";
 
 export default function StudyMaterialList() {
   const navigate = useNavigate();
-
-  // State for data (future backend data)
   const [chaptersData, setChaptersData] = useState([]);
 
-  // Mock data (simulates backend response)
   useEffect(() => {
     const mockChaptersData = [
       { id: 1, name: "Chapter 1", date: "21/01/26", fileUrl: "#" },
@@ -17,28 +15,14 @@ export default function StudyMaterialList() {
       { id: 4, name: "Chapter 4", date: "26/01/26", fileUrl: "#" },
       { id: 5, name: "Chapter 5", date: "26/01/26", fileUrl: "#" },
     ];
-
-{/*   // example for backend //
-
-  useEffect(() => {
-  fetch("/api/study-materials")
-    .then((res) => res.json())
-    .then((data) => setChaptersData(data));
-}, []);
-
-*/}
-
     setChaptersData(mockChaptersData);
   }, []);
 
-
   const handleView = (chapter) => {
-    // Open file in new tab for viewing
     window.open(chapter.fileUrl, "_blank");
   };
 
   const handleDownload = (chapter) => {
-    // Trigger download
     const link = document.createElement("a");
     link.href = chapter.fileUrl;
     link.download = `${chapter.name}.pdf`;
@@ -47,23 +31,18 @@ export default function StudyMaterialList() {
 
   return (
     <div className="studyMaterialPage">
-      <div className="studyMaterialBox">
-        {/* Back Button */}
-        <button className="studyMaterialBack" onClick={() => navigate(-1)}>
-          &lt; Back
-        </button>
+      <button className="studyMaterialBack" onClick={() => navigate(-1)}>
+        &lt; Back
+      </button>
 
-        {/* Header with Title and Search */}
-        <div className="studyMaterialHeader">
-          <h2 className="studyMaterialTitle">Subject Name</h2>
-          <div className="studyMaterialSearch">
-            <input placeholder="Search..." />
-            <span className="studyMaterialSearchIcon">🔍</span>
-          </div>
-        </div>
+      <div className="studyMaterialHeaderBox">
+        <PageHeader title="Subject Name" />
+      </div>
 
-        {/* Chapters Table */}
+      <div className="studyMaterialBodyBox">
         <div className="studyMaterialContent">
+
+          {/* Desktop Table */}
           <div className="studyMaterialTableWrap">
             <table className="studyMaterialTable">
               <thead>
@@ -79,16 +58,10 @@ export default function StudyMaterialList() {
                     <td>{chapter.name}</td>
                     <td>{chapter.date}</td>
                     <td className="studyMaterialActions">
-                      <button
-                        className="studyMaterialViewBtn"
-                        onClick={() => handleView(chapter)}
-                      >
+                      <button className="studyMaterialViewBtn" onClick={() => handleView(chapter)}>
                         View
                       </button>
-                      <button
-                        className="studyMaterialDownloadBtn"
-                        onClick={() => handleDownload(chapter)}
-                      >
+                      <button className="studyMaterialDownloadBtn" onClick={() => handleDownload(chapter)}>
                         Download
                       </button>
                     </td>
@@ -97,10 +70,30 @@ export default function StudyMaterialList() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile Cards */}
+          <div className="studyMaterialMobile">
+            <div className="studyMaterialMobileHeader">
+              <span>Title</span>
+              <span>Uploaded On</span>
+            </div>
+
+            {chaptersData.map((chapter) => (
+              <div key={chapter.id} className="studyMaterialCard">
+                <div className="studyMaterialCardTop">
+                  <p className="studyMaterialCardTitle">{chapter.name}</p>
+                  <p className="studyMaterialCardDate">{chapter.date}</p>
+                </div>
+                <div className="studyMaterialCardActions">
+                  <button className="viewBtn" onClick={() => handleView(chapter)}>View</button>
+                  <button className="downloadBtn" onClick={() => handleDownload(chapter)}>Download</button>
+                </div>
+              </div>
+            ))}
+          </div>
+
         </div>
       </div>
     </div>
   );
-
 }
-
