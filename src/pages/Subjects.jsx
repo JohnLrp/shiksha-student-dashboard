@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useCourse } from "../contexts/CourseContext";
-import { useState} from "react";
 import api from "../api/apiClient";
 import SubjectCard from "../components/SubjectCard";
 import PageHeader from "../components/PageHeader";
@@ -61,13 +60,13 @@ export default function Subjects() {
               <SubjectCard
                 key={subject.id}
                 img="https://images.unsplash.com/photo-1513258496099-48168024aec0?w=600"
-                subject={item.name}
+                subject={subject.name}
                 teacher={
-                  item.teachers?.length
-                    ? item.teachers.map(t => t.name).join(", ")
+                  subject.teachers?.length
+                    ? subject.teachers.map(t => t.name).join(", ")
                     : "No teacher assigned"
                 }
-                onClick={() => navigate(`/subjects/${item.id}`)}
+                onClick={() => navigate(`/subjects/${subject.id}`)}
               />
             ))
           )}
