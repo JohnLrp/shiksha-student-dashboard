@@ -7,7 +7,7 @@ import "../styles/recordings.css";
 
 export default function RecordingsList() {
   const navigate = useNavigate();
-  const { id: subjectId } = useParams();
+  const { subjectId } = useParams(); // ✅ FIXED
 
   const [recordingsData, setRecordingsData] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -15,7 +15,6 @@ export default function RecordingsList() {
   useEffect(() => {
     const fetchRecordings = async () => {
       try {
-        // ✅ Correct API path
         const res = await api.get(`/courses/subjects/${subjectId}/recordings/`);
         setRecordingsData(res.data || []);
       } catch (err) {
