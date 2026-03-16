@@ -55,9 +55,15 @@ export default function App() {
                 element={<SubjectDetails />}
               />
 
-              {/* ASSIGNMENTS (GLOBAL LIST) */}
+              {/* ASSIGNMENTS → FIRST SHOW SUBJECT LIST */}
               <Route
                 path="assignments"
+                element={<Subjects />}
+              />
+
+              {/* ASSIGNMENTS OF A SUBJECT */}
+              <Route
+                path="subjects/:subjectId/assignments"
                 element={<SubjectsAssignments />}
               />
 
