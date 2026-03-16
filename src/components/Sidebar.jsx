@@ -6,7 +6,7 @@ import logo from "../assets/Vector.svg";
 import { MdDashboardCustomize } from "react-icons/md";
 import { BsBook } from "react-icons/bs";
 import { BiVideo } from "react-icons/bi";
-import { FaClipboardList, FaBookOpen } from "react-icons/fa";
+import { FaBookOpen } from "react-icons/fa";
 import { RiLiveLine } from "react-icons/ri";
 import { AiOutlineFileDone, AiOutlineClose } from "react-icons/ai";
 
@@ -15,22 +15,24 @@ export default function Sidebar({ setMenuOpen }) {
 
   const isSubjectsActive =
     location.pathname.startsWith("/subjects") ||
-    location.pathname.startsWith("/assignments") ||
     location.pathname.startsWith("/study-material");
 
   return (
     <aside className="sidebar">
       <div className="sidebar__top">
+
         {/* Brand */}
         <div className="sidebar__brand">
           <img src={logo} alt="Logo" className="sidebar__logoCircle" />
           <div>
             <h2 className="sidebar__title">ShikshaCom</h2>
-            <p className="sidebar__tagline">Empowerment Through Education</p>
+            <p className="sidebar__tagline">
+              Empowerment Through Education
+            </p>
           </div>
         </div>
 
-        {/* Close button */}
+        {/* Close button (mobile) */}
         <button
           className="sidebar__closeBtn"
           onClick={() => setMenuOpen(false)}
@@ -41,8 +43,10 @@ export default function Sidebar({ setMenuOpen }) {
         </button>
       </div>
 
-      {/* Links */}
+      {/* Navigation */}
       <nav className="sidebar__nav">
+
+        {/* Dashboard */}
         <NavLink
           className="sidebar__link"
           to="/"
@@ -55,6 +59,7 @@ export default function Sidebar({ setMenuOpen }) {
           Dashboard
         </NavLink>
 
+        {/* Subjects */}
         <NavLink
           className="sidebar__link"
           to="/subjects"
@@ -63,18 +68,12 @@ export default function Sidebar({ setMenuOpen }) {
           <span className="sidebar__icon">
             <BsBook />
           </span>
-          Subject
+          Subjects
         </NavLink>
 
+        {/* Subjects submenu */}
         {isSubjectsActive && (
           <div className="sidebar__subMenu">
-            <NavLink
-              className="sidebar__subLink"
-              to="/assignments"
-              onClick={() => setMenuOpen(false)}
-            >
-              <FaClipboardList /> <span>Assignment</span>
-            </NavLink>
 
             <NavLink
               className="sidebar__subLink"
@@ -99,9 +98,11 @@ export default function Sidebar({ setMenuOpen }) {
             >
               <FaBookOpen /> <span>Study Material</span>
             </NavLink>
+
           </div>
         )}
 
+        {/* Live sessions */}
         <NavLink
           className="sidebar__link"
           to="/live-sessions"
@@ -112,6 +113,7 @@ export default function Sidebar({ setMenuOpen }) {
           </span>
           Live Sessions
         </NavLink>
+
       </nav>
     </aside>
   );
