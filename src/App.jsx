@@ -50,11 +50,16 @@ export default function App() {
               <Route path="subjects" element={<Subjects />} />
 
               {/* ===== ASSIGNMENTS ===== */}
-              <Route path="assignments" element={<SubjectsAssignments />} />
-              <Route
-                path="assignments/:assignmentId"
-                element={<AssignmentDetail />}
-              />
+              {/* ===== ASSIGNMENTS ===== */}
+<Route
+  path="subjects/:subjectId/assignments"
+  element={<SubjectsAssignments />}
+/>
+
+<Route
+  path="subjects/:subjectId/assignments/:assignmentId"
+  element={<AssignmentDetail />}
+/>
 
               {/* ===== QUIZ ===== */}
               <Route path="subjects/quiz" element={<SubjectsQuiz />} />
