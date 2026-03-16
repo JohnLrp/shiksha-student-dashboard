@@ -6,7 +6,7 @@ import logo from "../assets/Vector.svg";
 import { MdDashboardCustomize } from "react-icons/md";
 import { BsBook } from "react-icons/bs";
 import { BiVideo } from "react-icons/bi";
-import { FaBookOpen } from "react-icons/fa";
+import { FaClipboardList, FaBookOpen } from "react-icons/fa";
 import { RiLiveLine } from "react-icons/ri";
 import { AiOutlineFileDone, AiOutlineClose } from "react-icons/ai";
 
@@ -32,7 +32,7 @@ export default function Sidebar({ setMenuOpen }) {
           </div>
         </div>
 
-        {/* Close button (mobile) */}
+        {/* Close button */}
         <button
           className="sidebar__closeBtn"
           onClick={() => setMenuOpen(false)}
@@ -43,7 +43,6 @@ export default function Sidebar({ setMenuOpen }) {
         </button>
       </div>
 
-      {/* Navigation */}
       <nav className="sidebar__nav">
 
         {/* Dashboard */}
@@ -71,10 +70,19 @@ export default function Sidebar({ setMenuOpen }) {
           Subjects
         </NavLink>
 
-        {/* Subjects submenu */}
         {isSubjectsActive && (
           <div className="sidebar__subMenu">
 
+            {/* Assignments */}
+            <NavLink
+              className="sidebar__subLink"
+              to="/subjects"
+              onClick={() => setMenuOpen(false)}
+            >
+              <FaClipboardList /> <span>Assignments</span>
+            </NavLink>
+
+            {/* Quiz */}
             <NavLink
               className="sidebar__subLink"
               to="/subjects/quiz"
@@ -83,6 +91,7 @@ export default function Sidebar({ setMenuOpen }) {
               <AiOutlineFileDone /> <span>Quiz</span>
             </NavLink>
 
+            {/* Recordings */}
             <NavLink
               className="sidebar__subLink"
               to="/subjects/recordings"
@@ -91,6 +100,7 @@ export default function Sidebar({ setMenuOpen }) {
               <BiVideo /> <span>Recordings</span>
             </NavLink>
 
+            {/* Study Material */}
             <NavLink
               className="sidebar__subLink"
               to="/study-material"
