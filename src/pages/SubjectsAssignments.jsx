@@ -105,6 +105,7 @@ export default function SubjectsAssignments() {
                 <AssignmentPendingCard
                   key={item.id}
                   id={item.id}
+                  subjectId={subjectId}
                   title={item.title}
                   deadline={new Date(item.due_date).toLocaleString()}
                 />
