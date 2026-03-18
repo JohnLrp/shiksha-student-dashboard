@@ -13,6 +13,9 @@ export default function QuizDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
+  // ✅ TIMER STATE
+  const [timeLeft, setTimeLeft] = useState(null);
+
   useEffect(() => {
     async function fetchQuiz() {
       try {
@@ -30,8 +33,60 @@ export default function QuizDetail() {
     if (quizId) fetchQuiz();
   }, [quizId]);
 
+  // ✅ TIMER LOGIC
+  useEffect(() => {
+    if (!quizData) return;
+
+    const duration = (quizData.duration || 10) * 60;
+
+    let startTime = localStorage.getItem(`quiz_${quizId}_start`);
+
+    if (!startTime) {
+      startTime = Date.now();
+      localStorage.setItem(`quiz_${quizId}_start`, startTime);
+    } else {
+      startTime = parseInt(startTime);
+    }
+
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const elapsed = Math.floor((now - startTime) / 1000);
+      const remaining = duration - elapsed;
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        setTimeLeft(0);
+        handleAutoSubmit();
+      } else {
+        setTimeLeft(remaining);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [quizData]);
+
   const handleAnswerChange = (questionId, choiceId) => {
     setAnswers((prev) => ({ ...prev, [questionId]: choiceId }));
+  };
+
+  // ✅ AUTO SUBMIT
+  const handleAutoSubmit = async () => {
+    try {
+      const formattedAnswers = Object.entries(answers).map(
+        ([questionId, choiceId]) => ({
+          question: questionId,
+          selected_choice: choiceId,
+        })
+      );
+
+      await api.post(`student/quizzes/${quizId}/submit/`, { answers: formattedAnswers });
+
+      localStorage.removeItem(`quiz_${quizId}_start`);
+
+      navigate(`/subjects/quiz/${subjectId}/result/${quizId}`);
+    } catch (err) {
+      console.error("Auto submit failed", err);
+    }
   };
 
   const handleSubmit = async () => {
@@ -47,6 +102,10 @@ export default function QuizDetail() {
       );
 
       await api.post(`student/quizzes/${quizId}/submit/`, { answers: formattedAnswers });
+
+      // ✅ CLEAR TIMER
+      localStorage.removeItem(`quiz_${quizId}_start`);
+
       navigate(`/subjects/quiz/${subjectId}/result/${quizId}`);
     } catch (err) {
       setError(err.response?.data?.detail || "Failed to submit quiz.");
@@ -69,9 +128,18 @@ export default function QuizDetail() {
 
       <div className="quizActiveHeaderBox">
         <h2 className="quizPendingHeaderTitle">{quizData.subject_name}</h2>
+
         <div className="quizSearch">
           <input placeholder="Search..." />
           <span className="quizSearchIcon">🔍</span>
+
+          {/* ✅ TIMER DISPLAY */}
+          {timeLeft !== null && (
+            <span className="quizTimer">
+              ⏱ {Math.floor(timeLeft / 60)}:
+              {String(timeLeft % 60).padStart(2, "0")}
+            </span>
+          )}
         </div>
       </div>
 

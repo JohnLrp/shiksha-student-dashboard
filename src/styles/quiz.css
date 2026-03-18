@@ -790,4 +790,11 @@
   }
 }
 
+/* Quiz Timer */
+.quizTimer {
+  margin-left: 15px;
+  font-weight: bold;
+  color: #ff4d4f;
+}
+
 
