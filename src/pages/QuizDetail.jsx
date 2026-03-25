@@ -91,7 +91,6 @@ export default function QuizDetail() {
       await api.post(`student/quizzes/${quizId}/submit/`, { answers: formattedAnswers });
 
       localStorage.removeItem(`quiz_${quizId}_start`);
-
       navigate(`/subjects/quiz/${subjectId}/result/${quizId}`);
     } catch (err) {
       console.error("Auto submit failed", err);
@@ -130,7 +129,7 @@ export default function QuizDetail() {
   const currentQuestion = quizData.questions[currentIndex];
 
   return (
-    <div className="quizActivePage">
+    <div className="quizActivePage" style={{ width: "100%" }}>
       <button className="quizBackHeader" onClick={() => navigate(`/subjects/quiz/${subjectId}`)}>
         &lt; Back
       </button>
@@ -146,11 +145,19 @@ export default function QuizDetail() {
         </div>
       </div>
 
-      {/* ✅ MAIN 2 COLUMN LAYOUT */}
-      <div className="quizActiveBodyBox" style={{ display: "flex", gap: "20px" }}>
+      {/* ✅ FIXED FLEX */}
+      <div
+        className="quizActiveBodyBox"
+        style={{
+          display: "flex",
+          gap: "20px",
+          alignItems: "flex-start",
+          width: "100%",
+        }}
+      >
 
-        {/* LEFT SIDE */}
-        <div style={{ flex: 3 }}>
+        {/* LEFT */}
+        <div style={{ flex: 1, minWidth: 0 }}>
           <div className="quizDetailInfo">
             <h3 className="quizDetailInfoTitle">{quizData.title}</h3>
             <p className="quizDetailInfoMeta">{quizData.teacher_name}</p>
@@ -164,33 +171,39 @@ export default function QuizDetail() {
               {currentIndex + 1}. {currentQuestion.text}
             </p>
 
-            {/* ✅ VERTICAL OPTIONS */}
-            <div className="quizDetailOptions">
+            {/* ✅ ADD "Options" TEXT */}
+            <p style={{ fontWeight: "600", marginTop: "10px" }}>Options</p>
+
+            {/* ✅ FIX OPTIONS */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {currentQuestion.choices.map((choice) => (
                 <label
                   key={choice.id}
-                  className={`quizDetailOption ${
-                    answers[currentQuestion.id] === choice.id
-                      ? "quizDetailOption--selected"
-                      : ""
-                  }`}
-                  style={{ display: "block", marginBottom: "10px" }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    cursor: "pointer",
+                  }}
                 >
+                  {/* ✅ FORCE RADIO VISIBLE */}
                   <input
                     type="radio"
+                    style={{ display: "inline-block" }}
                     name={`question-${currentQuestion.id}`}
                     checked={answers[currentQuestion.id] === choice.id}
                     onChange={() =>
                       handleAnswerChange(currentQuestion.id, choice.id)
                     }
                   />
-                  <span className="quizDetailOptionText">{choice.text}</span>
+
+                  <span>{choice.text}</span>
                 </label>
               ))}
             </div>
           </div>
 
-          {/* NAVIGATION */}
+          {/* NAV */}
           <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
             {currentIndex > 0 && (
               <button onClick={() => setCurrentIndex(currentIndex - 1)}>
@@ -210,17 +223,17 @@ export default function QuizDetail() {
           </div>
         </div>
 
-        {/* RIGHT SIDE (PALETTE + TIMER) */}
+        {/* RIGHT PANEL */}
         <div
           style={{
-            flex: 1,
+            width: "250px",
+            flexShrink: 0,
             borderLeft: "2px solid #ddd",
             paddingLeft: "15px",
           }}
         >
-          {/* ✅ TIMER MOVED HERE */}
           {timeLeft !== null && (
-            <div style={{ marginBottom: "20px", fontWeight: "bold", color: "red" }}>
+            <div style={{ marginBottom: "20px", color: "red", fontWeight: "bold" }}>
               ⏱ {Math.floor(timeLeft / 60)}:
               {String(timeLeft % 60).padStart(2, "0")}
             </div>
@@ -235,8 +248,8 @@ export default function QuizDetail() {
                 onClick={() => setCurrentIndex(index)}
                 style={{
                   margin: "5px",
-                  padding: "8px",
                   width: "40px",
+                  height: "40px",
                   background:
                     answers[q.id]
                       ? "green"
