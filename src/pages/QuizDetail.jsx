@@ -14,12 +14,8 @@ export default function QuizDetail() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
 
-  
-
-  // ✅ TIMER STATE
   const [timeLeft, setTimeLeft] = useState(null);
 
-  // ✅ REF (fix auto submit issue)
   const answersRef = useRef({});
   const submittedRef = useRef(false);
 
@@ -40,21 +36,6 @@ export default function QuizDetail() {
     if (quizId) fetchQuiz();
   }, [quizId]);
 
-  useEffect(() => {
-  async function startQuiz() {
-    try {
-      await api.post(`/quizzes/${quizId}/start/`);
-    } catch (err) {
-      console.error("Start quiz failed:", err.response?.data);
-    }
-  }
-
-  if (quizId) {
-    startQuiz();
-  }
-}, [quizId]);
-
-  // ✅ TIMER LOGIC (default = 5 min)
   useEffect(() => {
     if (!quizData) return;
 
@@ -93,12 +74,11 @@ export default function QuizDetail() {
   const handleAnswerChange = (questionId, choiceId) => {
     setAnswers((prev) => {
       const updated = { ...prev, [questionId]: choiceId };
-      answersRef.current = updated; // ✅ keep latest answers
+      answersRef.current = updated;
       return updated;
     });
   };
 
-  // ✅ AUTO SUBMIT (fixed)
   const handleAutoSubmit = async () => {
     try {
       const formattedAnswers = Object.entries(answersRef.current).map(
@@ -108,10 +88,10 @@ export default function QuizDetail() {
         })
       );
 
-      await api.post(`student/quizzes/${quizId}/submit/`, { answers: formattedAnswers });
+      // ✅ Fix 1: added leading slash
+      await api.post(`/student/quizzes/${quizId}/submit/`, { answers: formattedAnswers });
 
       localStorage.removeItem(`quiz_${quizId}_start`);
-
       navigate(`/subjects/quiz/${subjectId}/result/${quizId}`);
     } catch (err) {
       console.error("Auto submit failed", err);
@@ -119,6 +99,12 @@ export default function QuizDetail() {
   };
 
   const handleSubmit = async () => {
+    // ✅ Fix 2: guard against unanswered questions
+    if (!allAnswered) {
+      setError("Please answer all questions before submitting.");
+      return;
+    }
+
     try {
       setSubmitting(true);
       setError(null);
@@ -130,27 +116,25 @@ export default function QuizDetail() {
         })
       );
 
-      await api.post(`student/quizzes/${quizId}/submit/`, { answers: formattedAnswers });
+      // ✅ Fix 1: added leading slash
+      await api.post(`/student/quizzes/${quizId}/submit/`, { answers: formattedAnswers });
 
       localStorage.removeItem(`quiz_${quizId}_start`);
       submittedRef.current = true;
 
       navigate(`/subjects/quiz/${subjectId}/result/${quizId}`);
     } catch (err) {
-      console.log("FULL ERROR:", err.response?.data); 
       setError(err.response?.data?.detail || "Failed to submit quiz.");
     } finally {
       setSubmitting(false);
     }
   };
-  
 
   if (loading) return <div className="quizActivePage">Loading quiz...</div>;
   if (error) return <div className="quizActivePage">{error}</div>;
   if (!quizData) return null;
 
   const currentQuestion = quizData.questions[currentIndex];
-
   const allAnswered = quizData.questions?.every((q) => answers[q.id] !== undefined) ?? false;
 
   return (
@@ -187,79 +171,76 @@ export default function QuizDetail() {
           <p className="quizDetailInfoDue">Due: {new Date(quizData.due_date).toLocaleString()}</p>
         </div>
 
-          <div className="quizDetailQuestion">
-  <p className="quizDetailQuestionText">
-    {currentIndex + 1}. {currentQuestion.text}
-  </p>
+        <div className="quizDetailQuestion">
+          <p className="quizDetailQuestionText">
+            {currentIndex + 1}. {currentQuestion.text}
+          </p>
 
-  <div className="quizDetailOptions">
-    {currentQuestion.choices.map((choice) => (
-      <label
-        key={choice.id}
-        className={`quizDetailOption ${
-          answers[currentQuestion.id] === choice.id
-            ? "quizDetailOption--selected"
-            : ""
-        }`}
-      >
-        <input
-          type="radio"
-          name={`question-${currentQuestion.id}`}
-          checked={answers[currentQuestion.id] === choice.id}
-          onChange={() =>
-            handleAnswerChange(currentQuestion.id, choice.id)
-          }
-        />
-        <span className="quizDetailOptionRadio" />
-        <span className="quizDetailOptionText">{choice.text}</span>
-      </label>
-    ))}
-  </div>
-</div>
+          <div className="quizDetailOptions">
+            {currentQuestion.choices.map((choice) => (
+              <label
+                key={choice.id}
+                className={`quizDetailOption ${
+                  answers[currentQuestion.id] === choice.id
+                    ? "quizDetailOption--selected"
+                    : ""
+                }`}
+              >
+                <input
+                  type="radio"
+                  name={`question-${currentQuestion.id}`}
+                  checked={answers[currentQuestion.id] === choice.id}
+                  onChange={() =>
+                    handleAnswerChange(currentQuestion.id, choice.id)
+                  }
+                />
+                <span className="quizDetailOptionRadio" />
+                <span className="quizDetailOptionText">{choice.text}</span>
+              </label>
+            ))}
+          </div>
+        </div>
 
-<div style={{ marginTop: "20px" }}>
-  {quizData.questions.map((q, index) => (
-    <button
-      key={q.id}
-      onClick={() => setCurrentIndex(index)}
-      style={{
-        margin: "5px",
-        padding: "6px 10px",
-        background:
-          answers[q.id]
-            ? "green"
-            : index === currentIndex
-            ? "blue"
-            : "gray",
-        color: "white",
-        border: "none",
-        borderRadius: "4px",
-      }}
-    >
-      {index + 1}
-    </button>
-  ))}
-</div>
+        <div style={{ marginTop: "20px" }}>
+          {quizData.questions.map((q, index) => (
+            <button
+              key={q.id}
+              onClick={() => setCurrentIndex(index)}
+              style={{
+                margin: "5px",
+                padding: "6px 10px",
+                background: answers[q.id]
+                  ? "green"
+                  : index === currentIndex
+                  ? "blue"
+                  : "gray",
+                color: "white",
+                border: "none",
+                borderRadius: "4px",
+              }}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
 
         <div style={{ marginTop: "20px", display: "flex", gap: "10px" }}>
-  
-  {currentIndex > 0 && (
-    <button onClick={() => setCurrentIndex(currentIndex - 1)}>
-      Back
-    </button>
-  )}
+          {currentIndex > 0 && (
+            <button onClick={() => setCurrentIndex(currentIndex - 1)}>
+              Back
+            </button>
+          )}
 
-  {currentIndex < quizData.questions.length - 1 ? (
-    <button onClick={() => setCurrentIndex(currentIndex + 1)}>
-      Save & Next
-    </button>
-  ) : (
-    <button onClick={handleSubmit} disabled={submitting}>
-      {submitting ? "Submitting..." : "Submit"}
-    </button>
-  )}
-
-</div>
+          {currentIndex < quizData.questions.length - 1 ? (
+            <button onClick={() => setCurrentIndex(currentIndex + 1)}>
+              Save & Next
+            </button>
+          ) : (
+            <button onClick={handleSubmit} disabled={submitting || !allAnswered}>
+              {submitting ? "Submitting..." : "Submit"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
