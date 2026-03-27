@@ -46,7 +46,6 @@ export default function QuizDetail() {
         setLoading(true);
         setError(null);
 
-        // call start endpoint first
         try {
           await api.post(`/quizzes/${quizId}/start/`);
         } catch (err) {
@@ -56,14 +55,12 @@ export default function QuizDetail() {
         const res = await api.get(`/quizzes/${quizId}/`);
         setQuizData(res.data);
 
-        // init palette
         const init = {};
         res.data.questions.forEach((q, i) => {
           init[q.id] = i === 0 ? S.NOT_ANSWERED : S.NOT_VISITED;
         });
         setPalette(init);
 
-        // init timer refs
         durationRef.current = (res.data.time_limit_minutes || 5) * 60;
         let st = localStorage.getItem(`quiz_${quizId}_start`);
         if (!st) {
@@ -86,7 +83,7 @@ export default function QuizDetail() {
     if (quizId) initQuiz();
   }, [quizId]);
 
-  // ── auto-submit (stable with useCallback) ────────────────────────────────
+  // ── auto-submit ──────────────────────────────────────────────────────────
   const handleAutoSubmit = useCallback(async () => {
     try {
       const formatted = Object.entries(answersRef.current).map(([q, c]) => ({
@@ -100,7 +97,7 @@ export default function QuizDetail() {
     }
   }, [quizId, subjectId, navigate]);
 
-  // ── timer (runs once, no reload loop) ────────────────────────────────────
+  // ── timer ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (durationRef.current === null || startTimeRef.current === null) return;
     const interval = setInterval(() => {
@@ -205,9 +202,8 @@ export default function QuizDetail() {
           </button>
           <span className="quiz-title">{quizData.title}</span>
         </div>
+        {/* ✅ Removed Max Mark and Negative chips — kept only Subject */}
         <div className="quiz-top-meta">
-          <span className="quiz-meta-chip">Max Mark: <b>{quizData.max_mark ?? 1}</b></span>
-          <span className="quiz-meta-chip">Negative: <b>{quizData.negative_mark ?? 0}</b></span>
           <span className="quiz-meta-chip">Subject: <b>{quizData.subject_name}</b></span>
         </div>
       </div>
@@ -244,17 +240,33 @@ export default function QuizDetail() {
             </label>
           ))}
 
+          {/* ✅ Button row: Prev + Next are now always separate, Submit only on last Q */}
           <div className="quiz-btn-row">
             <button className="quiz-btn-mark"  onClick={handleMarkForReview}>Mark for Review & Next</button>
             <button className="quiz-btn-clear" onClick={handleClearResponse}>Clear Response</button>
-            <button className="quiz-btn-prev"  onClick={() => goTo(currentIndex - 1)}
-              disabled={currentIndex === 0}>◀ Previous</button>
-            {currentIndex < qLen - 1
-              ? <button className="quiz-btn-next" onClick={() => goTo(currentIndex + 1)}>Save & Next ▶</button>
-              : <button className="quiz-btn-next" onClick={handleSubmit} disabled={submitting || !allAnswered}>
-                  {submitting ? "Submitting…" : "Submit"}
-                </button>
-            }
+            <button
+              className="quiz-btn-prev"
+              onClick={() => goTo(currentIndex - 1)}
+              disabled={currentIndex === 0}
+            >
+              ◀ Previous
+            </button>
+            <button
+              className="quiz-btn-next"
+              onClick={() => goTo(currentIndex + 1)}
+              disabled={currentIndex === qLen - 1}
+            >
+              Save & Next ▶
+            </button>
+            {currentIndex === qLen - 1 && (
+              <button
+                className="quiz-btn-submit-inline"
+                onClick={handleSubmit}
+                disabled={submitting || !allAnswered}
+              >
+                {submitting ? "Submitting…" : "Submit"}
+              </button>
+            )}
           </div>
         </div>
 
