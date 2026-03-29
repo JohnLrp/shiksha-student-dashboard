@@ -60,23 +60,27 @@ export default function ParticipantsPanel() {
 
       {open && (
         <div className="participants-row">
-          {participants.map((p) => (
-            <div
-              key={p.identity}
-              className={`participant-card ${raisedHands[p.identity] ? "hand-raised" : ""}`}
-            >
-              <div className="participant-avatar">
-                {p.identity.charAt(0).toUpperCase()}
-              </div>
+          {participants.map((p) => {
+            const displayName = p.name || p.identity;
 
-              <div className="participant-name">
-                {p.identity}
-                {raisedHands[p.identity] && (
-                  <span className="raised-hand-icon"> ✋</span>
-                )}
+            return (
+              <div
+                key={p.identity}
+                className={`participant-card ${raisedHands[p.identity] ? "hand-raised" : ""}`}
+              >
+                <div className="participant-avatar">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+
+                <div className="participant-name">
+                  {displayName}
+                  {raisedHands[p.identity] && (
+                    <span className="raised-hand-icon"> ✋</span>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

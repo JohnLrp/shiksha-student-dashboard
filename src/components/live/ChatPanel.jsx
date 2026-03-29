@@ -17,9 +17,11 @@ export default function ChatPanel({ role }) {
         if (msg.type === "raise-hand") return; // don't show in chat
       } catch {}
 
+      const displayName = participant?.name || participant?.identity || "Unknown";
+
       setMessages((prev) => [
         ...prev,
-        { sender: participant?.identity || "Unknown", text },
+        { sender: displayName, text },
       ]);
     };
 
@@ -40,7 +42,7 @@ export default function ChatPanel({ role }) {
         reliable: true,
       });
 
-      setMessages((prev) => [...prev, { sender: "Me", text: input }]);
+      setMessages((prev) => [...prev, { sender: "You", text: input }]);
       setInput("");
     } catch (e) {
       console.error("❌ sendMessage failed", e);
@@ -73,7 +75,7 @@ export default function ChatPanel({ role }) {
 
       <div className="chat-messages">
         {messages.map((msg, i) => (
-          <div key={i} className={`chat-bubble ${msg.sender === "Me" ? "chat-bubble--me" : ""}`}>
+          <div key={i} className={`chat-bubble ${msg.sender === "You" ? "chat-bubble--me" : ""}`}>
             <span className="chat-name">{msg.sender}</span>
             <span>{msg.text}</span>
           </div>
