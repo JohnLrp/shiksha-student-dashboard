@@ -27,14 +27,14 @@ export default function QuizDetail() {
   const navigate = useNavigate();
   const { subjectId, quizId } = useParams();
 
-  const [quizData, setQuizData]         = useState(null);
-  const [answers, setAnswers]           = useState({});
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [loading, setLoading]           = useState(true);
-  const [submitting, setSubmitting]     = useState(false);
-  const [error, setError]               = useState(null);
-  const [timeLeft, setTimeLeft]         = useState(null);
-  const [palette, setPalette]           = useState({});
+  const [quizData, setQuizData]           = useState(null);
+  const [answers, setAnswers]             = useState({});
+  const [currentIndex, setCurrentIndex]   = useState(0);
+  const [loading, setLoading]             = useState(true);
+  const [submitting, setSubmitting]       = useState(false);
+  const [error, setError]                 = useState(null);
+  const [timeLeft, setTimeLeft]           = useState(null);
+  const [palette, setPalette]             = useState({});
   const [showExitModal, setShowExitModal] = useState(false);
 
   const answersRef   = useRef({});
@@ -136,16 +136,8 @@ export default function QuizDetail() {
     });
     setPalette(p => ({
       ...p,
-      [questionId]:
-        p[questionId] === S.MARKED || p[questionId] === S.MARKED_ANSWERED
-          ? S.MARKED_ANSWERED : S.ANSWERED,
+      [questionId]: S.ANSWERED,
     }));
-  };
-
-  const handleMarkForReview = () => {
-    const qId = quizData.questions[currentIndex].id;
-    setPalette(p => ({ ...p, [qId]: answers[qId] ? S.MARKED_ANSWERED : S.MARKED }));
-    if (currentIndex < quizData.questions.length - 1) goTo(currentIndex + 1);
   };
 
   const handleClearResponse = () => {
@@ -245,19 +237,9 @@ export default function QuizDetail() {
             </div>
           )}
 
-          {/* Bottom nav buttons — Previous / Next only, like screenshot */}
+          {/* Action bar — Clear Response + Previous / Next */}
           <div className="quiz-action-bar">
-            <button
-              className="quiz-btn-mark"
-              onClick={handleMarkForReview}
-            >
-              Mark for Review &amp; Next
-            </button>
-
-            <button
-              className="quiz-btn-clear"
-              onClick={handleClearResponse}
-            >
+            <button className="quiz-btn-clear" onClick={handleClearResponse}>
               Clear Response
             </button>
 
