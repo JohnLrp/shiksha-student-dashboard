@@ -995,3 +995,15 @@
 .quizResultReattemptBtn:hover {
   background: #097a83;
 }
+
+.quizResultHeaderInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.quizResultHeaderBtns {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}

@@ -69,7 +69,7 @@ export default function QuizList() {
       setSelectedQuiz(quiz);
       setShowModal(true);
     } else {
-      navigate(`/subjects/quiz/${subjectId}/result/${quiz.id}`);
+ navigate(`/subjects/quiz/${subjectId}/attempts/${quiz.id}`);
     }
   };
 
