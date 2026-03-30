@@ -143,52 +143,38 @@ export default function AssignmentDetail() {
       <div className="assignmentDetailBodyBox">
         <div className="assignmentDetailContent">
 
-          {/* LEFT SIDE */}
-          <div className="assignmentDetailLeft">
-            <div className="assignmentTitleRow">
-              <h3 className="assignmentDetailTitle">Assignment</h3>
+          {/* LEFT SIDE (UNCHANGED) */}
+          {!isSubmitted && (
+            <div className="assignmentDetailLeft">
+              <div className="assignmentTitleRow">
+                <h3 className="assignmentDetailTitle">Assignment</h3>
+              </div>
 
-              {isSubmitted && (
-                <p className="submittedTopText">
-                  {formatSubmittedTop(submittedAt)}
-                </p>
+              <p className="assignmentDetailDue">
+                Due Date:{" "}
+                {new Date(assignment.due_date).toLocaleDateString("en-GB")}
+              </p>
+
+              <div className="assignmentDetailDivider" />
+
+              <p className="assignmentDetailLabel">
+                Title: {assignment.title}
+              </p>
+
+              <p className="assignmentDetailDesc">
+                Description: {assignment.description}
+              </p>
+
+              {assignment.attachment && (
+                <div className="fileStrip" onClick={handleOpenAttachment}>
+                  <div className="fileStripIcon">📄</div>
+                  <div className="fileStripName">
+                    {assignment.attachment.split("/").pop()}
+                  </div>
+                </div>
               )}
             </div>
-
-            <p className="assignmentDetailDue">
-              Due Date:{" "}
-              {new Date(assignment.due_date).toLocaleDateString("en-GB")}
-            </p>
-
-            <div className="assignmentDetailDivider" />
-
-            <p className="assignmentDetailLabel">
-              Title: {assignment.title}
-            </p>
-
-            <p className="assignmentDetailDesc">
-              Description: {assignment.description}
-            </p>
-
-            {assignment.attachment && (
-              <div className="fileStrip" onClick={handleOpenAttachment}>
-                <div className="fileStripIcon">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M14 2H6C5.46 2 4 3.46 4 4V20C4 21.53 5.46 22 6 22H18C19.53 22 20 20.53 20 20V8L14 2Z"
-                      stroke="#444"
-                      strokeWidth="2"
-                    />
-                    <path d="M14 2V8H20" stroke="#444" strokeWidth="2" />
-                  </svg>
-                </div>
-
-                <div className="fileStripName">
-                  {assignment.attachment.split("/").pop()}
-                </div>
-              </div>
-            )}
-          </div>
+          )}
 
           {/* RIGHT SIDE */}
           {!isSubmitted ? (
@@ -211,25 +197,84 @@ export default function AssignmentDetail() {
               </button>
             </div>
           ) : (
-            <>
-              {/* BREAK FLEX LAYOUT */}
-              <div style={{ width: "100%" }} />
+            /* ================= NEW COMPLETED UI ================= */
+            <div className="completedGrid">
 
-              <div style={{ width: "100%", marginTop: "20px" }}>
-                <h4 style={{ marginBottom: "6px" }}>Your Submission</h4>
+              {/* LEFT CARD */}
+              <div className="completedCard">
+                <p className="completedBadge">✓ Completed</p>
 
-                <p
-                  className="submittedTopText"
-                  style={{ marginBottom: "10px" }}
-                >
-                  {formatSubmittedTop(submittedAt)}
+                <h3 className="completedTitle">{assignment.title}</h3>
+
+                <p className="completedMeta">
+                  {assignment.chapter || "Chapter"} — {assignment.subject || "Subject"}
                 </p>
 
+                <p className="completedDesc">
+                  {assignment.description}
+                </p>
+              </div>
+
+              {/* CENTER CARD */}
+              <div className="completedCard completedCard--center">
+                <h4 className="completedSectionTitle">Assignment Details</h4>
+
+                <div className="completedDetailsGrid">
+                  <div>
+                    <span>Assigned on</span>
+                    <p>
+                      {new Date(
+                        assignment.created_at || assignment.due_date
+                      ).toLocaleDateString()}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span>Due date</span>
+                    <p>{new Date(assignment.due_date).toLocaleDateString()}</p>
+                  </div>
+
+                  <div>
+                    <span>Subject</span>
+                    <p>{assignment.subject || "-"}</p>
+                  </div>
+
+                  <div>
+                    <span>Teacher</span>
+                    <p>{assignment.teacher || "-"}</p>
+                  </div>
+                </div>
+
+                {assignment.attachment && (
+                  <div
+                    className="completedFileRow"
+                    onClick={handleOpenAttachment}
+                  >
+                    <span className="fileIcon">📄</span>
+                    <span className="fileName">
+                      {assignment.attachment.split("/").pop()}
+                    </span>
+                    <button className="viewBtn">View</button>
+                  </div>
+                )}
+              </div>
+
+              {/* RIGHT CARD */}
+              <div className="completedCard">
+                <h4 className="completedSectionTitle">Your Submission</h4>
+
+                <p className="submissionDate">
+                  Submitted on {formatSmallDate(submittedAt)}
+                </p>
+
+                <p className="submissionStatus">On time</p>
+
                 <button className="openFileBtn" onClick={handleOpenFile}>
-                  Open Submitted File
+                  View Submitted File
                 </button>
               </div>
-            </>
+
+            </div>
           )}
 
         </div>

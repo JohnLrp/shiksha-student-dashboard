@@ -316,3 +316,159 @@
     margin-top: 0;
   }
 }
+
+/* ===== COMPLETED GRID ===== */
+.completedGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.6fr 1fr; /* center bigger */
+  gap: 16px;
+  width: 100%;
+}
+
+/* ===== CARD ===== */
+.completedCard {
+  background: #1f2937;
+  color: #f9fafb;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* hover effect */
+.completedCard:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.2);
+}
+
+/* center card slightly different */
+.completedCard--center {
+  background: #111827;
+}
+
+/* ===== TEXT ===== */
+.completedBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #86efac;
+  margin-bottom: 6px;
+}
+
+.completedTitle {
+  font-size: 16px;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.completedMeta {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-bottom: 10px;
+}
+
+.completedDesc {
+  font-size: 12px;
+  color: #d1d5db;
+}
+
+/* ===== SECTION TITLE ===== */
+.completedSectionTitle {
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+/* ===== DETAILS GRID ===== */
+.completedDetailsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.completedDetailsGrid span {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.completedDetailsGrid p {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ===== FILE ROW ===== */
+.completedFileRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #374151;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.completedFileRow:hover {
+  background: #4b5563;
+}
+
+.fileIcon {
+  margin-right: 8px;
+}
+
+.fileName {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f3f4f6;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* view button */
+.viewBtn {
+  background: transparent;
+  border: 1px solid #9ca3af;
+  color: #f9fafb;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.viewBtn:hover {
+  background: #f9fafb;
+  color: #111827;
+}
+
+/* ===== SUBMISSION ===== */
+.submissionDate {
+  font-size: 12px;
+  color: #d1d5db;
+  margin-bottom: 6px;
+}
+
+.submissionStatus {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4ade80;
+  margin-bottom: 10px;
+}
+
+/* reuse your button but improve hover */
+.openFileBtn {
+  transition: all 0.2s ease;
+}
+
+.openFileBtn:hover {
+  background: #d1d5db;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .completedGrid {
+    grid-template-columns: 1fr;
+  }
+}
