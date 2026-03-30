@@ -60,7 +60,6 @@ export default function QuizDetail() {
         });
         setPalette(init);
 
-        durationRef.current = (res.data.time_limit_minutes || 5) * 60;
 
         let st = localStorage.getItem(`quiz_${quizId}_start`);
         if (!st) {
@@ -70,6 +69,7 @@ export default function QuizDetail() {
           st = parseInt(st, 10);
         }
         startTimeRef.current = st;
+        durationRef.current = (res.data.time_limit_minutes || 5) * 60;
 
         const elapsed = Math.floor((Date.now() - st) / 1000);
         setTimeLeft(Math.max(0, durationRef.current - elapsed));
@@ -95,30 +95,31 @@ export default function QuizDetail() {
   }, [quizId, subjectId, navigate]);
 
   // ── timer ─────────────────────────────────────────────────────────────────
-  const timerStarted = useRef(false);
+  console.log("START:", startTimeRef.current);
+console.log("DURATION:", durationRef.current);
 
-  useEffect(() => {
-    // Wait until initQuiz has populated both refs and set timeLeft
-    if (timeLeft === null || timerStarted.current) return;
-    timerStarted.current = true;
+ useEffect(() => {
+  if (!durationRef.current || !startTimeRef.current) return;
 
-    const interval = setInterval(() => {
-      const elapsed   = Math.floor((Date.now() - startTimeRef.current) / 1000);
-      const remaining = durationRef.current - elapsed;
-      if (remaining <= 0) {
-        clearInterval(interval);
-        setTimeLeft(0);
-        if (!submittedRef.current) {
-          submittedRef.current = true;
-          handleAutoSubmit();
-        }
-      } else {
-        setTimeLeft(remaining);
+  const interval = setInterval(() => {
+    const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+    const remaining = durationRef.current - elapsed;
+
+    if (remaining <= 0) {
+      clearInterval(interval);
+      setTimeLeft(0);
+
+      if (!submittedRef.current) {
+        submittedRef.current = true;
+        handleAutoSubmit();
       }
-    }, 1000);
+    } else {
+      setTimeLeft(remaining);
+    }
+  }, 1000);
 
-    return () => clearInterval(interval);
-  }, [timeLeft, handleAutoSubmit]);
+  return () => clearInterval(interval);
+}, [handleAutoSubmit]);
 
   const fmtTime = (s) => {
     const h   = String(Math.floor(s / 3600)).padStart(2, "0");
