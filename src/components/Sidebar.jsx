@@ -1,3 +1,4 @@
+console.log("=== MY NEW SIDEBAR ===");
 import { NavLink, useLocation } from "react-router-dom";
 import "../styles/sidebar.css";
 import logo from "../assets/Vector.svg";
@@ -7,9 +8,10 @@ import { MdDashboardCustomize } from "react-icons/md";
 import { BsBook } from "react-icons/bs";
 import { BiVideo } from "react-icons/bi";
 import { FaClipboardList, FaBookOpen } from "react-icons/fa";
-import { RiLiveLine } from "react-icons/ri";
+import { RiLiveLine, RiLockLine } from "react-icons/ri";
 import { AiOutlineFileDone, AiOutlineClose } from "react-icons/ai";
 
+console.log("SIDEBAR LOADED - NEW VERSION");
 export default function Sidebar({ setMenuOpen }) {
   const location = useLocation();
 
@@ -123,6 +125,18 @@ export default function Sidebar({ setMenuOpen }) {
             <RiLiveLine />
           </span>
           Live Sessions
+        </NavLink>
+
+        {/* Private Sessions */}
+        <NavLink
+          className="sidebar__link"
+          to="/private-sessions"
+          onClick={() => setMenuOpen(false)}
+        >
+          <span className="sidebar__icon">
+            <RiLockLine />
+          </span>
+          Private Sessions
         </NavLink>
 
       </nav>

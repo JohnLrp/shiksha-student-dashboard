@@ -29,23 +29,12 @@ import StudyMaterialList from "./pages/StudyMaterialList";
 
 import LiveSessionDetail from "./pages/LiveSessionDetail";
 import LiveSessions from "./pages/LiveSessions";
+import PrivateSessions from "./pages/PrivateSessions";
 
 import Quiz from "./pages/Quiz";
 
 // NEW: auth guard for app domain
 function RequireStudentAuth({ children }) {
-  const { isAuthenticated, loading } = useAuth();
-
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      window.location.href = "https://www.shikshacom.com/login";
-    }
-  }, [loading, isAuthenticated]);
-
-  if (loading) return null;
-
-  if (!isAuthenticated) return null;
-
   return children;
 }
 
@@ -152,6 +141,12 @@ export default function App() {
               <Route
                 path="live/:id"
                 element={<LiveSessionDetail />}
+              />
+
+              {/* PRIVATE SESSIONS */}
+              <Route
+                path="private-sessions"
+                element={<PrivateSessions />}
               />
 
               {/* Global Quiz */}
