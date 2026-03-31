@@ -122,6 +122,32 @@
   opacity: 0.8;
 }
 
+.sidebar__bottom {
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+.sidebar__homeBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 10px 12px;
+  border-radius: 10px;
+  opacity: 0.7;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: 0.2s ease;
+}
+
+.sidebar__homeBtn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.13);
+}
+
+
 @media (max-width: 768px) {
   .sidebar__closeBtn {
     display: block;

@@ -248,8 +248,23 @@ export default function Dashboard() {
 
             <div className="mobileSectionContent">
               {filteredSchedule.map((item, idx) => (
-                <div key={idx} className="scheduleItem">
-                  <p className="scheduleDate">{item.date}</p>
+                <div key={idx} className={`scheduleItem scheduleItem--${
+                item.type === "Live Sessions" ? "livesessions"
+                : item.type === "Assignments" ? "assignments"
+                : item.type === "Quiz" ? "quiz"
+                : ""
+            }`}>
+
+                  <div className="scheduleItem__header">
+                    <p className="scheduleDate">{item.date}</p>
+                    {item.type && (
+                      <span className={`scheduleBadge scheduleBadge--${
+                        item.type === "Live Sessions" ? "livesessions"
+                        : item.type === "Assignments" ? "assignments"
+                        : item.type === "Quiz" ? "quiz" : ""
+                      }`}>{item.type}</span>
+                    )}
+                  </div>
                   <p className="scheduleTitle">{item.title}</p>
                   <p className="scheduleSub">{item.subject}</p>
                   <p className="scheduleSub">{item.teacher}</p>
@@ -486,9 +501,25 @@ export default function Dashboard() {
 
               <div className="scheduleList">
                 {filteredSchedule.map((item, idx) => (
-                  <div key={idx} className="scheduleItem">
-                    <p className="scheduleDate">{item.date}</p>
-                    <p className="scheduleTitle">{item.title}</p>
+                  <div key={idx} className={`scheduleItem scheduleItem--${
+                    item.type === "Live Sessions" ? "livesessions"
+                    : item.type === "Assignments" ? "assignments"
+                    : item.type === "Quiz" ? "quiz"
+                    : ""
+                    }`}>
+
+                    <div className="scheduleItem__header">
+                      <p className="scheduleDate">{item.date}</p>
+                        {item.type && (
+                          <span className={`scheduleBadge scheduleBadge--${
+                            item.type === "Live Sessions" ? "livesessions"
+                            : item.type === "Assignments" ? "assignments"
+                            : item.type === "Quiz" ? "quiz" : ""
+                          }`}>{item.type}</span>
+                        )}
+                      </div>
+                      <p className="scheduleTitle">{item.title}</p>
+
                     <p className="scheduleSub">{item.subject}</p>
                     <p className="scheduleSub">{item.teacher}</p>
                     <p className="scheduleSub">{item.time}</p>

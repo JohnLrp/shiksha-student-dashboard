@@ -4,6 +4,7 @@ import "../styles/sidebar.css";
 import logo from "../assets/Vector.svg";
 
 // icons
+import { FiHome } from "react-icons/fi";
 import { MdDashboardCustomize } from "react-icons/md";
 import { BsBook } from "react-icons/bs";
 import { BiVideo } from "react-icons/bi";
@@ -140,6 +141,15 @@ export default function Sidebar({ setMenuOpen }) {
         </NavLink>
 
       </nav>
+      <div className="sidebar__bottom">
+        <a
+          href="https://shikshacom.com"
+          className="sidebar__homeBtn"
+        >
+          <FiHome />
+          Return to Homepage
+        </a>
+      </div>
     </aside>
   );
 }
