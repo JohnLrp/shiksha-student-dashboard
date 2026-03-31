@@ -11,6 +11,7 @@ export default function AssignmentCompletedCard({
   const navigate = useNavigate();
 
   const handleClick = () => {
+    console.log("subjectId:", subjectId);
     navigate(`/subjects/${subjectId}/assignments/${id}`);
   };
 
