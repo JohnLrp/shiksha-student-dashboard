@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import api from "../api/apiClient";
 import PageHeader from "../components/PageHeader";
-import CompletedAssignment from "../components/CompletedAssignment"; // ✅ ONLY ADD
+import CompletedAssignment from "../components/CompletedAssignment";
 import "../styles/assignmentDetail.css";
 
 export default function AssignmentDetail() {
@@ -26,8 +26,6 @@ export default function AssignmentDetail() {
 
         const res = await api.get(`/assignments/${assignmentId}/`);
         const data = res.data;
-
-        console.log("ASSIGNMENT DATA:", data);
 
         setAssignment(data);
 
@@ -85,43 +83,14 @@ export default function AssignmentDetail() {
     }
   };
 
-  const handleOpenFile = () => {
-    const fileUrl =
-      assignment?.submitted_file ||
-      assignment?.file ||
-      assignment?.submission_file;
-
-    if (fileUrl) {
-      window.open(fileUrl, "_blank");
-    }
-  };
-
   const handleOpenAttachment = () => {
     if (assignment?.attachment) {
       window.open(assignment.attachment, "_blank");
     }
   };
 
-  const formatSubmittedTop = (dateObj) => {
-    if (!dateObj) return "";
-    const d = dateObj.toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-
-    const t = dateObj.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-    return `Submitted: ${d} / ${t}`;
-  };
-
   const formatSmallDate = (dateObj) => {
     if (!dateObj) return "";
-
     return dateObj.toLocaleDateString("en-GB", {
       day: "2-digit",
       month: "short",
@@ -140,13 +109,13 @@ export default function AssignmentDetail() {
       </button>
 
       <div className="assignmentDetailHeaderBox">
-        <PageHeader title={assignment.subject || assignment.title} />
+        {/* ✅ FIXED */}
+        <PageHeader title={assignment.subject_name || assignment.title} />
       </div>
 
       <div className="assignmentDetailBodyBox">
         <div className="assignmentDetailContent">
 
-          {/* LEFT SIDE (UNCHANGED) */}
           {!isSubmitted && (
             <div className="assignmentDetailLeft">
               <div className="assignmentTitleRow">
@@ -179,7 +148,6 @@ export default function AssignmentDetail() {
             </div>
           )}
 
-          {/* RIGHT SIDE */}
           {!isSubmitted ? (
             <div className="assignmentDetailRight">
               <div className="yourWorkTop">
@@ -200,85 +168,49 @@ export default function AssignmentDetail() {
               </button>
             </div>
           ) : (
-            /* ✅ ONLY THIS BLOCK CHANGED */
             <CompletedAssignment
-  assignment={{
-    title: assignment.title,
+              assignment={{
+                title: assignment.title,
 
-    // ✅ FIX SUBJECT
-    subject:
-      assignment.subject_name ||
-      assignment.subject ||
-      "",
+                // ✅ FIXED MAPPING
+                subject: assignment.subject_name || "",
+                chapter: assignment.chapter_name || "",
+                teacher: assignment.teacher_name || "",
 
-    chapter: assignment.chapter || "",
+                description: assignment.description,
 
-    // ✅ FIX TEACHER
-    teacher:
-      assignment.teacher_name ||
-      assignment.teacher ||
-      "",
+                // ✅ FIXED DATE
+                assignedOn: assignment.assigned_on
+                  ? new Date(assignment.assigned_on).toLocaleDateString("en-GB")
+                  : "",
 
-    className: assignment.class_name || "",
+                dueDate: assignment.due_date
+                  ? new Date(assignment.due_date).toLocaleDateString("en-GB")
+                  : "",
 
-    description: assignment.description,
+                teacherFile: assignment.attachment
+                  ? {
+                      name: assignment.attachment.split("/").pop(),
+                      size: "—",
+                      url: assignment.attachment,
+                    }
+                  : null,
 
-    // ✅ FIX ASSIGNED DATE (NO FALLBACK)
-    assignedOn: assignment.created_at
-      ? new Date(assignment.created_at).toLocaleDateString("en-GB")
-      : "",
+                submittedOn: formatSmallDate(submittedAt),
 
-    // ✅ FIX DUE DATE
-    dueDate: assignment.due_date
-      ? new Date(assignment.due_date).toLocaleDateString("en-GB")
-      : "",
+                submissionStatus: "On time",
 
-    // ✅ FIX TEACHER FILE SAFE
-    teacherFile: assignment.attachment
-      ? {
-          name: assignment.attachment.split("/").pop(),
-          size: "—",
-          url: assignment.attachment,
-        }
-      : null,
-
-    submittedOn: formatSmallDate(submittedAt),
-
-    submissionStatus: "On time",
-
-    // ✅ FIX FILE TYPE + URL
-    submittedFile:
-      assignment?.submitted_file ||
-      assignment?.file ||
-      assignment?.submission_file
-        ? {
-            name: (
-              assignment?.submitted_file ||
-              assignment?.file ||
-              assignment?.submission_file
-            )
-              .split("/")
-              .pop(),
-
-            size: "—",
-
-            type: (
-              assignment?.submitted_file ||
-              assignment?.file ||
-              assignment?.submission_file
-            )
-              .split(".")
-              .pop()
-              .toUpperCase(),
-
-            url:
-              assignment?.submitted_file ||
-              assignment?.file ||
-              assignment?.submission_file,
-          }
-        : null,
-  }}
-/>
+                // ✅ FIXED FILE (NO FALLBACKS)
+                submittedFile: assignment.submitted_file
+                  ? {
+                      name: assignment.submitted_file.split("/").pop(),
+                      size: "—",
+                      type: assignment.submitted_file.split(".").pop().toUpperCase(),
+                      url: assignment.submitted_file,
+                    }
+                  : null,
+              }}
+            />
           )}
 
         </div>
