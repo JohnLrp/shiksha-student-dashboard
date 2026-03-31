@@ -325,6 +325,9 @@ export default function Dashboard() {
               {(showAllSessions ? sessions : collapsedSessions).map((s, idx) => (
                 <SessionCard key={idx} {...s} />
               ))}
+              {(showAllSessions ? sessions : collapsedSessions).length === 0 && (
+                <div className="emptyState">No upcoming live sessions for today</div>
+              )}
             </div>
           </div>
 
