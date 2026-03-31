@@ -199,7 +199,7 @@ export default function Dashboard() {
                 return (
                   <div
                     key={day}
-                    className={`calDate ${isToday ? "calRed" : ""} ${isSelected ? "calSelected" : ""}`}
+                    className={`calDate ${isToday ? "calToday" : ""} ${isSelected ? "calSelected" : ""}`}
                     onClick={() => setSelectedDate({ day, month: currMonth, year: currYear })}
                   >
                     {day}
@@ -423,7 +423,7 @@ export default function Dashboard() {
                 return (
                   <div
                     key={day}
-                    className={`calDate ${isToday ? "calRed" : ""} ${isSelected ? "calSelected" : ""}`}
+                    className={`calDate ${isToday ? "calToday" : ""} ${isSelected ? "calSelected" : ""}`}
                     onClick={() => setSelectedDate({ day, month: currMonth, year: currYear })}
                   >
                     {day}
