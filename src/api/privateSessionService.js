@@ -1,106 +1,78 @@
 /**
- * Private Session API Service — Student Dashboard
- *
- * All methods hit the real backend. No mock data.
- * LiveKit tokens come from /api/private-sessions/<id>/join/
- * which reuses the existing livestream token generator.
+ * FILE: student_dashboard/src/api/privateSessionService.js
+ * Matches the REAL backend: sessions_app with UUID IDs,
+ * scheduled_date/scheduled_time fields, and /join/ endpoint.
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import api from "./apiClient";
 
-function authHeaders() {
-  const token = localStorage.getItem("access_token");
-  return {
-    "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
+const privateSession = {
 
-async function request(method, path, body = null) {
-  const opts = { method, headers: authHeaders() };
-  if (body) opts.body = JSON.stringify(body);
-  const res = await fetch(`${API_BASE}${path}`, opts);
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || err.detail || `Request failed (${res.status})`);
-  }
-  return res.json();
-}
+  // ── Sessions by tab ──
+  async getSessions(tab) {
+    const res = await api.get("/sessions/student/", { params: { tab } });
+    return res.data;
+  },
 
-// ──────────────────────────────────────────────
-// Student session lists
-// ──────────────────────────────────────────────
+  // ── Detail ──
+  async getSessionDetail(id) {
+    const res = await api.get(`/sessions/${id}/`);
+    return res.data;
+  },
 
-export async function getSessions(tab = "scheduled") {
-  return request("GET", `/api/private-sessions/student/?tab=${tab}`);
-}
+  // ── Request a session ──
+  // Backend expects: teacher_id, subject, scheduled_date, scheduled_time,
+  // duration_minutes, session_type, group_strength, notes, student_ids
+  async requestSession(payload) {
+    const res = await api.post("/sessions/request/", payload);
+    return res.data;
+  },
 
-// ──────────────────────────────────────────────
-// Session detail
-// ──────────────────────────────────────────────
+  // ── Cancel ──
+  async cancelSession(sessionId, reason = "") {
+    const res = await api.post(`/sessions/${sessionId}/cancel/`, { reason });
+    return res.data;
+  },
 
-export async function getSessionDetail(sessionId) {
-  return request("GET", `/api/private-sessions/${sessionId}/`);
-}
+  // ── Reschedule responses ──
+  async confirmReschedule(sessionId) {
+    const res = await api.post(`/sessions/${sessionId}/confirm-reschedule/`);
+    return res.data;
+  },
 
-// ──────────────────────────────────────────────
-// Request a new session
-// ──────────────────────────────────────────────
+  async declineReschedule(sessionId) {
+    const res = await api.post(`/sessions/${sessionId}/decline-reschedule/`);
+    return res.data;
+  },
 
-export async function requestSession(data) {
-  return request("POST", "/api/private-sessions/request/", data);
-}
+  // ── Leave / end session ──
+  async leaveSession(sessionId) {
+    const res = await api.post(`/sessions/${sessionId}/end/`);
+    return res.data;
+  },
 
-// ──────────────────────────────────────────────
-// Student actions
-// ──────────────────────────────────────────────
+  // ── LiveKit — uses /join/ endpoint ──
+  async getLiveKitToken(sessionId) {
+    const res = await api.post(`/sessions/${sessionId}/join/`);
+    return res.data;
+  },
 
-export async function cancelSession(sessionId, reason = "") {
-  return request("POST", `/api/private-sessions/${sessionId}/cancel/`, { reason });
-}
+  // ── Teachers list (for request form) ──
+  async getTeachers(subject) {
+    const res = await api.get("/auth/teachers/", { params: { subject } });
+    return res.data;
+  },
 
-export async function confirmReschedule(sessionId) {
-  return request("POST", `/api/private-sessions/${sessionId}/confirm-reschedule/`);
-}
+  // ── Validate student ID (for group form) ──
+  async validateStudentId(studentId) {
+    const res = await api.get(`/auth/student/${studentId}/validate/`);
+    return res.data;
+  },
 
-export async function declineReschedule(sessionId, reason = "") {
-  return request("POST", `/api/private-sessions/${sessionId}/decline-reschedule/`, { reason });
-}
+  // ── Constants ──
+  SUBJECTS: ["Mathematics", "Science", "Physics", "Chemistry", "English", "History", "Biology"],
+  TIME_SLOTS: ["3:00 p.m - 5:00 p.m", "5:00 p.m - 7:00 p.m", "7:00 p.m - 9:00 p.m"],
+  DURATIONS: ["30 minutes", "60 minutes", "90 minutes"],
+};
 
-export async function leaveSession(sessionId) {
-  return request("POST", `/api/private-sessions/${sessionId}/cancel/`, {
-    reason: "Student left the session.",
-  });
-}
-
-// ──────────────────────────────────────────────
-// Teachers list (for the request form)
-// ──────────────────────────────────────────────
-
-export async function getTeachers() {
-  try {
-    return await request("GET", "/api/accounts/teachers/");
-  } catch {
-    console.warn("Teachers list endpoint not available, returning empty.");
-    return [];
-  }
-}
-
-export async function validateStudentId(studentId) {
-  try {
-    return await request(
-      "GET",
-      `/api/accounts/validate-student/?student_id=${encodeURIComponent(studentId)}`
-    );
-  } catch {
-    return { valid: false };
-  }
-}
-
-// ──────────────────────────────────────────────
-// LiveKit — reuses existing livestream token infra
-// ──────────────────────────────────────────────
-
-export async function getLiveKitToken(sessionId) {
-  return request("POST", `/api/private-sessions/${sessionId}/join/`);
-}
+export default privateSession;
