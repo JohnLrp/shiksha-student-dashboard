@@ -1,17 +1,3 @@
-/**
- * FILE: student_dashboard/src/pages/PrivateSessions.jsx
- * REPLACE the existing file.
- *
- * FIXES:
- * - History tab now handles ALL statuses (completed, cancelled, declined,
- *   expired, withdrawn, teacher_no_show, student_no_show)
- * - History filter dropdown added
- * - Cancel modal now sends reason to API via cancelSession(id, reason)
- * - RequestsTab unread logic fixed (was clearing immediately)
- * - Added status pill colors for all statuses
- * - Improved empty states
- */
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -19,6 +5,165 @@ import * as privateSession from "../api/privateSessionService";
 import PrivateSessionCard from "../components/PrivateSessionCard";
 import PageHeader from "../components/PageHeader";
 import "../styles/privateSessions.css";
+
+/* ═══════════════════════════════════════════════════════════
+   MOCK DATA FALLBACK
+═══════════════════════════════════════════════════════════ */
+const MOCK_SESSIONS = {
+  scheduled: [
+    {
+      id: "S-101",
+      course: "Class 8",
+      subject: "Mathematics",
+      topic: "Linear Equations",
+      teacher: "Rahul Sir",
+      date: "2026-04-04",
+      time: "5:00 PM",
+      duration: "60 mins",
+      status: "approved",
+      groupStrength: 3,
+      students: ["Aman Jha", "Rohit Kumar", "Priya Singh"],
+      note: "Need help with solving equation word problems.",
+    },
+    {
+      id: "S-102",
+      course: "Class 8",
+      subject: "Science",
+      topic: "Force and Pressure",
+      teacher: "Anita Ma’am",
+      date: "2026-04-05",
+      time: "6:00 PM",
+      duration: "60 mins",
+      status: "ongoing",
+      groupStrength: 2,
+      students: ["Aman Jha", "Sakshi Verma"],
+      note: "Revision before test.",
+    },
+    {
+      id: "S-103",
+      course: "Class 8",
+      subject: "English",
+      topic: "Grammar Practice",
+      teacher: "Neha Ma’am",
+      date: "2026-04-06",
+      time: "4:30 PM",
+      duration: "60 mins",
+      status: "needs_reconfirmation",
+      originalDate: "2026-04-05",
+      originalTime: "4:30 PM",
+      teacherNote: "Please confirm because of a schedule conflict.",
+      groupStrength: 1,
+      students: ["Aman Jha"],
+      note: "Need help with tense rules.",
+    },
+  ],
+  requests: [
+    {
+      id: "R-201",
+      type: "private",
+      subject: "Mathematics",
+      topic: "Trigonometry Basics",
+      teacher: "Rahul Sir",
+      date: "2026-04-07",
+      time: "5:30 PM",
+      students: 2,
+      status: "pending",
+      note: "Need a basic concept revision session.",
+      unread: true,
+    },
+  ],
+  history: [
+    {
+      id: "H-301",
+      subject: "Mathematics",
+      topic: "Quadratic Equations",
+      teacher: "Rahul Sir",
+      date: "2026-03-29",
+      time: "5:00 PM",
+      duration: "60 mins",
+      groupStrength: 3,
+      status: "completed",
+    },
+    {
+      id: "H-302",
+      subject: "Science",
+      topic: "Light Reflection",
+      teacher: "Anita Ma’am",
+      date: "2026-03-27",
+      time: "4:00 PM",
+      duration: "60 mins",
+      groupStrength: 2,
+      status: "cancelled",
+    },
+  ],
+};
+
+function formatDate(value) {
+  if (!value) return "—";
+  return value;
+}
+
+function formatTime12h(value) {
+  if (!value) return "—";
+  if (typeof value !== "string") return String(value);
+
+  if (value.includes("AM") || value.includes("PM")) return value;
+
+  const parts = value.split(":");
+  if (parts.length < 2) return value;
+
+  let hour = Number(parts[0]);
+  const minute = parts[1];
+  if (Number.isNaN(hour)) return value;
+
+  const ampm = hour >= 12 ? "PM" : "AM";
+  hour = hour % 12 || 12;
+  return `${hour}:${minute} ${ampm}`;
+}
+
+function normalizeSession(item, tab = "scheduled") {
+  return {
+    id: item.id,
+    course: item.course || "Class 8",
+    subject: item.subject || "—",
+    topic: item.topic || item.notes || "Private Session",
+    teacher: item.teacher || item.teacher_name || "Teacher",
+    date: item.date || formatDate(item.scheduled_date),
+    time: item.time || formatTime12h(item.scheduled_time),
+    duration:
+      item.duration ||
+      (item.duration_minutes ? `${item.duration_minutes} mins` : "60 mins"),
+    status: item.status || "pending",
+    groupStrength: item.groupStrength || item.group_strength || item.students || 1,
+    students: Array.isArray(item.students)
+      ? item.students
+      : item.participants?.map((p) => p.name) || [],
+    note: item.note || item.notes || "",
+    originalDate: item.originalDate || "",
+    originalTime: item.originalTime || "",
+    teacherNote: item.teacherNote || item.reschedule_reason || "",
+    unread: Boolean(item.unread),
+    type: item.type || item.session_type || "private",
+    tab,
+  };
+}
+
+async function loadSessionsWithFallback(tab) {
+  try {
+    const data = await privateSession.getSessions(tab);
+    const normalized = Array.isArray(data)
+      ? data.map((item) => normalizeSession(item, tab))
+      : [];
+
+    return { data: normalized, isMock: false };
+  } catch (error) {
+    console.error(`Failed to load ${tab} sessions. Using mock data.`, error);
+    return {
+      data: (MOCK_SESSIONS[tab] || []).map((item) => normalizeSession(item, tab)),
+      isMock: true,
+    };
+  }
+}
 
 /* ═══════════════════════════════════════════════════════════
    HELPERS
@@ -32,9 +177,17 @@ function Stars({ count }) {
 }
 
 function TeacherAvatar({ name, size = 42 }) {
-  const initials = name.split(" ").map((w) => w[0]).join("").slice(0, 2);
+  const initials = (name || "T")
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2);
+
   return (
-    <div className="ps__teacherAvatar" style={{ width: size, height: size, fontSize: size * 0.35 }}>
+    <div
+      className="ps__teacherAvatar"
+      style={{ width: size, height: size, fontSize: size * 0.35 }}
+    >
       {initials}
     </div>
   );
@@ -42,20 +195,47 @@ function TeacherAvatar({ name, size = 42 }) {
 
 function statusLabel(st) {
   const m = {
-    completed: "✔ Completed", cancelled: "✗ Cancelled", declined: "✗ Declined",
-    expired: "⏰ Expired", withdrawn: "↩ Withdrawn",
-    teacher_no_show: "⚠ Teacher No-Show", student_no_show: "⚠ Student No-Show",
+    completed: "✔ Completed",
+    cancelled: "✗ Cancelled",
+    declined: "✗ Declined",
+    expired: "⏰ Expired",
+    withdrawn: "↩ Withdrawn",
+    teacher_no_show: "⚠ Teacher No-Show",
+    student_no_show: "⚠ Student No-Show",
   };
   return m[st] || st;
 }
 
 function statusCls(st) {
   const m = {
-    completed: "completed", cancelled: "cancelled", declined: "declined",
-    expired: "expired", withdrawn: "withdrawn",
-    teacher_no_show: "noshow", student_no_show: "noshow",
+    completed: "completed",
+    cancelled: "cancelled",
+    declined: "declined",
+    expired: "expired",
+    withdrawn: "withdrawn",
+    teacher_no_show: "noshow",
+    student_no_show: "noshow",
   };
   return m[st] || "";
+}
+
+function MockNotice() {
+  return (
+    <div
+      style={{
+        marginBottom: 16,
+        padding: "10px 14px",
+        borderRadius: 10,
+        background: "#fff4e5",
+        border: "1px solid #ffd59e",
+        color: "#8a5700",
+        fontSize: 14,
+        fontWeight: 600,
+      }}
+    >
+      Backend data is unavailable right now, so mock data is being shown.
+    </div>
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -63,15 +243,21 @@ function statusCls(st) {
 ═══════════════════════════════════════════════════════════ */
 function CancelModal({ session, onClose, onConfirm }) {
   const [reason, setReason] = useState("");
+
   return (
     <div className="ps__modalOverlay" onClick={onClose}>
       <div className="ps__modal" onClick={(e) => e.stopPropagation()}>
         <h3 className="ps__modalTitle">Cancel Session?</h3>
         <div className="ps__modalInfo">
-          <div className="ps__modalInfoRow"><strong>{session.subject} Session</strong></div>
+          <div className="ps__modalInfoRow">
+            <strong>{session.subject} Session</strong>
+          </div>
           <div className="ps__modalInfoRow">Teacher: {session.teacher}</div>
-          <div className="ps__modalInfoRow">Timing: {session.date}, {session.time}</div>
+          <div className="ps__modalInfoRow">
+            Timing: {session.date}, {session.time}
+          </div>
         </div>
+
         <label className="ps__modalLabel">Reason for Cancellation (required):</label>
         <input
           className="ps__modalInput"
@@ -79,12 +265,16 @@ function CancelModal({ session, onClose, onConfirm }) {
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         />
+
         <p className="ps__modalNote">
-          <strong>Note:</strong> Frequent cancellations may affect your ability to book future sessions.
-          The Teacher and Group Members will be notified of the cancellation.
+          <strong>Note:</strong> Frequent cancellations may affect your ability to
+          book future sessions. The Teacher and Group Members will be notified.
         </p>
+
         <div className="ps__modalActions">
-          <button className="ps__modalBack" onClick={onClose}>Back</button>
+          <button className="ps__modalBack" onClick={onClose}>
+            Back
+          </button>
           <button
             className="ps__modalConfirm"
             onClick={() => reason.trim() && onConfirm(session.id, reason)}
@@ -107,35 +297,47 @@ function SessionDetail({ session, onBack, onCancel, onEnterRoom }) {
 
   return (
     <div className="ps__detail">
-      <button className="ps__backBtn" onClick={onBack}>← Back</button>
-      <div className={`ps__statusBar ${isLive ? "ps__statusBar--live" : "ps__statusBar--upcoming"}`}>
+      <button className="ps__backBtn" onClick={onBack}>
+        ← Back
+      </button>
+
+      <div
+        className={`ps__statusBar ${
+          isLive ? "ps__statusBar--live" : "ps__statusBar--upcoming"
+        }`}
+      >
         <span>
-          {isLive
-            ? "STATUS: CURRENTLY LIVE"
-            : `STATUS: UPCOMING at ${session.time?.split("–")[0]?.trim()}`}
+          {isLive ? "STATUS: CURRENTLY LIVE" : `STATUS: UPCOMING at ${session.time}`}
         </span>
+
         {isLive ? (
-          <button className="ps__joinBtn" onClick={() => onEnterRoom(session)}>JOIN</button>
+          <button className="ps__joinBtn" onClick={() => onEnterRoom(session)}>
+            JOIN
+          </button>
         ) : (
-          <button className="ps__cancelBtn" onClick={() => setShowCancel(true)}>Cancel Class</button>
+          <button className="ps__cancelBtn" onClick={() => setShowCancel(true)}>
+            Cancel Class
+          </button>
         )}
       </div>
+
       <div className="ps__detailLabel">Summary:</div>
       <div className="ps__detailBody">
         <div className="ps__detailLeft">
           {[
-            ["Course",    session.course],
-            ["Subject",   session.subject],
-            ["Teacher",   session.teacher],
-            ["Date",      session.date],
+            ["Course", session.course],
+            ["Subject", session.subject],
+            ["Teacher", session.teacher],
+            ["Date", session.date],
             ["Time Slot", session.time],
-            ["Duration",  session.duration],
+            ["Duration", session.duration],
           ].map(([k, v]) => (
             <div key={k} className="ps__detailRow">
               <span className="ps__detailKey">{k}:</span>
               <span className="ps__detailVal">{v}</span>
             </div>
           ))}
+
           {session.note && (
             <div className="ps__noteBlock">
               <div className="ps__detailKey">Note (Reason for the Session):</div>
@@ -143,15 +345,21 @@ function SessionDetail({ session, onBack, onCancel, onEnterRoom }) {
             </div>
           )}
         </div>
+
         <div className="ps__detailRight">
-          <div className="ps__groupHeader">Group Strength: <strong>{session.groupStrength}</strong></div>
+          <div className="ps__groupHeader">
+            Group Strength: <strong>{session.groupStrength}</strong>
+          </div>
           <div className="ps__studentList">
             {session.students?.map((s, i) => (
-              <div key={i} className="ps__studentItem">{s}</div>
+              <div key={i} className="ps__studentItem">
+                {s}
+              </div>
             ))}
           </div>
         </div>
       </div>
+
       {showCancel && (
         <CancelModal
           session={session}
@@ -174,25 +382,56 @@ function ScheduledTab({ onEnterRoom }) {
   const [sessions, setSessions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [usingMock, setUsingMock] = useState(false);
 
   useEffect(() => {
-    privateSession.getSessions("scheduled").then((data) => {
-      setSessions(data);
+    let mounted = true;
+
+    (async () => {
+      const result = await loadSessionsWithFallback("scheduled");
+      if (!mounted) return;
+      setSessions(result.data);
+      setUsingMock(result.isMock);
       setLoading(false);
-    });
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleConfirm = async (id) => {
-    await privateSession.confirmReschedule(id);
-    setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, status: "approved" } : s)));
+    try {
+      await privateSession.confirmReschedule(id);
+    } catch (error) {
+      console.error("confirmReschedule failed, updating UI locally.", error);
+    }
+
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status: "approved" } : s))
+    );
   };
+
   const handleDecline = async (id) => {
-    await privateSession.declineReschedule(id);
+    try {
+      await privateSession.declineReschedule(id);
+    } catch (error) {
+      console.error("declineReschedule failed, updating UI locally.", error);
+    }
+
     setSessions((prev) => prev.filter((s) => s.id !== id));
   };
+
   const handleCancel = async (id, reason) => {
-    await privateSession.cancelSession(id, reason);
-    setSessions((prev) => prev.map((s) => (s.id === id ? { ...s, status: "cancelled" } : s)));
+    try {
+      await privateSession.cancelSession(id, reason);
+    } catch (error) {
+      console.error("cancelSession failed, updating UI locally.", error);
+    }
+
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, status: "cancelled" } : s))
+    );
   };
 
   if (loading) return <div style={{ padding: 20 }}>Loading sessions...</div>;
@@ -204,37 +443,54 @@ function ScheduledTab({ onEnterRoom }) {
 
   if (selected) {
     return (
-      <SessionDetail
-        session={selected}
-        onBack={() => setSelected(null)}
-        onCancel={(id, reason) => { handleCancel(id, reason); setSelected(null); }}
-        onEnterRoom={onEnterRoom}
-      />
+      <div>
+        {usingMock && <MockNotice />}
+        <SessionDetail
+          session={selected}
+          onBack={() => setSelected(null)}
+          onCancel={(id, reason) => {
+            handleCancel(id, reason);
+            setSelected(null);
+          }}
+          onEnterRoom={onEnterRoom}
+        />
+      </div>
     );
   }
 
   return (
     <div>
+      {usingMock && <MockNotice />}
+
       {reconfirm.map((s) => (
         <div key={s.id} className="ps__reconfirmBanner">
           <div className="ps__reconfirmIcon">⚠️</div>
           <div className="ps__reconfirmText">
             <strong>{s.teacher} proposed a new time for your {s.subject} session</strong>
             <p>
-              Original: {s.originalDate}, {s.originalTime}<br />
-              New time: <strong>{s.date}, {s.time}</strong><br />
+              Original: {s.originalDate || "—"}, {s.originalTime || "—"}
+              <br />
+              New time: <strong>{s.date}, {s.time}</strong>
+              <br />
               {s.teacherNote && <span>Note: &quot;{s.teacherNote}&quot;</span>}
             </p>
           </div>
           <div className="ps__reconfirmActions">
-            <button className="ps__confirmBtn" onClick={() => handleConfirm(s.id)}>✓ Confirm</button>
-            <button className="ps__declineBtn" onClick={() => handleDecline(s.id)}>✗ Decline</button>
+            <button className="ps__confirmBtn" onClick={() => handleConfirm(s.id)}>
+              ✓ Confirm
+            </button>
+            <button className="ps__declineBtn" onClick={() => handleDecline(s.id)}>
+              ✗ Decline
+            </button>
           </div>
         </div>
       ))}
 
       {active.length === 0 ? (
-        <div className="ps__empty"><div className="ps__emptyIcon">📭</div><p>No scheduled sessions.</p></div>
+        <div className="ps__empty">
+          <div className="ps__emptyIcon">📭</div>
+          <p>No scheduled sessions.</p>
+        </div>
       ) : (
         <div className="ps__cardGrid">
           {active.map((s) => (
@@ -265,7 +521,9 @@ function RequestedCard({ item, onCancel }) {
       <div className="ps__reqTopic">{item.topic}</div>
       <div className="ps__reqTeacher">👤 {item.teacher}</div>
       {item.students && (
-        <div className="ps__reqMeta">👥 {item.students} student{item.students !== 1 ? "s" : ""}</div>
+        <div className="ps__reqMeta">
+          👥 {item.students} student{item.students !== 1 ? "s" : ""}
+        </div>
       )}
       <div className="ps__reqTimeRow">
         <span>📅 {item.date}</span>
@@ -273,7 +531,9 @@ function RequestedCard({ item, onCancel }) {
       </div>
       {item.note && <div className="ps__reqNote">&quot;{item.note}&quot;</div>}
       <div className="ps__reqActions">
-        <button className="ps__reqCancelBtn" onClick={() => onCancel(item.id)}>✕ Cancel</button>
+        <button className="ps__reqCancelBtn" onClick={() => onCancel(item.id)}>
+          ✕ Cancel
+        </button>
       </div>
     </div>
   );
@@ -286,29 +546,46 @@ function RequestsTab({ onUnreadChange }) {
   const [requests, setRequests] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [usingMock, setUsingMock] = useState(false);
 
   useEffect(() => {
-    privateSession.getSessions("requests").then((data) => {
-      setRequests(data);
+    let mounted = true;
+
+    (async () => {
+      const result = await loadSessionsWithFallback("requests");
+      if (!mounted) return;
+
+      setRequests(result.data);
+      setUsingMock(result.isMock);
       setLoading(false);
-      const unread = data.filter((r) => r.unread).length;
-      onUnreadChange(unread);
-    });
-  }, []);
 
-  // Mark as read after a short delay (simulates "seen")
+      const unread = result.data.filter((r) => r.unread).length;
+      onUnreadChange(unread);
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, [onUnreadChange]);
+
   useEffect(() => {
-    if (!loading && requests.some(r => r.unread)) {
+    if (!loading && requests.some((r) => r.unread)) {
       const timer = setTimeout(() => {
         setRequests((prev) => prev.map((r) => ({ ...r, unread: false })));
         onUnreadChange(0);
       }, 2000);
+
       return () => clearTimeout(timer);
     }
-  }, [loading, requests]);
+  }, [loading, requests, onUnreadChange]);
 
   const handleCancel = async (id) => {
-    await privateSession.cancelSession(id);
+    try {
+      await privateSession.cancelSession(id);
+    } catch (error) {
+      console.error("cancelSession failed for request, updating UI locally.", error);
+    }
+
     setRequests((prev) => prev.filter((r) => r.id !== id));
   };
 
@@ -316,30 +593,49 @@ function RequestsTab({ onUnreadChange }) {
 
   if (showForm) {
     return (
-      <RequestForm
-        onBack={() => setShowForm(false)}
-        onSubmit={(data) => {
-          setRequests((prev) => [{
-            id: `R-${Date.now()}`,
-            type: "private",
-            subject: data.subject,
-            topic: "Private Session",
-            teacher: data.teacher?.name || "Teacher",
-            date: data.date || "TBD",
-            time: data.timeSlot || "TBD",
-            students: data.groupSize,
-            status: "pending",
-            note: data.note,
-            unread: false,
-          }, ...prev]);
-          setShowForm(false);
-        }}
-      />
+      <div>
+        {usingMock && <MockNotice />}
+        <RequestForm
+          onBack={() => setShowForm(false)}
+          onSubmit={async (data) => {
+            try {
+              const created = await privateSession.requestSession(data);
+              const normalized = normalizeSession(created, "requests");
+              setRequests((prev) => [normalized, ...prev]);
+            } catch (error) {
+              console.error("requestSession failed, adding UI item locally.", error);
+              setRequests((prev) => [
+                normalizeSession(
+                  {
+                    id: `R-${Date.now()}`,
+                    subject: data.subject,
+                    notes: data.note,
+                    teacher_name: data.teacher?.name || "Teacher",
+                    scheduled_date: data.date,
+                    scheduled_time: data.timeSlot,
+                    duration_minutes: parseInt(data.duration, 10) || 60,
+                    status: "pending",
+                    group_strength: data.groupSize,
+                    unread: false,
+                    topic: "Private Session",
+                  },
+                  "requests"
+                ),
+                ...prev,
+              ]);
+            }
+
+            setShowForm(false);
+          }}
+        />
+      </div>
     );
   }
 
   return (
     <div>
+      {usingMock && <MockNotice />}
+
       <div className="ps__reqHeader">
         <span className="ps__reqCount">
           {requests.length} request{requests.length !== 1 ? "s" : ""}
@@ -350,7 +646,10 @@ function RequestsTab({ onUnreadChange }) {
       </div>
 
       {requests.length === 0 ? (
-        <div className="ps__empty"><div className="ps__emptyIcon">📋</div><p>No pending requests.</p></div>
+        <div className="ps__empty">
+          <div className="ps__emptyIcon">📋</div>
+          <p>No pending requests.</p>
+        </div>
       ) : (
         <div className="ps__reqGrid">
           {requests.map((r) => (
@@ -363,15 +662,20 @@ function RequestsTab({ onUnreadChange }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   4-STEP REQUEST FORM (unchanged — was working)
+   REQUEST FORM
 ═══════════════════════════════════════════════════════════ */
 function RequestForm({ onBack, onSubmit }) {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [data, setData] = useState({
-    subject: "Mathematics", teacher: null,
-    groupSize: 6, students: Array(9).fill(""),
-    date: "4th April 2026", timeSlot: "", duration: "", note: "",
+    subject: "Mathematics",
+    teacher: null,
+    groupSize: 1,
+    students: Array(9).fill(""),
+    date: "2026-04-04",
+    timeSlot: "",
+    duration: "",
+    note: "",
   });
 
   const displayName = user?.profile?.full_name || user?.email || "Student";
@@ -379,13 +683,18 @@ function RequestForm({ onBack, onSubmit }) {
 
   const canNext = () => {
     if (step === 1) return !!data.teacher;
+
     if (step === 2) {
-      return Array(data.groupSize - 1).fill(0).every((_, i) => {
-        const val = data.students[i] || "";
-        return val.trim() !== "" && !!privateSession.MOCK_STUDENTS_DB[val];
-      });
+      return Array(data.groupSize - 1)
+        .fill(0)
+        .every((_, i) => {
+          const val = data.students[i] || "";
+          return val.trim() !== "" && !!privateSession.MOCK_STUDENTS_DB[val];
+        });
     }
+
     if (step === 3) return !!data.timeSlot && !!data.duration;
+
     return true;
   };
 
@@ -396,32 +705,52 @@ function RequestForm({ onBack, onSubmit }) {
       <div className="ps__stepper">
         {steps.map((s, i) => (
           <div key={s} className="ps__stepGroup">
-            <div className={`ps__stepCircle ${step > i + 1 ? "done" : step === i + 1 ? "active" : ""}`}>
+            <div
+              className={`ps__stepCircle ${
+                step > i + 1 ? "done" : step === i + 1 ? "active" : ""
+              }`}
+            >
               {step > i + 1 ? "✓" : i + 1}
             </div>
-            <span className={`ps__stepLabel ${step === i + 1 ? "active" : ""}`}>{s}</span>
-            {i < steps.length - 1 && <div className={`ps__stepLine ${step > i + 1 ? "done" : ""}`} />}
+            <span className={`ps__stepLabel ${step === i + 1 ? "active" : ""}`}>
+              {s}
+            </span>
+            {i < steps.length - 1 && (
+              <div className={`ps__stepLine ${step > i + 1 ? "done" : ""}`} />
+            )}
           </div>
         ))}
       </div>
 
       <div className="ps__formBody">
         {step === 1 && <Step1 data={data} setData={setData} />}
-        {step === 2 && <Step2 data={data} setData={setData} displayName={displayName} />}
+        {step === 2 && (
+          <Step2 data={data} setData={setData} displayName={displayName} />
+        )}
         {step === 3 && <Step3 data={data} setData={setData} />}
         {step === 4 && <Step4 data={data} displayName={displayName} />}
       </div>
 
       <div className="ps__formActions">
-        <button className="ps__formBackBtn" onClick={() => (step === 1 ? onBack() : setStep(step - 1))}>
+        <button
+          className="ps__formBackBtn"
+          onClick={() => (step === 1 ? onBack() : setStep(step - 1))}
+        >
           {step === 1 ? "Cancel" : "Back"}
         </button>
+
         {step < 4 ? (
-          <button className="ps__formNextBtn" onClick={() => setStep(step + 1)} disabled={!canNext()}>
+          <button
+            className="ps__formNextBtn"
+            onClick={() => setStep(step + 1)}
+            disabled={!canNext()}
+          >
             Continue
           </button>
         ) : (
-          <button className="ps__formSubmitBtn" onClick={() => onSubmit(data)}>Submit</button>
+          <button className="ps__formSubmitBtn" onClick={() => onSubmit(data)}>
+            Submit
+          </button>
         )}
       </div>
     </div>
@@ -441,26 +770,46 @@ function Step1({ data, setData }) {
         <label className="ps__fieldLabel">Course :</label>
         <span className="ps__fieldVal">Class 8 (Selected by default)</span>
       </div>
+
       <div className="ps__fieldRow" style={{ alignItems: "center" }}>
         <label className="ps__fieldLabel">Subject :</label>
-        <select className="ps__select" value={data.subject} onChange={(e) => setData({ ...data, subject: e.target.value, teacher: null })}>
-          {privateSession.SUBJECTS.map((s) => <option key={s}>{s}</option>)}
+        <select
+          className="ps__select"
+          value={data.subject}
+          onChange={(e) =>
+            setData({ ...data, subject: e.target.value, teacher: null })
+          }
+        >
+          {privateSession.SUBJECTS.map((s) => (
+            <option key={s}>{s}</option>
+          ))}
         </select>
       </div>
+
       <div className="ps__sectionLabel">Teachers for {data.subject} :</div>
       <div className="ps__teacherGrid">
         {teachers.map((t) => (
-          <div key={t.id} className={`ps__teacherCard ${data.teacher?.id === t.id ? "selected" : ""}`} onClick={() => setData({ ...data, teacher: t })}>
+          <div
+            key={t.id}
+            className={`ps__teacherCard ${data.teacher?.id === t.id ? "selected" : ""}`}
+            onClick={() => setData({ ...data, teacher: t })}
+          >
             <TeacherAvatar name={t.name} size={42} />
             <div className="ps__teacherInfo">
               <div className="ps__teacherName">{t.name}</div>
               <div className="ps__teacherMeta">
                 <span>{t.sessions} Private Sessions</span>
-                <Stars count={t.rating} />
+                <Stars count={Math.round(Number(t.rating || 4))} />
               </div>
             </div>
-            <div className={`ps__teacherAvail ${t.available ? "available" : "unavailable"}`}>
-              {t.available ? "Currently available" : `Currently unavailable (For ${t.unavailableDays} days)`}
+            <div
+              className={`ps__teacherAvail ${
+                t.available ? "available" : "unavailable"
+              }`}
+            >
+              {t.available
+                ? "Currently available"
+                : `Currently unavailable (For ${t.unavailableDays} days)`}
             </div>
           </div>
         ))}
@@ -474,7 +823,9 @@ function Step2({ data, setData, displayName }) {
 
   const applyGroupSize = (n) => {
     const size = Math.max(1, Math.min(10, n));
-    const students = Array(size - 1).fill("").map((_, i) => data.students[i] || "");
+    const students = Array(size - 1)
+      .fill("")
+      .map((_, i) => data.students[i] || "");
     setData({ ...data, groupSize: size, students });
     setGroupInput(String(size));
   };
@@ -483,12 +834,12 @@ function Step2({ data, setData, displayName }) {
     const raw = e.target.value.replace(/\D/g, "").slice(0, 2);
     setGroupInput(raw);
     if (raw === "") return;
-    const n = parseInt(raw);
-    if (!isNaN(n)) applyGroupSize(n);
+    const n = parseInt(raw, 10);
+    if (!Number.isNaN(n)) applyGroupSize(n);
   };
 
   const handleGroupBlur = () => {
-    const n = parseInt(groupInput);
+    const n = parseInt(groupInput, 10);
     if (!n || n < 1) applyGroupSize(1);
     else if (n > 10) applyGroupSize(10);
     else applyGroupSize(n);
@@ -496,9 +847,10 @@ function Step2({ data, setData, displayName }) {
 
   const setStudent = (i, val) => {
     const s = [...data.students];
-    s[i] = val;
+    s[i] = val.toUpperCase();
     setData({ ...data, students: s });
   };
+
   const validateId = (id) => privateSession.MOCK_STUDENTS_DB[id] || null;
 
   return (
@@ -506,28 +858,60 @@ function Step2({ data, setData, displayName }) {
       <div className="ps__groupRow">
         <label className="ps__fieldLabel">Group Strength</label>
         <div className="ps__groupCtrl">
-          <button className="ps__groupBtn" onClick={() => applyGroupSize(data.groupSize - 1)}>−</button>
-          <input className="ps__groupInput" value={groupInput} onChange={handleGroupType} onBlur={handleGroupBlur} maxLength={2} />
-          <button className="ps__groupBtn" onClick={() => applyGroupSize(data.groupSize + 1)}>+</button>
+          <button className="ps__groupBtn" onClick={() => applyGroupSize(data.groupSize - 1)}>
+            −
+          </button>
+          <input
+            className="ps__groupInput"
+            value={groupInput}
+            onChange={handleGroupType}
+            onBlur={handleGroupBlur}
+            maxLength={2}
+          />
+          <button className="ps__groupBtn" onClick={() => applyGroupSize(data.groupSize + 1)}>
+            +
+          </button>
         </div>
       </div>
+
       <div className="ps__studentInputs">
         <div className="ps__studentRow">
           <span className="ps__slotNum">1.</span>
-          <input className="ps__studentInput ps__studentInput--you" value={`${displayName} (You)`} readOnly />
+          <input
+            className="ps__studentInput ps__studentInput--you"
+            value={`${displayName} (You)`}
+            readOnly
+          />
           <span className="ps__youTag">You</span>
         </div>
-        {Array(data.groupSize - 1).fill(0).map((_, i) => {
-          const val = data.students[i] || "";
-          const name = validateId(val);
-          return (
-            <div key={i} className="ps__studentRow">
-              <span className="ps__slotNum">{i + 2}.</span>
-              <input className={`ps__studentInput ${name ? "ps__studentInput--valid" : val ? "ps__studentInput--invalid" : ""}`} placeholder="Enter Student id" value={val} onChange={(e) => setStudent(i, e.target.value)} />
-              {name ? <span className="ps__validTag">✓ {name}</span> : <button className="ps__clearBtn" onClick={() => setStudent(i, "")}>✕</button>}
-            </div>
-          );
-        })}
+
+        {Array(data.groupSize - 1)
+          .fill(0)
+          .map((_, i) => {
+            const val = data.students[i] || "";
+            const name = validateId(val);
+
+            return (
+              <div key={i} className="ps__studentRow">
+                <span className="ps__slotNum">{i + 2}.</span>
+                <input
+                  className={`ps__studentInput ${
+                    name ? "ps__studentInput--valid" : val ? "ps__studentInput--invalid" : ""
+                  }`}
+                  placeholder="Enter Student id"
+                  value={val}
+                  onChange={(e) => setStudent(i, e.target.value)}
+                />
+                {name ? (
+                  <span className="ps__validTag">✓ {name}</span>
+                ) : (
+                  <button className="ps__clearBtn" onClick={() => setStudent(i, "")}>
+                    ✕
+                  </button>
+                )}
+              </div>
+            );
+          })}
       </div>
     </div>
   );
@@ -538,22 +922,48 @@ function Step3({ data, setData }) {
     <div>
       <div className="ps__fieldRow" style={{ marginBottom: 20 }}>
         <label className="ps__fieldLabel">Select Date:</label>
-        <span className="ps__fieldVal" style={{ fontWeight: 700 }}>{data.date} 📅</span>
+        <input
+          type="date"
+          className="ps__input"
+          value={data.date}
+          onChange={(e) => setData({ ...data, date: e.target.value })}
+        />
       </div>
+
       <div className="ps__sectionLabel">Select Time Slots:</div>
       <div className="ps__slotBtns">
         {privateSession.TIME_SLOTS.map((t) => (
-          <button key={t} className={`ps__slotBtn ${data.timeSlot === t ? "selected" : ""}`} onClick={() => setData({ ...data, timeSlot: t })}>{t}</button>
+          <button
+            key={t}
+            className={`ps__slotBtn ${data.timeSlot === t ? "selected" : ""}`}
+            onClick={() => setData({ ...data, timeSlot: t })}
+          >
+            {t}
+          </button>
         ))}
       </div>
+
       <div className="ps__sectionLabel">Select Durations:</div>
       <div className="ps__slotBtns">
         {privateSession.DURATIONS.map((d) => (
-          <button key={d} className={`ps__slotBtn ${data.duration === d ? "selected" : ""}`} onClick={() => setData({ ...data, duration: d })}>{d}</button>
+          <button
+            key={d}
+            className={`ps__slotBtn ${data.duration === d ? "selected" : ""}`}
+            onClick={() => setData({ ...data, duration: d })}
+          >
+            {d}
+          </button>
         ))}
       </div>
+
       <div className="ps__sectionLabel">Note (Reason for the Session):</div>
-      <textarea className="ps__noteArea" placeholder="Need help understanding trigonometric identities..." value={data.note} onChange={(e) => setData({ ...data, note: e.target.value })} rows={5} />
+      <textarea
+        className="ps__noteArea"
+        placeholder="Need help understanding concepts..."
+        value={data.note}
+        onChange={(e) => setData({ ...data, note: e.target.value })}
+        rows={5}
+      />
     </div>
   );
 }
@@ -561,17 +971,22 @@ function Step3({ data, setData }) {
 function Step4({ data, displayName }) {
   const filled = data.students.filter((s) => s && privateSession.MOCK_STUDENTS_DB[s]);
   const all = [displayName, ...filled.map((s) => privateSession.MOCK_STUDENTS_DB[s])];
-  const groupLabel = all.length > 1 ? `${all[0].split(" ")[0]} + ${all.length - 1} others` : all[0];
+  const groupLabel =
+    all.length > 1 ? `${all[0].split(" ")[0]} + ${all.length - 1} others` : all[0];
 
   return (
     <div>
       <div className="ps__summaryLabel">Summary:</div>
       <div className="ps__summaryTable">
         {[
-          ["Course", "Class 8"], ["Subject", data.subject],
-          ["Teacher", data.teacher?.name || "—"], ["Date", data.date],
-          ["Time Slot", data.timeSlot || "—"], ["Duration", data.duration || "—"],
-          ["Group", groupLabel], ["Note", data.note || "—"],
+          ["Course", "Class 8"],
+          ["Subject", data.subject],
+          ["Teacher", data.teacher?.name || "—"],
+          ["Date", data.date],
+          ["Time Slot", data.timeSlot || "—"],
+          ["Duration", data.duration || "—"],
+          ["Group", groupLabel],
+          ["Note", data.note || "—"],
         ].map(([k, v]) => (
           <div key={k} className="ps__summaryRow">
             <span className="ps__summaryKey">{k}</span>
@@ -584,31 +999,42 @@ function Step4({ data, displayName }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   HISTORY TAB (FIXED — now handles all statuses + filter)
+   HISTORY TAB
 ═══════════════════════════════════════════════════════════ */
 function HistoryTab() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [usingMock, setUsingMock] = useState(false);
 
   useEffect(() => {
-    privateSession.getSessions("history").then((data) => {
-      setHistory(data);
+    let mounted = true;
+
+    (async () => {
+      const result = await loadSessionsWithFallback("history");
+      if (!mounted) return;
+      setHistory(result.data);
+      setUsingMock(result.isMock);
       setLoading(false);
-    });
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  const filtered = filter === "all"
-    ? history
-    : history.filter(h => h.status === filter);
+  const filtered = filter === "all" ? history : history.filter((h) => h.status === filter);
 
   if (loading) return <div style={{ padding: 20 }}>Loading history...</div>;
 
   return (
     <div>
-      {/* Filter */}
+      {usingMock && <MockNotice />}
+
       <div className="ps__historyFilterRow">
-        <span className="ps__reqCount">{filtered.length} session{filtered.length !== 1 ? "s" : ""}</span>
+        <span className="ps__reqCount">
+          {filtered.length} session{filtered.length !== 1 ? "s" : ""}
+        </span>
         <select
           className="ps__historyFilter"
           value={filter}
@@ -646,7 +1072,9 @@ function HistoryTab() {
                 <div className="ps__historyMeta">📅 {h.date}</div>
                 <div className="ps__historyMeta">🕐 {h.time}</div>
                 <div className="ps__historyMeta">⏱ {h.duration}</div>
-                <div className="ps__historyMeta">👥 {h.groupStrength} student{h.groupStrength !== 1 ? "s" : ""}</div>
+                <div className="ps__historyMeta">
+                  👥 {h.groupStrength} student{h.groupStrength !== 1 ? "s" : ""}
+                </div>
               </div>
             </div>
           ))}
