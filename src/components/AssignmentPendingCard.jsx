@@ -27,7 +27,7 @@ export default function AssignmentPendingCard({
       {/* ✅ LABEL ADDED */}
       {chapter && (
         <p className="assignmentPendingCard__chapter">
-          <span className="assignmentPendingCard__label">Subject:</span> {chapter}
+          <span className="assignmentPendingCard__label">Chapter:</span> {chapter}
         </p>
       )}
 
