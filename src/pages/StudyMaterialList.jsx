@@ -22,26 +22,13 @@ export default function StudyMaterialList() {
         const materials = res.data.map((item) => {
           const firstFile = item.files?.[0];
 
-          let fileUrl = null;
-
-          if (firstFile?.file) {
-
-            // If backend already returns full URL
-            if (firstFile.file.startsWith("http")) {
-              fileUrl = firstFile.file;
-            } 
-            // Otherwise build correct API media URL
-            else {
-              fileUrl = `https://api.shikshacom.com${firstFile.file}`;
-            }
-
-          }
-
           return {
             id: item.id,
             name: item.title,
             date: new Date(item.created_at).toLocaleDateString(),
-            fileUrl
+
+            // ✅ FIX: correct field from backend
+            fileUrl: firstFile?.file_url || null
           };
         });
 
@@ -62,10 +49,8 @@ export default function StudyMaterialList() {
   const handleDownload = (chapter) => {
     if (!chapter.fileUrl) return;
 
-    const link = document.createElement("a");
-    link.href = chapter.fileUrl;
-    link.download = chapter.name;
-    link.click();
+    // ✅ FIX: reliable download for external URLs
+    window.open(chapter.fileUrl, "_blank");
   };
 
   const filteredChapters = chaptersData.filter((chapter) =>
