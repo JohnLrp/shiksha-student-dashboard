@@ -31,7 +31,7 @@ export default function SubjectsStudyMaterial() {
   }, [activeCourse]);
 
   const handleSubjectClick = (id) => {
-    navigate(`/study-material/${id}`);
+    navigate(`/study-material/list/${id}`);
   };
 
   return (
