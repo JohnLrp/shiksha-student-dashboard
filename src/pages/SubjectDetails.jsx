@@ -98,7 +98,21 @@ export default function SubjectDetails() {
         <div className="secondGrid">
           <div className="liveSessionsCard">
             <h3 className="cardTitleMain">Upcoming Live Sessions</h3>
-            <p className="sessionItemText">See the Live Sessions page for upcoming classes.</p>
+            {subjectDetails.upcomingSessions?.length > 0 ? (
+              subjectDetails.upcomingSessions.map((session) => (
+                <div key={session.id} className="sessionItem" onClick={() => navigate(`/live/${session.id}`)}>
+                  <span className="sessionItemTitle">{session.title}</span>
+                  <span className="sessionItemTime">
+                    {new Date(session.start_time).toLocaleString()}
+                  </span>
+                  <span className={`sessionBadge sessionBadge--${session.status.toLowerCase()}`}>
+                    {session.status}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="sessionItemText">No upcoming sessions for this subject.</p>
+            )}
           </div>
 
           <div
