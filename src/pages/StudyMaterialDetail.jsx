@@ -37,7 +37,7 @@ export default function StudyMaterialDetail() {
           <h3 className="smd-topic">{material.title}</h3>
 
           <p className="smd-chapter">
-            {material.chapter_name || "Chapter"}
+            {material.chapter_title || "No chapter"}
           </p>
 
           <div className="smd-note">
@@ -56,7 +56,6 @@ export default function StudyMaterialDetail() {
             Files - {material.files?.length || 0}
           </div>
 
-          {/* FLOATING COUNT BADGE */}
           <div className="smd-file-count">
             {material.files?.length || 0}
           </div>
@@ -69,17 +68,13 @@ export default function StudyMaterialDetail() {
                 <div className="smd-file-info">
                   <div className="smd-file-icon">📄</div>
 
-                  <div>
+                  <div className="smd-file-text">
                     <p className="smd-file-name">{file.file_name}</p>
-                    <span className="smd-file-size">20 MB</span>
+                    <span className="smd-file-size">—</span>
                   </div>
                 </div>
 
                 <div className="smd-file-actions">
-                  <button onClick={() => window.open(file.file_url)}>
-                    View
-                  </button>
-
                   <button onClick={() => window.open(file.file_url)}>
                     ⬇
                   </button>
