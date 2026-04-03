@@ -1,5 +1,6 @@
 import { useState } from "react";
 import "../styles/changePassword.css";
+import api from "../api/apiClient";
 
 export default function ChangePassword() {
   const [formData, setFormData] = useState({
@@ -16,6 +17,8 @@ export default function ChangePassword() {
     hasUpper: false,
   });
 
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
   const handleChange = (field, value) => {
     setFormData((prev) => ({
       ...prev,
@@ -33,39 +36,54 @@ export default function ChangePassword() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setMessage({ type: "", text: "" });
 
     const allValid = Object.values(validation).every((v) => v);
     if (!allValid) {
-      alert("Please meet all password requirements");
+      setMessage({ type: "error", text: "Please meet all password requirements" });
       return;
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      setMessage({ type: "error", text: "Passwords do not match" });
       return;
     }
 
     if (!formData.oldPassword) {
-      alert("Please enter your old password");
+      setMessage({ type: "error", text: "Please enter your old password" });
       return;
     }
 
-    alert("Password changed successfully!");
-    setFormData({
-      oldPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
-    setValidation({
-      minLength: false,
-      hasNumber: false,
-      hasSpecial: false,
-      hasLower: false,
-      hasUpper: false,
-    });
+    try {
+      setLoading(true);
+      await api.post("/accounts/change-password/", {
+        old_password: formData.oldPassword,
+        new_password: formData.newPassword,
+      });
+      setMessage({ type: "success", text: "Password changed successfully!" });
+      setFormData({ oldPassword: "", newPassword: "", confirmPassword: "" });
+      setValidation({
+        minLength: false,
+        hasNumber: false,
+        hasSpecial: false,
+        hasLower: false,
+        hasUpper: false,
+      });
+    } catch (err) {
+      const data = err.response?.data;
+      const errorMsg =
+        data?.old_password?.[0] ||
+        data?.new_password?.[0] ||
+        data?.detail ||
+        "Failed to change password. Please try again.";
+      setMessage({ type: "error", text: errorMsg });
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   return (
     <div className="changePassword">
@@ -73,6 +91,11 @@ export default function ChangePassword() {
         <h2 className="changePassword__title">Change Password</h2>
 
         <form onSubmit={handleSubmit} className="changePassword__form">
+          {message.text && (
+            <div className={`changePassword__message changePassword__message--${message.type}`}>
+              {message.text}
+            </div>
+          )}
           <div className="changePassword__field">
             <label className="changePassword__label">Old Password</label>
             <input
@@ -120,9 +143,10 @@ export default function ChangePassword() {
             />
           </div>
 
-          <button type="submit" className="changePassword__btn">
-            Change Password
+          <button type="submit" className="changePassword__btn" disabled={loading}>
+            {loading ? "Changing..." : "Change Password"}
           </button>
+
         </form>
       </div>
     </div>
