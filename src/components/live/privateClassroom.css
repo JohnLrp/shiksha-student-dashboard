@@ -313,6 +313,134 @@
 .pvt-participant-role { font-size: 11px; color: #6b7591; margin-top: 1px; }
 .pvt-participant-icons { display: flex; align-items: center; gap: 6px; font-size: 14px; }
 
+/* ── Speaking / Pinned tile borders ── */
+.pvt-tile-speaking {
+  border-color: #22c55e;
+  box-shadow: 0 0 0 2px rgba(34,197,94,0.3);
+}
+
+.pvt-tile-pinned {
+  border-color: #4f7ef7;
+  box-shadow: 0 0 0 2px rgba(79,126,247,0.3);
+}
+
+.pvt-speaking-dot {
+  color: #22c55e;
+  font-size: 8px;
+  animation: pvt-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pvt-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ── Pin button ── */
+.pvt-pin-btn {
+  position: absolute;
+  top: 8px; right: 8px;
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: rgba(0,0,0,0.45);
+  color: #a0aec0;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  z-index: 10;
+}
+.pvt-tile:hover .pvt-pin-btn { opacity: 1; }
+.pvt-pin-active { opacity: 1; background: rgba(79,126,247,0.3); color: #4f7ef7; }
+
+/* ── Muted bar ── */
+.pvt-muted-bar {
+  position: absolute;
+  top: 10px; left: 10px;
+  background: rgba(245,101,101,0.85);
+  color: white;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px; font-weight: 600;
+  z-index: 5;
+}
+
+/* ── Raised hand indicator ── */
+.pvt-hand-indicator {
+  position: absolute;
+  top: 10px; right: 42px;
+  font-size: 22px;
+  animation: pvt-hand-wave 0.6s ease-in-out infinite alternate;
+  z-index: 5;
+}
+
+@keyframes pvt-hand-wave {
+  from { transform: rotate(-12deg); }
+  to { transform: rotate(12deg); }
+}
+
+/* ── Raised hand banner ── */
+.pvt-hand-banner {
+  background: rgba(234,179,8,0.15);
+  color: #eab308;
+  padding: 8px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid rgba(234,179,8,0.2);
+  flex-shrink: 0;
+}
+
+/* ── End button variant ── */
+.pvt-end-btn {
+  background: rgba(245,101,101,0.2);
+}
+
+/* ── Control bar sections ── */
+.pvt-ctrl-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pvt-ctrl-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Toast Notifications ── */
+.pvt-toast-wrap {
+  position: fixed;
+  top: 70px; right: 20px;
+  display: flex; flex-direction: column;
+  gap: 8px;
+  z-index: 500;
+  pointer-events: none;
+}
+
+.pvt-toast {
+  background: #1e2435;
+  border: 1px solid rgba(255,255,255,0.1);
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px; font-weight: 500;
+  color: #e8eaf2;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  animation: pvt-toast-in 0.25s ease;
+}
+
+.pvt-toast-warn {
+  border-color: rgba(245,101,101,0.3);
+  color: #f56565;
+}
+
+@keyframes pvt-toast-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
   .pvt-sidebar { display: none; }

@@ -702,3 +702,86 @@
 }
 .tps__live-error h2 { color: #1e293b; margin: 0 0 8px; font-size: 20px; }
 .tps__live-error p { color: #64748b; margin: 0 0 24px; max-width: 400px; }
+
+
+/* ── Pending status bar ── */
+.ps__statusBar--pending {
+  background: #fffbeb;
+  color: #d97706;
+  border-bottom: 1px solid #fcd34d;
+}
+
+/* ── Status bar colors for history ── */
+.ps__statusBar--completed { background: #f0fdf4; color: #16a34a; border-bottom: 1px solid #bbf7d0; }
+.ps__statusBar--cancelled { background: #fef2f2; color: #dc2626; border-bottom: 1px solid #fecaca; }
+.ps__statusBar--declined { background: #fef2f2; color: #dc2626; border-bottom: 1px solid #fecaca; }
+.ps__statusBar--expired { background: #f9fafb; color: #6b7280; border-bottom: 1px solid #d1d5db; }
+.ps__statusBar--withdrawn { background: #f9fafb; color: #6b7280; border-bottom: 1px solid #d1d5db; }
+.ps__statusBar--noshow { background: #fffbeb; color: #d97706; border-bottom: 1px solid #fcd34d; }
+
+/* ── Reschedule banner in request detail ── */
+.ps__reschedBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 16px 20px;
+  margin: 0 20px 16px;
+}
+
+.ps__reschedBannerIcon { font-size: 22px; flex-shrink: 0; }
+
+.ps__reschedBannerText { flex: 1; }
+.ps__reschedBannerText strong { font-size: 14px; color: var(--ps-text-dark); display: block; margin-bottom: 4px; }
+.ps__reschedBannerText p { font-size: 12px; color: var(--ps-text-muted); line-height: 1.6; }
+
+/* ── Modal info label styling ── */
+.ps__modalInfoLabel {
+  color: var(--ps-text-muted);
+  font-weight: 500;
+  min-width: 80px;
+  display: inline-block;
+}
+
+/* ── History card clickable ── */
+.ps__historyCard--clickable {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.ps__historyCard--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  border-color: var(--ps-accent);
+}
+
+/* ── History badge additional colors ── */
+.ps__historyBadge--declined { background: #fef2f2; color: #dc2626; }
+.ps__historyBadge--expired { background: #f9fafb; color: #6b7280; }
+.ps__historyBadge--withdrawn { background: #f3f4f6; color: #6b7280; }
+.ps__historyBadge--noshow { background: #fffbeb; color: #d97706; }
+
+/* ── History filter row ── */
+.ps__historyFilterRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ps__historyFilter {
+  padding: 7px 12px;
+  border: 1.5px solid var(--ps-border);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--ps-text-dark);
+  background: white;
+  outline: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+.ps__historyFilter:focus { border-color: var(--ps-accent); }
