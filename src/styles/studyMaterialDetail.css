@@ -1,35 +1,23 @@
+/* PAGE */
 .smd-page {
-  padding: 20px;
-  background: #c8d0d3;
-  min-height: 100vh;
-}
-
-/* BACK */
-.smd-back {
-  background: #4ba7b5;
-  color: white;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
+  height: 100vh;
+  overflow: hidden;
+  padding: 16px;
 }
 
 /* HEADER */
 .smd-header {
   background: #eceff0;
-  padding: 14px 20px;
-  border-radius: 12px;
-  margin-top: 10px;
+  border-radius: 10px;
+  padding: 12px 20px;
+  margin-bottom: 12px;
 }
 
 /* MAIN WRAPPER */
 .smd-wrapper {
   display: flex;
   gap: 40px;
-  margin-top: 20px;
-  background: #dcdcdc;
-  padding: 30px;
-  border-radius: 18px;
+  height: calc(100vh - 140px); /* fixed height */
 }
 
 /* LEFT */
@@ -37,111 +25,83 @@
   flex: 1;
 }
 
-.smd-topic {
-  font-size: 22px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-
-.smd-chapter {
-  color: #444;
-  font-size: 14px;
-  margin-bottom: 20px;
-}
-
-/* NOTE */
-.smd-note-label {
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-
+/* NOTE BOX */
 .smd-note-box {
-  background: #f3f3f3;
-  border: 1px solid #aaa;
+  background: #eee;
   border-radius: 6px;
-  padding: 12px;
-  max-width: 420px;
-  font-size: 13px;
+  padding: 10px;
+  max-width: 500px;
 }
 
 /* RIGHT PANEL */
 .smd-files-panel {
-  width: 330px;
-  background: #2e5b63;
-  border-radius: 14px;
-  padding: 20px;
+  width: 320px;
+  background: #2f5d62;
+  border-radius: 12px;
+  padding: 16px;
   color: white;
   position: relative;
-}
-
-/* HEADER */
-.smd-files-header {
-  text-align: center;
-  font-weight: 600;
-  margin-bottom: 14px;
-}
-
-/* FLOAT BADGE */
-.smd-file-count {
-  position: absolute;
-  top: 10px;
-  right: -10px;
-  background: #4caf50;
-  color: white;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-/* FILE LIST */
-.smd-files-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+}
+
+/* FIXED HEIGHT FILE LIST */
+.smd-files-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 260px; /* approx 4 files */
 }
 
 /* FILE CARD */
 .smd-file-card {
-  border: 1px dashed rgba(255,255,255,0.5);
-  padding: 12px;
-  border-radius: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border: 1px dashed rgba(255,255,255,0.5);
+  border-radius: 10px;
+  padding: 10px;
 }
 
-/* FILE INFO */
-.smd-file-info {
+/* FILE TEXT */
+.smd-file-text {
   display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.smd-file-icon {
-  font-size: 18px;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .smd-file-name {
-  font-size: 13px;
-  margin: 0;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
 }
 
+/* FILE SIZE */
 .smd-file-size {
-  font-size: 11px;
+  font-size: 10px;
   opacity: 0.7;
 }
 
-/* ACTIONS */
+/* DOWNLOAD BUTTON */
 .smd-file-actions button {
   background: transparent;
   border: none;
   color: white;
   cursor: pointer;
-  margin-left: 10px;
+  font-size: 16px;
+}
+
+/* FLOAT BADGE */
+.smd-file-count {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #4caf50;
+  border-radius: 50%;
+  padding: 6px 10px;
   font-size: 12px;
 }
