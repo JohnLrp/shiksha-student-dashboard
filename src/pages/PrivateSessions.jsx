@@ -665,7 +665,7 @@ function RequestForm({ onBack, onSubmit }) {
     try {
       await onSubmit({
         teacherId: data.teacher.id,
-        subject: data.subject,
+        subject: data.subject_id,
         scheduledDate: data.scheduledDate,
         scheduledTime: data.timeSlot.value,
         durationMinutes: data.duration.value,
