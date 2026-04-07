@@ -227,24 +227,29 @@ export default function PrivateClassroomUI({ role, session }) {
   // ── Load persisted chat messages on mount ──
   useEffect(() => {
     if (!session?.id) return;
+    const myName = localParticipant?.name || "";
     api.get(`/sessions/${session.id}/chat/`).then((res) => {
-      const msgs = (res.data || []).map((m) => ({
-        id: m.id,
-        sender: m.sender_name,
-        text: m.message,
-        isTeacher: m.sender_role === "teacher",
-        isMe: false,
-        time: new Date(m.created_at),
-      }));
+      const msgs = (res.data || []).map((m) => {
+        const isMe = myName && m.sender_name === myName;
+        return {
+          id: m.id,
+          sender: m.sender_name,
+          text: m.message,
+          isTeacher: m.sender_role === "teacher",
+          isMe,
+          time: new Date(m.created_at),
+        };
+      });
       setChatMessages(msgs);
     }).catch(() => {});
-  }, [session?.id]);
+  }, [session?.id, localParticipant?.name]);
 
   // ── WebSocket for real-time chat updates ──
   useEffect(() => {
     if (!session?.id) return;
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const wsUrl = `${protocol}//api.shikshacom.com/ws/private-session/${session.id}/chat/`;
+    const myName = localParticipant?.name || "";
     let ws;
     try {
       ws = new WebSocket(wsUrl);
@@ -254,13 +259,14 @@ export default function PrivateClassroomUI({ role, session }) {
           if (data) {
             setChatMessages((prev) => {
               if (prev.some((m) => m.id === data.id)) return prev;
-              soundManager.messageReceive();
+              const isMe = myName && data.sender_name === myName;
+              if (!isMe) soundManager.messageReceive();
               return [...prev, {
                 id: data.id,
                 sender: data.sender_name,
                 text: data.message,
                 isTeacher: data.sender_role === "teacher",
-                isMe: false,
+                isMe,
                 time: new Date(data.created_at),
               }];
             });
@@ -269,7 +275,7 @@ export default function PrivateClassroomUI({ role, session }) {
       };
     } catch {}
     return () => { if (ws) ws.close(); };
-  }, [session?.id]);
+  }, [session?.id, localParticipant?.name]);
 
   // Get all tracks
   const tracks = useTracks([

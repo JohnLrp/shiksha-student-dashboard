@@ -330,43 +330,77 @@
 .chat-messages::-webkit-scrollbar-track { background: transparent; }
 .chat-messages::-webkit-scrollbar-thumb { background: var(--ls-border); border-radius: 4px; }
 
+.chat-empty {
+  font-size: 13px;
+  color: var(--ls-muted);
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* ── Row alignment ── */
+.chat-row {
+  display: flex;
+}
+.chat-row.me {
+  justify-content: flex-end;
+}
+.chat-row.other {
+  justify-content: flex-start;
+}
+
+/* ── Base bubble ── */
 .chat-bubble {
-  max-width: 90%;
+  max-width: 82%;
   background: var(--ls-surface2);
   border: 1px solid var(--ls-border);
-  border-radius: 12px;
-  border-bottom-left-radius: 4px;
+  border-radius: 14px;
   padding: 8px 12px;
   color: var(--ls-text);
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
 }
 
-.chat-bubble.chat-bubble--me {
-  align-self: flex-end;
-  background: var(--ls-brand-dim);
-  border-color: rgba(26,158,158,.25);
-  border-bottom-right-radius: 4px;
-  border-bottom-left-radius: 12px;
+/* ── My messages ── */
+.chat-bubble.me-bubble {
+  background: var(--ls-brand);
+  color: #fff;
+  border-color: transparent;
 }
 
+/* ── Teacher messages ── */
+.chat-bubble.teacher-bubble {
+  background: #0369a1;
+  color: #fff;
+  border-color: transparent;
+}
+
+/* ── Sender label ── */
 .chat-name {
   display: block;
   font-size: 10px;
-  font-weight: 700;
-  color: var(--ls-brand);
+  font-weight: 800;
+  color: var(--ls-muted);
   margin-bottom: 3px;
-  text-transform: uppercase;
-  letter-spacing: .4px;
+  letter-spacing: 0.2px;
 }
 
-.chat-bubble--me .chat-name {
-  color: var(--ls-brand);
-  text-align: right;
+.chat-bubble.me-bubble .chat-name,
+.chat-bubble.teacher-bubble .chat-name {
+  color: rgba(255,255,255,0.75);
 }
 
-.chat-bubble span:last-child {
+/* ── Message text ── */
+.chat-text {
   font-size: 13px;
   line-height: 1.45;
-  color: var(--ls-text);
+  word-break: break-word;
+}
+
+/* ── Timestamp ── */
+.chat-time {
+  font-size: 10px;
+  opacity: 0.55;
+  margin-top: 4px;
+  text-align: right;
 }
 
 .chat-input-area {
