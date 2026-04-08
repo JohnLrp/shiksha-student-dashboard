@@ -65,7 +65,7 @@ export default function Subjects({ mode }) {
             filteredSubjects.map((subject) => (
               <SubjectCard
                 key={subject.id}
-                img={getImage(subject.name)}
+                img={subjectImages[subject.name] || "/images/default.png"}
                 subject={subject.name}
                 teacher={
                   subject.teachers?.length
