@@ -7,6 +7,7 @@ import RaiseHandButton from "./RaiseHandButton";
 import ControlBar from "./ControlBar";
 import { useState, useRef, useEffect } from "react";
 import "../../styles/live.css";
+import useLiveSessionChat from "../../hooks/useLiveSessionChat";
 import { MdFullscreen, MdFullscreenExit } from "react-icons/md";
 import { IoChatbubblesOutline } from "react-icons/io5";
 
@@ -19,6 +20,13 @@ export default function ClassroomUI({ role }) {
   const [raiseHandToasts, setRaiseHandToasts] = useState([]);
   const containerRef = useRef(null);
   const room = useRoomContext();
+
+  /* =====================================
+     🔥 LIVE CHAT via WebSocket
+  ===================================== */
+  // Get session ID from URL
+  const sessionId = window.location.pathname.split("/").filter(Boolean).pop();
+  const { messages: chatMessages, sendMessage } = useLiveSessionChat(sessionId);
 
   /* =====================================
      🔥 RAISE / LOWER HAND LISTENER
@@ -181,7 +189,7 @@ export default function ClassroomUI({ role }) {
         <div className="right-sidebar">
           {/* ✅ FIX: pass raisedHands so badges show in participant list */}
           <ParticipantsPanel raisedHands={raisedHands} />
-          <ChatPanel role={role} />
+          <ChatPanel role={role} messages={chatMessages} onSendMessage={sendMessage} />
         </div>
       )}
 

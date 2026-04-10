@@ -4,6 +4,7 @@ import { useCourse } from "../contexts/CourseContext";
 import api from "../api/apiClient";
 import PageHeader from "../components/PageHeader";
 import "../styles/liveSessions.css";
+import useNotificationSocket from "../hooks/useNotificationSocket";
 
 export default function LiveSessions() {
   const navigate = useNavigate();
@@ -14,6 +15,24 @@ export default function LiveSessions() {
   const [selectedSubject, setSelectedSubject] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { notifications } = useNotificationSocket();
+
+  // 🔥 Auto-refresh when new live session notification arrives
+  useEffect(() => {
+    const latest = notifications[0];
+    if (latest?.data?.type === "live_session") {
+      // Re-trigger fetchData by updating activeCourse dependency
+      setSessions((prev) => [...prev]); // force re-render
+      if (activeCourse) {
+        api.get(`/livestream/student/sessions/?course_id=${activeCourse.id}`)
+          .then(res => {
+            const sorted = res.data.sort((a, b) => new Date(a.start_time) - new Date(b.start_time));
+            setSessions(sorted);
+          })
+          .catch(console.error);
+      }
+    }
+  }, [notifications, activeCourse]);
 
   useEffect(() => {
     if (!activeCourse) {

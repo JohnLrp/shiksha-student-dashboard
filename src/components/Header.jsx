@@ -120,11 +120,9 @@ export default function Header({ toggleMenu, menuOpen }) {
         )}
       </div>
 
-      {/* Notification Bell */}
-      <NotificationBell />
-
       {/* Profile */}
       <div className="header__right" ref={profileRef}>
+        <NotificationBell />
         <div
           className="header__avatar"
           onClick={() => setProfileOpen((prev) => !prev)}
