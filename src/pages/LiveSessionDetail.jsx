@@ -48,7 +48,7 @@ export default function LiveSessionDetail() {
       video={isPresenter}
       audio={true}
     >
-      <ClassroomUI role={data.role} />
+      <ClassroomUI role={data.role} sessionId={id} />
       {isPresenter && <TeacherControls />}
       <RoomAudioRenderer />
     </LiveKitRoom>
