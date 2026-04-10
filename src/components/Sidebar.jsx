@@ -143,7 +143,7 @@ export default function Sidebar({ setMenuOpen }) {
       </nav>
       <div className="sidebar__bottom">
         <a
-          href="https://shikshacom.com"
+          href={import.meta.env.VITE_HOME_URL || "https://shikshacom.com"}
           className="sidebar__homeBtn"
         >
           <FiHome />

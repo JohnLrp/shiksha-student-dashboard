@@ -248,7 +248,7 @@ export default function PrivateClassroomUI({ role, session }) {
   useEffect(() => {
     if (!session?.id) return;
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//api.shikshacom.com/ws/private-session/${session.id}/chat/`;
+    const wsUrl = `${protocol}//${import.meta.env.VITE_WS_HOST || "api.shikshacom.com"}/ws/private-session/${session.id}/chat/`;
     const myName = localParticipant?.name || "";
     let ws;
     try {

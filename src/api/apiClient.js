@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://api.shikshacom.com/api",
+  baseURL: import.meta.env.VITE_API_URL || "https://api.shikshacom.com/api",
   withCredentials: true,
 });
 
@@ -46,7 +46,7 @@ api.interceptors.response.use(
 
     try {
       await axios.post(
-        "https://api.shikshacom.com/api/accounts/refresh/",
+        `${import.meta.env.VITE_API_URL || "https://api.shikshacom.com/api"}/accounts/refresh/`,
         {},
         { withCredentials: true }
       );
@@ -54,7 +54,7 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshError) {
       processQueue(refreshError);
-      window.location.href = "https://www.shikshacom.com/login";
+      window.location.href = (import.meta.env.VITE_HOME_URL || "https://www.shikshacom.com") + "/login";
       return Promise.reject(refreshError);
     } finally {
       isRefreshing = false;
