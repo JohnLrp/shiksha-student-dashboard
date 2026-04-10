@@ -34,7 +34,7 @@ export default function RecordingDetail() {
     return <div style={{ padding: 20 }}>Video not found.</div>;
   }
 
-  const videoUrl = `https://iframe.mediadelivery.net/embed/615730/${videoData.bunny_video_id}`;
+  const videoUrl = `https://iframe.mediadelivery.net/embed/${import.meta.env.VITE_BUNNY_LIBRARY_ID || "615730"}/${videoData.bunny_video_id}`;
 
   return (
     <div className="recordingDetailPage">
