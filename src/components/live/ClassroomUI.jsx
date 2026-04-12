@@ -19,27 +19,13 @@ export default function ClassroomUI({ role, sessionId: sessionIdProp, onLeave })
   const [raiseHandToasts, setRaiseHandToasts] = useState([]);
   const [sessionStatus, setSessionStatus] = useState(null);
   const containerRef = useRef(null);
-  const statusWsRef = useRef(null);
   const room = useRoomContext();
   const sessionId = sessionIdProp || window.location.pathname.split("/").filter(Boolean).pop();
-  const { messages: chatMessages, sendMessage } = useLiveSessionChat(sessionId);
+  const { messages: chatMessages, sendMessage, sessionStatus: hookStatus } = useLiveSessionChat(sessionId);
 
   useEffect(() => {
-    if (!sessionId) return;
-    const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsHost = import.meta.env.VITE_WS_HOST || window.location.host;
-    const ws = new WebSocket(proto + "://" + wsHost + "/ws/live-session/" + sessionId + "/");
-    statusWsRef.current = ws;
-    ws.onmessage = (e) => {
-      let msg;
-      try { msg = JSON.parse(e.data); } catch { return; }
-      if (msg.type === "initial_state" || msg.type === "session_update") {
-        setSessionStatus(msg.data.status);
-      }
-    };
-    ws.onerror = (e) => console.error("Status WS error", e);
-    return () => { ws.close(); statusWsRef.current = null; };
-  }, [sessionId]);
+    if (hookStatus) setSessionStatus(hookStatus);
+  }, [hookStatus]);
 
   useEffect(() => {
     const handleData = (payload, participant) => {
@@ -91,6 +77,22 @@ export default function ClassroomUI({ role, sessionId: sessionIdProp, onLeave })
 
 
 
+  if (!isPresenter && sessionStatus === "PAUSED") {
+    return (
+      <div style={{
+        height: "100vh", display: "flex", alignItems: "center",
+        justifyContent: "center", flexDirection: "column",
+        background: "#0d1117", color: "#e8eaf2", gap: 16,
+      }}>
+        <div style={{ fontSize: 52 }}>&#9208;</div>
+        <h2 style={{ margin: 0, fontWeight: 600 }}>Session paused by teacher</h2>
+        <p style={{ color: "#6b7591", margin: 0, fontSize: 14 }}>
+          Please wait, the session will resume shortly
+        </p>
+      </div>
+    );
+  }
+
   if (!mainTrack) {
     return (
       <div className="waiting-screen">
@@ -109,17 +111,6 @@ export default function ClassroomUI({ role, sessionId: sessionIdProp, onLeave })
 
   return (
     <div className={"classroom-layout" + (isFullscreen ? " fs-mode" : "")} ref={containerRef}>
-      {!isPresenter && sessionStatus === "PAUSED" && (
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, zIndex: 50,
-          background: "rgba(0,0,0,0.75)", color: "#e8eaf2",
-          padding: "12px 20px", display: "flex", alignItems: "center",
-          justifyContent: "center", gap: 10, fontSize: 15, fontWeight: 500,
-        }}>
-          <span style={{ fontSize: 20 }}>&#9208;</span>
-          Session paused by teacher — you can still chat or leave
-        </div>
-      )}
 
       {isPresenter && raiseHandToasts.length > 0 && (
         <div className="rh-toasts">
