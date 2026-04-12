@@ -24,7 +24,7 @@ export default function ClassroomUI({ role, sessionId: sessionIdProp, onLeave })
   const { messages: chatMessages, sendMessage, sessionStatus: hookStatus } = useLiveSessionChat(sessionId);
 
   useEffect(() => {
-    if (hookStatus) setSessionStatus(hookStatus);
+    setSessionStatus(hookStatus);
   }, [hookStatus]);
 
   useEffect(() => {
