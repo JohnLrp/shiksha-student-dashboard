@@ -4,7 +4,7 @@ import {
 } from "@livekit/components-react";
 import { useState, useEffect } from "react";
 
-export default function ControlBar() {
+export default function ControlBar({ onLeave }) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
 
@@ -35,7 +35,7 @@ export default function ControlBar() {
 
   const leaveRoom = async () => {
     await room.disconnect();
-    window.history.back();
+    if (onLeave) onLeave();
   };
 
   return (
