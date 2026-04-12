@@ -19,14 +19,6 @@ const TYPE_COLORS = {
   forum: "#3b82f6",
 };
 
-const TYPE_ROUTES = {
-  assignment: "/assignments",
-  quiz: "/subjects",
-  live_session: "/live-sessions",
-  material: "/subjects",
-  forum: "/forum",
-};
-
 function timeAgo(isoString) {
   if (!isoString) return "";
   const diff = Math.floor((Date.now() - new Date(isoString)) / 1000);
@@ -60,17 +52,47 @@ export default function NotificationBell() {
 
   const handleNotifClick = (notif) => {
     const type = notif?.type || notif?.data?.type;
-    const route = TYPE_ROUTES[type];
-    if (route) {
-      navigate(route);
-      setOpen(false);
+    const subjectId = notif?.subject_id || notif?.data?.subject_id;
+
+    // Route using subject_id when available for precise navigation
+    if (subjectId) {
+      if (type === "assignment") {
+        navigate(`/subjects/${subjectId}/assignments`);
+      } else if (type === "quiz") {
+        navigate(`/subjects/quiz/${subjectId}`);
+      } else if (type === "live_session") {
+        navigate(`/live-sessions`);
+      } else {
+        navigate(`/subjects/${subjectId}`);
+      }
+    } else {
+      // Fallback routes
+      const fallback = {
+        assignment:   "/assignments",
+        quiz:         "/subjects/quiz",
+        live_session: "/live-sessions",
+        material:     "/subjects",
+        forum:        "/forum",
+      };
+      const route = fallback[type];
+      if (route) navigate(route);
     }
+
+    setOpen(false);
   };
 
   const getTitle = (notif) => {
-    return notif?.title || notif?.data?.title ||
-           notif?.message || notif?.data?.message ||
-           "New notification";
+    return (
+      notif?.title ||
+      notif?.data?.title ||
+      notif?.message ||
+      notif?.data?.message ||
+      "New notification"
+    );
+  };
+
+  const getSubjectName = (notif) => {
+    return notif?.subject_name || notif?.data?.subject_name || "";
   };
 
   const getType = (notif) => {
@@ -78,7 +100,7 @@ export default function NotificationBell() {
   };
 
   const getTime = (notif) => {
-    return notif?.time || notif?.data?.time;
+    return notif?.time || notif?.data?.time || notif?.created_at;
   };
 
   return (
@@ -126,6 +148,11 @@ export default function NotificationBell() {
                   </span>
                   <div className="notif-bell-content">
                     <p className="notif-bell-title">{getTitle(notif)}</p>
+                    {getSubjectName(notif) && (
+                      <p className="notif-bell-subject" style={{ fontSize: "0.75rem", color: "#6b7280", margin: "2px 0" }}>
+                        {getSubjectName(notif)}
+                      </p>
+                    )}
                     <p className="notif-bell-time">{timeAgo(getTime(notif))}</p>
                   </div>
                 </div>
