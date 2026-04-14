@@ -48,7 +48,7 @@ export default function SubjectsQuiz() {
             subjectData.map((item) => (
               <SubjectCard
                 key={item.id}
-                img="https://images.unsplash.com/photo-1513258496099-48168024aec0?w=600"
+                img={item.image}
                 subject={item.subject}
                 teacher={item.teacher}
                 onClick={() => navigate(`/subjects/quiz/${item.id}`)}
