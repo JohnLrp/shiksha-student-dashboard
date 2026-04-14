@@ -499,7 +499,7 @@ export default function Dashboard() {
         </div>
 
         {/* Bottom Section */}
-        {!showAllSessions && (
+        
           <div className="dashExact__bottom">
             {/* Assignments */}
             <div className="dashExact__leftCol">
@@ -581,7 +581,7 @@ export default function Dashboard() {
               </div>
             </div>
           </div>
-        )}
+        
       </div>
 
       <div className="mobileOnly">
