@@ -18,12 +18,12 @@ export default function SubjectsQuiz() {
 
   "english (it so happened)": "/images/eng.jpeg",
   "english (grammar)": "/images/eng.jpeg",
-  "english (honeydew )": "/images/eng.jpeg",
+  "english (honeydew)": "/images/eng.jpeg",
   "english (hornbill)": "/images/eng.jpeg",
   "english (vistas)": "/images/eng.jpeg",
   "english (flamingo)": "/images/eng.jpeg",
   "english (first flight)": "/images/eng.jpeg",
-  "english (footrpints without feet)": "/images/eng.jpeg",
+  "english (footprints without feet)": "/images/eng.jpeg",
   "english (snapshots)": "/images/eng.jpeg",
 
   "4a: english – honeydew (main reader)": "/images/eng.jpeg",
@@ -31,7 +31,7 @@ export default function SubjectsQuiz() {
   "4b: english – it so happened (supplementary reader)": "/images/eng.jpeg",
   "4b: english – supplementary (moments)": "/images/eng.jpeg",
   "4a: english – main reader (first flight)": "/images/eng.jpeg",
-  "4b: english – supplementary reader (footprints without feet)": "/images/eng.jpeg",
+  "4b: english – supplementary (footprints without feet)": "/images/eng.jpeg",
 
   "hindi - vasant iii + grammar (mil)": "/images/hindi.png",
   "hindi (aroh i)": "/images/hindi.png",
@@ -42,18 +42,18 @@ export default function SubjectsQuiz() {
   "hindi (vitan ii)": "/images/hindi.png",
   "hindi (grammer)": "/images/hindi.png",
 
-  "social science (civics)": "/images/Civics.jpeg",
+  "social science (civics)": "/images/Civics.jpg",
   "social science (history)": "/images/history.jpeg",
   "social science (geography)": "/images/geography.jpg",
   "social science (economics)": "/images/eco.jpeg",
 
   "3a: social science - history (our pasts iii)": "/images/history.jpeg",
   "3b: social science – geography (resources and development)": "/images/geography.jpg",
-  "3c: social science - civics (social and political life iii)": "/images/Civics.jpeg",
+  "3c: social science - civics (social and political life iii)": "/images/Civics.jpg",
 
   "3a: social science – history": "/images/history.jpeg",
   "3b: social science – geography": "/images/geography.jpg",
-  "3c: social science – civics": "/images/Civics.jpeg",
+  "3c: social science – civics": "/images/Civics.jpg",
   "3d: social science – economics": "/images/eco.jpeg",
 
   "history": "/images/history.jpeg",
@@ -75,7 +75,7 @@ export default function SubjectsQuiz() {
   "business studies": "/images/business study.jpeg",
 
   "chemistry": "/images/chem.jpeg",
-  "physics": "/images/phys.jpg",
+  "physics": "/images/phys.jpeg",
   "biology": "/images/bio.jpeg",
 
   "sociology": "/images/sociology.jpeg",
@@ -84,20 +84,20 @@ export default function SubjectsQuiz() {
   function getSubjectImage(subjectName) {
   const normalized = subjectName
     ?.toLowerCase()
-    .replace(/\s+/g, " ")   // remove extra spaces
-    .trim();
+    .replace(/[–—]/g, "-")
+    .replace(/\s+/g, " ")
+    .trim() || "";
 
-  const sortedKeys = Object.keys(subjectImages).sort(
-    (a, b) => b.length - a.length
-  );
+  const normalizedMap = Object.entries(subjectImages).map(([key, value]) => [
+    key.toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ").trim(),
+    value,
+  ]);
 
-  const matchedKey = sortedKeys.find((key) =>
-    normalized.includes(key.toLowerCase())
-  );
+  const matched = normalizedMap
+    .sort((a, b) => b[0].length - a[0].length)
+    .find(([key]) => normalized.includes(key));
 
-  console.log("SUBJECT:", normalized, "MATCH:", matchedKey);
-
-  return matchedKey ? subjectImages[matchedKey] : "/images/default.png";
+  return matched ? matched[1] : "/images/default.png";
 }
 
   useEffect(() => {
