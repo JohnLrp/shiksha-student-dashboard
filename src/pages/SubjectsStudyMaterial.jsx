@@ -126,20 +126,20 @@ const subjectImages = {
       <div className="subjectsBodyBox">
         <div className="subjectsGrid">
 
-          {subjects.map((subject) => (
-            <SubjectCard
-              key={item.id}
-              id={item.id}
-              subject={item.name}
-              teacher={
-                item.teachers?.length
-                   ? item.teachers.map(t => t.name).join(", ")
-                  : "No teacher assigned"
-}
-              img={getSubjectImage(item.name)}
-              onClick={() => handleSubjectClick(item.id)}
-    />
-          ))}
+         {subjects.map((item) => (
+    <SubjectCard
+      key={item.id}
+      id={item.id}
+      subject={item.name}
+      teacher={
+        item.teachers?.length
+          ? item.teachers.map(t => t.name).join(", ")
+          : "No teacher assigned"
+    }
+    img={getSubjectImage(item.name)}
+    onClick={() => handleSubjectClick(item.id)}
+  />
+))}
 
         </div>
       </div>
