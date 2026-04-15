@@ -12,6 +12,35 @@ export default function SubjectsQuiz() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const subjectImages = {
+    science: "/images/sci.jpeg",
+    mathematics: "/images/Math.png",
+    math: "/images/Math.png",
+    english: "/images/eng.jpeg",
+    hindi: "/images/hindi.png",
+    civics: "/images/Civics.jpg",
+    history: "/images/history.jpeg",
+    geography: "/images/geography.jpg",
+    economics: "/images/eco.jpeg",
+    chemistry: "/images/chem.jpeg",
+    physics: "/images/phys.jpeg",
+    biology: "/images/bio.jpeg",
+    sociology: "/images/sociology.jpeg",
+    accountancy: "/images/accountancy.jpeg",
+    "business studies": "/images/business study.jpeg",
+    "political science": "/images/polSci.jpeg",
+  };
+
+  function getSubjectImage(subjectName) {
+    const normalized = subjectName?.toLowerCase().trim() || "";
+
+    const matchedKey = Object.keys(subjectImages).find((key) =>
+      normalized.includes(key)
+    );
+
+    return matchedKey ? subjectImages[matchedKey] : "/images/sci.jpeg";
+  }
+
   useEffect(() => {
     async function fetchSubjects() {
       try {
@@ -48,7 +77,7 @@ export default function SubjectsQuiz() {
             subjectData.map((item) => (
               <SubjectCard
                 key={item.id}
-                img={item.image}
+                img={getSubjectImage(item.subject)}
                 subject={item.subject}
                 teacher={item.teacher}
                 onClick={() => navigate(`/subjects/quiz/${item.id}`)}
