@@ -44,23 +44,23 @@ export default function SubjectsQuiz() {
 
   "social science (civics)": "/images/Civics.jpeg",
   "social science (history)": "/images/history.jpeg",
-  "social science (geography)": "/images/geography.jpeg",
+  "social science (geography)": "/images/geography.jpg",
   "social science (economics)": "/images/eco.jpeg",
 
   "3a: social science - history (our pasts iii)": "/images/history.jpeg",
-  "3b: social science – geography (resources and development)": "/images/geography.jpeg",
+  "3b: social science – geography (resources and development)": "/images/geography.jpg",
   "3c: social science - civics (social and political life iii)": "/images/Civics.jpeg",
 
   "3a: social science – history": "/images/history.jpeg",
-  "3b: social science – geography": "/images/geography.jpeg",
+  "3b: social science – geography": "/images/geography.jpg",
   "3c: social science – civics": "/images/Civics.jpeg",
   "3d: social science – economics": "/images/eco.jpeg",
 
   "history": "/images/history.jpeg",
-  "geography (india)": "/images/geography.jpeg",
+  "geography (india)": "/images/geography.jpg",
   "geography (india - physical, social and economic)": "/images/history.jpeg",
   "geography (physical)": "/images/history.jpeg",
-  "geography (human)": "/images/geography.jpeg",
+  "geography (human)": "/images/geography.jpg",
 
   "economics": "/images/eco.jpeg",
   "economics (indian economic development)": "/images/eco.jpeg",
@@ -75,22 +75,27 @@ export default function SubjectsQuiz() {
   "business studies": "/images/business study.jpeg",
 
   "chemistry": "/images/chem.jpeg",
-  "physics": "/images/phys.jpeg",
+  "physics": "/images/phys.jpg",
   "biology": "/images/bio.jpeg",
 
   "sociology": "/images/sociology.jpeg",
 };
 
   function getSubjectImage(subjectName) {
-  const normalized = subjectName?.toLowerCase().trim() || "";
+  const normalized = subjectName
+    ?.toLowerCase()
+    .replace(/\s+/g, " ")   // remove extra spaces
+    .trim();
 
   const sortedKeys = Object.keys(subjectImages).sort(
     (a, b) => b.length - a.length
   );
 
   const matchedKey = sortedKeys.find((key) =>
-    normalized.includes(key)
+    normalized.includes(key.toLowerCase())
   );
+
+  console.log("SUBJECT:", normalized, "MATCH:", matchedKey);
 
   return matchedKey ? subjectImages[matchedKey] : "/images/default.png";
 }
