@@ -82,14 +82,18 @@ export default function SubjectsQuiz() {
 };
 
   function getSubjectImage(subjectName) {
-    const normalized = subjectName?.toLowerCase().trim() || "";
+  const normalized = subjectName?.toLowerCase().trim() || "";
 
-    const matchedKey = Object.keys(subjectImages).find((key) =>
-      normalized.includes(key)
-    );
+  const sortedKeys = Object.keys(subjectImages).sort(
+    (a, b) => b.length - a.length
+  );
 
-    return matchedKey ? subjectImages[matchedKey] : "/images/sci.jpeg";
-  }
+  const matchedKey = sortedKeys.find((key) =>
+    normalized.includes(key)
+  );
+
+  return matchedKey ? subjectImages[matchedKey] : "/images/default.png";
+}
 
   useEffect(() => {
     async function fetchSubjects() {
