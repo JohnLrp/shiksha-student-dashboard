@@ -32,6 +32,7 @@ export default function SubjectsRecordings() {
     "4b: english – supplementary (moments)": "/images/eng.jpeg",
     "4a: english – main reader (first flight)": "/images/eng.jpeg",
     "4b: english – supplementary (footprints without feet)": "/images/eng.jpeg",
+    "4c: english - grammar & writing skills": "/images/eng.jpeg",
 
     "hindi - vasant iii + grammar (mil)": "/images/hindi.png",
     "hindi (aroh i)": "/images/hindi.png",
