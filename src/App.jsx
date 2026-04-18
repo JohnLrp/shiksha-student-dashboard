@@ -7,6 +7,9 @@ import StudentLayout from "./layout/StudentLayout";
 
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
+import PrivateDetails from "./pages/PrivateDetails";
+import EditPrivateDetails from "./pages/EditPrivateDetails";
 import ChangePassword from "./pages/ChangePassword";
 
 import Subjects from "./pages/Subjects";
@@ -56,6 +59,9 @@ export default function App() {
               <Route index element={<Dashboard />} />
 
               <Route path="profile" element={<Profile />} />
+              <Route path="profile/edit" element={<EditProfile />} />
+              <Route path="profile/private-details" element={<PrivateDetails />} />
+              <Route path="profile/private-details/edit" element={<EditPrivateDetails />} />
               <Route path="change-password" element={<ChangePassword />} />
 
               <Route path="subjects" element={<Subjects />} />
