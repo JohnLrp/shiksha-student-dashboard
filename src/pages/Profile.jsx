@@ -19,7 +19,6 @@ export default function Profile() {
     email: "",
     phone: "",
   });
-  const [courses, setCourses] = useState([]);
 
   const [about, setAbout] = useState(_stored.about ?? "");
   const [subjects, setSubjects] = useState(_stored.subjects ?? []);
@@ -46,7 +45,6 @@ export default function Profile() {
       });
       setAvatar(p.avatar);
       setAvatarType(p.avatar_type);
-      setCourses(data.enrollments || []);
     } catch (err) {
       console.error("Failed to load profile", err);
     } finally {
@@ -173,25 +171,6 @@ export default function Profile() {
         <hr className="profileDivider" />
       </div>
 
-      {/* ── Courses ── */}
-      {courses.length > 0 && (
-        <div className="coursesSection">
-          <div className="coursesSection__table">
-            <div className="coursesSection__header">
-              <span className="coursesSection__headerItem">COURSES ENROLLED</span>
-              <span className="coursesSection__headerItem">BATCH CODE</span>
-            </div>
-            <div className="coursesSection__body">
-              {courses.map((item) => (
-                <div key={item.id} className="coursesSection__row">
-                  <span className="coursesSection__course">{item.course_title}</span>
-                  <span className="coursesSection__batch">{item.batch_code}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
