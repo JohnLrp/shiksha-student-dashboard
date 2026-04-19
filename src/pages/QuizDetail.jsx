@@ -21,6 +21,8 @@ const palClass = (s) => {
 const OPTION_LABELS = ["A", "B", "C", "D", "E", "F"];
 
 // ── Seeded shuffle ────────────────────────────────────────────────────────────
+// Uses a simple deterministic shuffle so the same seed always produces
+// the same order — stable across page refreshes for the same attempt.
 function seededRandom(seed) {
   let s = seed;
   return () => {
@@ -39,6 +41,7 @@ function shuffleWithSeed(arr, seed) {
   return out;
 }
 
+// Generate a numeric seed from a string (quiz id + attempt number)
 function makeSeed(str) {
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
@@ -47,6 +50,8 @@ function makeSeed(str) {
   return Math.abs(hash);
 }
 
+// Shuffle questions and their choices, storing the order in localStorage
+// so refreshing the page gives the same order for the same attempt.
 function getShuffledQuestions(questions, quizId, attemptKey) {
   const storageKey = `quiz_${quizId}_${attemptKey}_order`;
   let orderMap = null;
@@ -57,6 +62,7 @@ function getShuffledQuestions(questions, quizId, attemptKey) {
   } catch {}
 
   if (!orderMap) {
+    // First time: generate seeds and store them
     const seed = makeSeed(`${quizId}_${attemptKey}`);
     const shuffledQuestions = shuffleWithSeed(questions, seed);
 
@@ -76,6 +82,7 @@ function getShuffledQuestions(questions, quizId, attemptKey) {
     } catch {}
   }
 
+  // Apply the stored order
   const questionById = Object.fromEntries(questions.map((q) => [q.id, q]));
   return orderMap.questionOrder
     .map((qId) => {
@@ -109,16 +116,14 @@ export default function QuizDetail() {
 
   const answersRef    = useRef({});
   const submittedRef  = useRef(false);
-  const mountedRef    = useRef(true);
+  const mountedRef    = useRef(true);   // false after unmount — prevents auto-submit firing after nav away
   const durationRef   = useRef(null);
   const startTimeRef  = useRef(null);
-  const attemptKeyRef = useRef("1");
+  const attemptKeyRef = useRef("1"); // will be set to attempt_number from backend
 
   // ── fetch + start ──────────────────────────────────────────────────────────
   useEffect(() => {
-    // FIX 3: guard both quizId and subjectId
-    if (!quizId || !subjectId) return;
-
+    // Direct submit used when time expired while component was unmounted
     async function handleAutoSubmitImmediate(answerEntries) {
       try {
         const formatted = answerEntries.map(([q, c]) => ({ question: q, selected_choice: c }));
@@ -135,10 +140,11 @@ export default function QuizDetail() {
         setLoading(true);
         setError(null);
 
+        // Backend returns existing PENDING attempt or creates new one
         let attemptNumber = "1";
         try {
-          // FIX 1: use /student/quizzes/ to match submit endpoint
-          const startRes = await api.post(`/student/quizzes/${quizId}/start/`);
+          const startRes = await api.post(`/quizzes/${quizId}/start/`);
+          // Backend now returns attempt_id — use it as the shuffle seed key
           if (startRes.data?.attempt_id) {
             attemptNumber = String(startRes.data.attempt_id).slice(-8);
           }
@@ -148,10 +154,10 @@ export default function QuizDetail() {
         }
         attemptKeyRef.current = attemptNumber;
 
-        // FIX 2: use /student/quizzes/ so only enrolled-subject quizzes load
-        const res = await api.get(`/student/quizzes/${quizId}/`);
+        const res = await api.get(`/quizzes/${quizId}/`);
         setQuizData(res.data);
 
+        // Shuffle questions and choices using attempt-specific seed
         const shuffled = getShuffledQuestions(
           res.data.questions,
           quizId,
@@ -159,12 +165,14 @@ export default function QuizDetail() {
         );
         setShuffled(shuffled);
 
+        // Initialise palette
         const init = {};
         shuffled.forEach((q, i) => {
           init[q.id] = i === 0 ? S.NOT_ANSWERED : S.NOT_VISITED;
         });
         setPalette(init);
 
+        // Timer
         let st = localStorage.getItem(`quiz_${quizId}_start`);
         if (!st) {
           st = Date.now();
@@ -178,6 +186,8 @@ export default function QuizDetail() {
         const elapsed = Math.floor((Date.now() - st) / 1000);
         const remaining = durationRef.current - elapsed;
 
+        // If time already ran out while student was away, auto-submit immediately
+        // rather than letting the interval catch it — gives a cleaner UX
         if (remaining <= 0) {
           setTimeLeft(0);
           setLoading(false);
@@ -195,27 +205,32 @@ export default function QuizDetail() {
         setLoading(false);
       }
     }
+    if (quizId) initQuiz();
+  }, [quizId]);
 
-    initQuiz();
-  // FIX 3: added subjectId to dependency array
-  }, [quizId, subjectId]);
-
+  // Set mountedRef false on unmount — prevents auto-submit firing after sidebar navigation
   useEffect(() => {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
 
   // ── Block in-app navigation while quiz is active ─────────────────────────
+  // BrowserRouter doesn't support useBlocker, so we intercept popstate
+  // (back/forward) with beforeunload, and push a dummy history entry so
+  // the back button triggers popstate instead of navigating away.
+  // For sidebar NavLink clicks we use a custom nav guard state.
   const [showNavWarning, setShowNavWarning] = useState(false);
   const pendingNavRef = useRef(null);
 
   useEffect(() => {
     if (!quizReady) return;
 
+    // Push a dummy history entry so back button hits popstate first
     window.history.pushState(null, "", window.location.href);
 
     const handlePopState = () => {
       if (!submittedRef.current) {
+        // Push again to prevent actual navigation
         window.history.pushState(null, "", window.location.href);
         setShowNavWarning(true);
       }
@@ -237,19 +252,23 @@ export default function QuizDetail() {
     };
   }, [quizReady]);
 
+  // Intercept NavLink clicks — monkey-patch history.pushState
   useEffect(() => {
     if (!quizReady) return;
 
     const originalPushState = window.history.pushState.bind(window.history);
 
     window.history.pushState = function(state, title, url) {
+      // Allow our own dummy pushState calls (same URL)
       if (url && url.toString() === window.location.href) {
         return originalPushState(state, title, url);
       }
       if (!submittedRef.current) {
+        // Store intended destination and show warning instead
         pendingNavRef.current = () => {
           window.history.pushState = originalPushState;
           originalPushState(state, title, url);
+          // Force React Router to sync
           window.dispatchEvent(new PopStateEvent("popstate", { state }));
         };
         setShowNavWarning(true);
@@ -265,6 +284,7 @@ export default function QuizDetail() {
 
   // ── Auto-submit ────────────────────────────────────────────────────────────
   const handleAutoSubmit = useCallback(async () => {
+    // Don't submit if student navigated away — they can resume later
     if (!mountedRef.current) return;
     try {
       const formatted = Object.entries(answersRef.current).map(([q, c]) => ({
@@ -274,6 +294,7 @@ export default function QuizDetail() {
       localStorage.removeItem(`quiz_${quizId}_start`);
       navigate(`/subjects/quiz/${subjectId}/result/${quizId}`);
     } catch (err) {
+      // Retry once
       setTimeout(async () => {
         if (!mountedRef.current) return;
         try {
@@ -358,6 +379,7 @@ export default function QuizDetail() {
   };
 
   const handleExitQuiz = () => {
+    // Mark as submitted so the pushState monkey-patch doesn't intercept navigate()
     submittedRef.current = true;
     localStorage.removeItem(`quiz_${quizId}_start`);
     navigate(`/subjects/quiz/${subjectId}`);
@@ -387,6 +409,7 @@ export default function QuizDetail() {
       submittedRef.current = true;
       navigate(`/subjects/quiz/${subjectId}/result/${quizId}`);
     } catch (err) {
+      // Show the real backend reason (expired, not enrolled, etc.)
       const msg = err.response?.data?.detail
         || (err.response?.data && typeof err.response.data === 'object'
             ? Object.values(err.response.data).flat().join(' ')

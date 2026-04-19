@@ -106,8 +106,16 @@ export default function SubjectsQuiz() {
       try {
         setLoading(true);
         setError(null);
-        const res = await api.get("/student/quiz-subjects/");
-        setSubjectData(res.data);
+        // FIX: use the same enrolled-subjects endpoint as Recordings/Assignments
+        // so ALL subjects appear, not just those with quizzes already created
+        const res = await api.get("/courses/enrolled-subjects/");
+        // Remap to the shape SubjectCard expects: { id, subject, teacher }
+        const mapped = res.data.map((item) => ({
+          id: item.id,
+          subject: item.name,
+          teacher: item.teachers?.[0]?.name || "",
+        }));
+        setSubjectData(mapped);
       } catch (err) {
         console.error("Failed to fetch quiz subjects:", err);
         setError("Failed to load quiz subjects.");
