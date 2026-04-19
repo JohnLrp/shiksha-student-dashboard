@@ -19,6 +19,17 @@ export default function QuizList() {
 
   const [showModal, setShowModal] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
+  // Track which quizzes have an in-progress attempt in localStorage
+  const [inProgressIds, setInProgressIds] = useState(() => {
+    const ids = new Set();
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      // Keys are: quiz_<quizId>_start
+      const match = key?.match(/^quiz_(.+)_start$/);
+      if (match) ids.add(match[1]);
+    }
+    return ids;
+  });
 
   useEffect(() => {
     if (tab) setActiveTab(tab);
@@ -81,6 +92,17 @@ export default function QuizList() {
     setShowModal(false);
   };
 
+  // Refresh in-progress set (e.g. after returning from a quiz)
+  useEffect(() => {
+    const ids = new Set();
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      const match = key?.match(/^quiz_(.+)_start$/);
+      if (match) ids.add(match[1]);
+    }
+    setInProgressIds(ids);
+  }, [activeTab]);
+
   if (loading) return <div>Loading quizzes...</div>;
   if (error) return <div>{error}</div>;
 
@@ -135,8 +157,9 @@ export default function QuizList() {
                   key={quiz.id}
                   title={quiz.title}
                   teacher={quiz.teacher_name}
-                  deadline={new Date(quiz.due_date).toLocaleString()}
+                  deadline={`${quiz.questions_count ?? "?"} questions • ${quiz.time_limit_minutes ?? "?"} min`}
                   isCompleted={activeTab === "completed"}
+                  inProgress={activeTab === "pending" && inProgressIds.has(quiz.id)}
                   // Show attempt count badge for completed quizzes
                   badge={activeTab === "completed" && quiz.attempts_count > 1
                     ? `${quiz.attempts_count} attempts`
