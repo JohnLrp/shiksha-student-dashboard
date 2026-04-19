@@ -37,6 +37,9 @@ export default function QuizDetail() {
   const [palette, setPalette]             = useState({});
   const [showExitModal, setShowExitModal] = useState(false);
 
+  // Use state for quiz-ready so the timer effect can depend on it
+  const [quizReady, setQuizReady]         = useState(false);
+
   const answersRef   = useRef({});
   const submittedRef = useRef(false);
   const durationRef  = useRef(null);
@@ -48,8 +51,16 @@ export default function QuizDetail() {
       try {
         setLoading(true);
         setError(null);
-        try { await api.post(`/quizzes/${quizId}/start/`); }
-        catch (err) { console.error("Start quiz failed:", err.response?.data); }
+
+        // Start or resume attempt — backend returns existing PENDING attempt
+        // if one exists, preventing ghost attempts on page refresh
+        try {
+          await api.post(`/quizzes/${quizId}/start/`);
+        } catch (err) {
+          // If start fails (e.g. quiz expired), surface the error
+          const msg = err.response?.data?.detail;
+          if (msg) { setError(msg); setLoading(false); return; }
+        }
 
         const res = await api.get(`/quizzes/${quizId}/`);
         setQuizData(res.data);
@@ -60,7 +71,8 @@ export default function QuizDetail() {
         });
         setPalette(init);
 
-
+        // Timer: persist start time in localStorage so a page refresh
+        // doesn't reset the clock
         let st = localStorage.getItem(`quiz_${quizId}_start`);
         if (!st) {
           st = Date.now();
@@ -72,7 +84,11 @@ export default function QuizDetail() {
         durationRef.current = (res.data.time_limit_minutes || 5) * 60;
 
         const elapsed = Math.floor((Date.now() - st) / 1000);
-        setTimeLeft(Math.max(0, durationRef.current - elapsed));
+        const remaining = Math.max(0, durationRef.current - elapsed);
+        setTimeLeft(remaining);
+
+        // Signal that quiz is ready so the timer effect fires
+        setQuizReady(true);
       } catch (err) {
         setError(err.response?.data?.detail || "Unable to load quiz.");
       } finally {
@@ -82,44 +98,56 @@ export default function QuizDetail() {
     if (quizId) initQuiz();
   }, [quizId]);
 
-  // ── auto-submit ───────────────────────────────────────────────────────────
+  // ── auto-submit (partial answers accepted) ────────────────────────────────
   const handleAutoSubmit = useCallback(async () => {
     try {
       const formatted = Object.entries(answersRef.current).map(([q, c]) => ({
         question: q, selected_choice: c,
       }));
+      // Backend now accepts partial answers — unanswered questions are scored 0
       await api.post(`/student/quizzes/${quizId}/submit/`, { answers: formatted });
       localStorage.removeItem(`quiz_${quizId}_start`);
       navigate(`/subjects/quiz/${subjectId}/result/${quizId}`);
-    } catch (err) { console.error("Auto submit failed", err); }
+    } catch (err) {
+      console.error("Auto submit failed", err);
+      // Retry once after 2 seconds in case of transient network error
+      setTimeout(async () => {
+        try {
+          const formatted = Object.entries(answersRef.current).map(([q, c]) => ({
+            question: q, selected_choice: c,
+          }));
+          await api.post(`/student/quizzes/${quizId}/submit/`, { answers: formatted });
+          localStorage.removeItem(`quiz_${quizId}_start`);
+          navigate(`/subjects/quiz/${subjectId}/result/${quizId}`);
+        } catch (retryErr) {
+          console.error("Auto submit retry failed", retryErr);
+        }
+      }, 2000);
+    }
   }, [quizId, subjectId, navigate]);
 
-  // ── timer ─────────────────────────────────────────────────────────────────
-  console.log("START:", startTimeRef.current);
-console.log("DURATION:", durationRef.current);
+  // ── timer — only starts once quizReady=true ───────────────────────────────
+  useEffect(() => {
+    if (!quizReady) return;
 
- useEffect(() => {
-  if (!durationRef.current || !startTimeRef.current) return;
+    const interval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+      const remaining = durationRef.current - elapsed;
 
-  const interval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-    const remaining = durationRef.current - elapsed;
-
-    if (remaining <= 0) {
-      clearInterval(interval);
-      setTimeLeft(0);
-
-      if (!submittedRef.current) {
-        submittedRef.current = true;
-        handleAutoSubmit();
+      if (remaining <= 0) {
+        clearInterval(interval);
+        setTimeLeft(0);
+        if (!submittedRef.current) {
+          submittedRef.current = true;
+          handleAutoSubmit();
+        }
+      } else {
+        setTimeLeft(remaining);
       }
-    } else {
-      setTimeLeft(remaining);
-    }
-  }, 1000);
+    }, 1000);
 
-  return () => clearInterval(interval);
-}, [handleAutoSubmit]);
+    return () => clearInterval(interval);
+  }, [quizReady, handleAutoSubmit]);
 
   const fmtTime = (s) => {
     const h   = String(Math.floor(s / 3600)).padStart(2, "0");
@@ -127,6 +155,8 @@ console.log("DURATION:", durationRef.current);
     const sec = String(s % 60).padStart(2, "0");
     return `${h}:${m}:${sec}`;
   };
+
+  const isLowTime = timeLeft !== null && timeLeft <= 60;
 
   // ── navigation ────────────────────────────────────────────────────────────
   const goTo = (idx) => {
@@ -171,10 +201,14 @@ console.log("DURATION:", durationRef.current);
 
   // ── submit ────────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    if (!allAnswered) {
-      setError("Please answer all questions before submitting.");
-      return;
+    const unanswered = quizData.questions.filter(qq => answers[qq.id] === undefined).length;
+    if (unanswered > 0) {
+      const confirmed = window.confirm(
+        `You have ${unanswered} unanswered question(s). Submit anyway? Unanswered questions will be scored 0.`
+      );
+      if (!confirmed) return;
     }
+
     try {
       setSubmitting(true);
       setError(null);
@@ -193,11 +227,12 @@ console.log("DURATION:", durationRef.current);
   };
 
   if (loading) return <div className="quiz-center">Loading quiz…</div>;
+  if (error && !quizData) return <div className="quiz-center quiz-error-full">{error}</div>;
   if (!quizData) return null;
 
-  const q           = quizData.questions[currentIndex];
-  const qLen        = quizData.questions.length;
-  const allAnswered = quizData.questions.every(qq => answers[qq.id] !== undefined);
+  const q    = quizData.questions[currentIndex];
+  const qLen = quizData.questions.length;
+  const answeredCount = Object.keys(answers).length;
 
   return (
     <div className="quiz-page">
@@ -208,6 +243,7 @@ console.log("DURATION:", durationRef.current);
           ← Back
         </button>
         <span className="quiz-title">{quizData.title}</span>
+        <span className="quiz-progress-text">{answeredCount}/{qLen} answered</span>
       </div>
 
       {/* BODY */}
@@ -221,7 +257,7 @@ console.log("DURATION:", durationRef.current);
           <h2 className="quiz-q-heading">Question {currentIndex + 1}.</h2>
           <p className="quiz-q-text">{q.text}</p>
 
-          {/* Options with A/B/C/D labels */}
+          {/* Options */}
           <div className="quiz-options">
             {q.choices.map((choice, ci) => (
               <label
@@ -240,14 +276,11 @@ console.log("DURATION:", durationRef.current);
             ))}
           </div>
 
-        
-
-          {/* Action bar — Clear Response + Previous / Next */}
+          {/* Action bar */}
           <div className="quiz-action-bar">
             <button className="quiz-btn-clear" onClick={handleClearResponse}>
               Clear Response
             </button>
-
             <div className="quiz-nav-btns">
               <button
                 className="quiz-btn-prev"
@@ -265,19 +298,25 @@ console.log("DURATION:", durationRef.current);
               </button>
             </div>
           </div>
-
         </div>
 
         {/* RIGHT — sidebar */}
         <div className="quiz-sidebar">
 
           {/* Timer */}
-          <div className="quiz-timer">
-            <div className="quiz-timer-label">Time Limit:</div>
+          <div className={`quiz-timer ${isLowTime ? "quiz-timer--warning" : ""}`}>
+            <div className="quiz-timer-label">Time Remaining</div>
             <div className="quiz-timer-value">
               {timeLeft !== null ? fmtTime(timeLeft) : "--:--:--"}
             </div>
-            <div className="quiz-timer-sub">(minutes)</div>
+            {isLowTime && <div className="quiz-timer-warning">⚠ Less than 1 minute!</div>}
+          </div>
+
+          {/* Palette legend */}
+          <div className="quiz-palette-legend">
+            <span className="pal-legend-item"><span className="pal-dot answered" />Answered</span>
+            <span className="pal-legend-item"><span className="pal-dot not-answered" />Not answered</span>
+            <span className="pal-legend-item"><span className="pal-dot not-visited" />Not visited</span>
           </div>
 
           {/* Palette grid */}
@@ -293,8 +332,6 @@ console.log("DURATION:", durationRef.current);
             ))}
           </div>
 
-          
-
           {/* Submit */}
           <button
             className="quiz-submit-btn"
@@ -303,7 +340,6 @@ console.log("DURATION:", durationRef.current);
           >
             {submitting ? "Submitting…" : "Submit Quiz"}
           </button>
-
         </div>
       </div>
 
@@ -315,7 +351,9 @@ console.log("DURATION:", durationRef.current);
             <p>
               You are currently attempting this quiz.
               <br /><br />
-              ⚠️ Your progress will be lost if you exit.
+              ⚠️ Your progress will be lost if you exit now.
+              <br />
+              The attempt will count — you can re-attempt later.
             </p>
             <div className="quiz-modal-actions">
               <button className="quiz-btn-cancel" onClick={() => setShowExitModal(false)}>
@@ -328,7 +366,6 @@ console.log("DURATION:", durationRef.current);
           </div>
         </div>
       )}
-
     </div>
   );
 }

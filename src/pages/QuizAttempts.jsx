@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../api/apiClient";
-import "../styles/quiz.css"; // reuse existing styles or create QuizAttempts.css
+import "../styles/quiz.css";
 
 export default function QuizAttempts() {
   const navigate = useNavigate();
@@ -11,13 +11,15 @@ export default function QuizAttempts() {
   const [quizTitle, setQuizTitle] = useState("");
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
+  const [starting, setStarting] = useState(false);
 
   useEffect(() => {
     async function fetchAttempts() {
       try {
         setLoading(true);
         setError(null);
-        const res = await api.get(`/quizzes/${quizId}/attempts/`); // adjust endpoint if different
+        // Correct student endpoint added in urls.py
+        const res = await api.get(`/student/quizzes/${quizId}/attempts/`);
         setAttempts(res.data.attempts ?? res.data);
         setQuizTitle(res.data.title ?? "");
       } catch (err) {
@@ -32,10 +34,14 @@ export default function QuizAttempts() {
 
   const handleReattempt = async () => {
     try {
+      setStarting(true);
       await api.post(`/quizzes/${quizId}/start/`);
       navigate(`/subjects/quiz/${subjectId}/take/${quizId}`);
     } catch (err) {
-      alert("Unable to start reattempt");
+      const msg = err.response?.data?.detail || "Unable to start reattempt.";
+      alert(msg);
+    } finally {
+      setStarting(false);
     }
   };
 
@@ -48,13 +54,17 @@ export default function QuizAttempts() {
         className="quizResultBack"
         onClick={() => navigate(`/subjects/quiz/${subjectId}`)}
       >
-        &lt; Back
+        &lt; Back to Quizzes
       </button>
 
       <div className="quizAttemptsHeader">
         <h2 className="quizAttemptsTitle">{quizTitle}</h2>
-        <button className="quizResultReattemptBtn" onClick={handleReattempt}>
-          Re-Attempt Quiz
+        <button
+          className="quizResultReattemptBtn"
+          onClick={handleReattempt}
+          disabled={starting}
+        >
+          {starting ? "Starting…" : "🔁 Re-Attempt Quiz"}
         </button>
       </div>
 
@@ -62,43 +72,57 @@ export default function QuizAttempts() {
         <table className="quizAttemptsTable">
           <thead>
             <tr>
-              <th>S.No.</th>
-              <th>Name</th>
+              <th>Attempt</th>
               <th>Submitted On</th>
-              <th>Time Taken</th>
               <th>Score</th>
+              <th>Accuracy</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
             {attempts.length === 0 ? (
               <tr>
-                <td colSpan={6} style={{ textAlign: "center" }}>
-                  No attempts found.
+                <td colSpan={5} style={{ textAlign: "center", padding: "24px", color: "#94a3b8" }}>
+                  No submitted attempts yet.
                 </td>
               </tr>
             ) : (
-              attempts.map((attempt, idx) => (
-                <tr key={attempt.id}>
-                  <td>{idx + 1}</td>
-                  <td>{attempt.student_name}</td>
-                  <td>{new Date(attempt.submitted_at).toLocaleString()}</td>
-                  <td>{attempt.time_taken}</td>
-                  <td>{attempt.score}</td>
-                  <td>
-                    <button
-                      className="quizAttemptsReviewBtn"
-                      onClick={() =>
-                        navigate(
-                          `/subjects/quiz/${subjectId}/result/${quizId}?attempt=${attempt.id}`
-                        )
-                      }
-                    >
-                      Review
-                    </button>
-                  </td>
-                </tr>
-              ))
+              attempts.map((attempt) => {
+                const pct = attempt.total_marks
+                  ? Math.round((attempt.score / attempt.total_marks) * 100)
+                  : 0;
+                const scoreClass =
+                  pct >= 70 ? "score-high" : pct >= 40 ? "score-mid" : "score-low";
+
+                return (
+                  <tr key={attempt.id}>
+                    <td>#{attempt.attempt_number}</td>
+                    <td>
+                      {attempt.submitted_at
+                        ? new Date(attempt.submitted_at).toLocaleString()
+                        : "—"}
+                    </td>
+                    <td>
+                      <span className={`quizScorePill ${scoreClass}`}>
+                        {attempt.score} / {attempt.total_marks}
+                      </span>
+                    </td>
+                    <td>{pct}%</td>
+                    <td>
+                      <button
+                        className="quizAttemptsReviewBtn"
+                        onClick={() =>
+                          navigate(
+                            `/subjects/quiz/${subjectId}/result/${quizId}?attempt=${attempt.id}`
+                          )
+                        }
+                      >
+                        Review
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
             )}
           </tbody>
         </table>
@@ -106,3 +130,4 @@ export default function QuizAttempts() {
     </div>
   );
 }
+  

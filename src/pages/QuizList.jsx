@@ -17,7 +17,6 @@ export default function QuizList() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
-  // ✅ NEW STATES (added)
   const [showModal, setShowModal] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
 
@@ -51,8 +50,6 @@ export default function QuizList() {
       } catch (err) {
         console.error("Failed to fetch quizzes:", err);
         setError("Failed to load quizzes.");
-        setPendingQuizzes([]);
-        setCompletedQuizzes([]);
       } finally {
         setLoading(false);
       }
@@ -63,17 +60,18 @@ export default function QuizList() {
 
   const quizzes = activeTab === "pending" ? pendingQuizzes : completedQuizzes;
 
-  // ✅ MODIFIED CLICK HANDLER
   const handleQuizClick = (quiz) => {
     if (activeTab === "pending") {
+      // Show start confirmation modal
       setSelectedQuiz(quiz);
       setShowModal(true);
     } else {
-      navigate(`/subjects/quiz/${subjectId}/result/${quiz.id}`);
+      // Completed: go to attempts list (student can pick which attempt to review,
+      // or re-attempt from there)
+      navigate(`/subjects/quiz/${subjectId}/attempts/${quiz.id}`);
     }
   };
 
-  // ✅ CONFIRM FUNCTION (added)
   const confirmStartQuiz = () => {
     navigate(`/subjects/quiz/${subjectId}/take/${selectedQuiz.id}`);
     setShowModal(false);
@@ -84,15 +82,19 @@ export default function QuizList() {
 
   return (
     <div className="quizListPage">
-      <button className="quizBackHeader" onClick={() => navigate(`/subjects/quiz`)}>
-  &lt; Back
-</button>
+      <button className="quizBackHeader" onClick={() => navigate("/subjects/quiz")}>
+        &lt; Back
+      </button>
 
       <div className="quizListHeaderBox">
         <div className="quizListHeaderRow">
           <h2 className="quizListTitle">Quizzes</h2>
           <div className="quizSearch">
-            <input placeholder="Search..." onChange={(e) => setSearchTerm(e.target.value)} />
+            <input
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <span className="quizSearchIcon">🔍</span>
           </div>
         </div>
@@ -120,7 +122,9 @@ export default function QuizList() {
               quiz.title.toLowerCase().includes(searchTerm.toLowerCase())
             );
             return filtered.length === 0 ? (
-              <div>{searchTerm ? "No matching quizzes." : "No quizzes found."}</div>
+              <div className="quizEmpty">
+                {searchTerm ? "No matching quizzes." : "No quizzes found."}
+              </div>
             ) : (
               filtered.map((quiz) => (
                 <QuizCard
@@ -129,6 +133,10 @@ export default function QuizList() {
                   teacher={quiz.teacher_name}
                   deadline={new Date(quiz.due_date).toLocaleString()}
                   isCompleted={activeTab === "completed"}
+                  // Show attempt count badge for completed quizzes
+                  badge={activeTab === "completed" && quiz.attempts_count > 1
+                    ? `${quiz.attempts_count} attempts`
+                    : null}
                   onClick={() => handleQuizClick(quiz)}
                 />
               ))
@@ -137,19 +145,20 @@ export default function QuizList() {
         </div>
       </div>
 
-      {/* ✅ MODAL UI (added) */}
+      {/* Start quiz confirmation modal */}
       {showModal && (
         <div className="quizModalOverlay">
           <div className="quizModalBox">
             <h3>Start Quiz?</h3>
             <p>
               You are about to start <b>{selectedQuiz?.title}</b>
-              <br /><br />
-              ⏱ Time will start immediately  
-              <br />
-              🚫 You cannot pause the quiz
             </p>
-
+            <ul className="quizModalRules">
+              <li>⏱ Timer starts immediately and cannot be paused</li>
+              <li>📝 Unanswered questions are scored 0</li>
+              <li>🔁 You can re-attempt after submitting</li>
+              <li>✅ Results are shown immediately after submission</li>
+            </ul>
             <div className="quizModalActions">
               <button className="startBtn" onClick={confirmStartQuiz}>
                 Start
