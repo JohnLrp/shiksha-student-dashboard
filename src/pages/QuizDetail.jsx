@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, useParams, useBlocker } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import api from "../api/apiClient";
 import "../styles/QuizDetail.css";
 
@@ -215,15 +215,72 @@ export default function QuizDetail() {
   }, []);
 
   // ── Block in-app navigation while quiz is active ─────────────────────────
-  // useBlocker intercepts NavLink / navigate() clicks within the SPA.
-  // When the student clicks Recordings, Assignments etc. in the sidebar
-  // this shows a confirmation modal instead of silently navigating away.
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      quizReady &&
-      !submittedRef.current &&
-      currentLocation.pathname !== nextLocation.pathname
-  );
+  // BrowserRouter doesn't support useBlocker, so we intercept popstate
+  // (back/forward) with beforeunload, and push a dummy history entry so
+  // the back button triggers popstate instead of navigating away.
+  // For sidebar NavLink clicks we use a custom nav guard state.
+  const [showNavWarning, setShowNavWarning] = useState(false);
+  const pendingNavRef = useRef(null);
+
+  useEffect(() => {
+    if (!quizReady) return;
+
+    // Push a dummy history entry so back button hits popstate first
+    window.history.pushState(null, "", window.location.href);
+
+    const handlePopState = () => {
+      if (!submittedRef.current) {
+        // Push again to prevent actual navigation
+        window.history.pushState(null, "", window.location.href);
+        setShowNavWarning(true);
+      }
+    };
+
+    const handleBeforeUnload = (e) => {
+      if (!submittedRef.current) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [quizReady]);
+
+  // Intercept NavLink clicks — monkey-patch history.pushState
+  useEffect(() => {
+    if (!quizReady) return;
+
+    const originalPushState = window.history.pushState.bind(window.history);
+
+    window.history.pushState = function(state, title, url) {
+      // Allow our own dummy pushState calls (same URL)
+      if (url && url.toString() === window.location.href) {
+        return originalPushState(state, title, url);
+      }
+      if (!submittedRef.current) {
+        // Store intended destination and show warning instead
+        pendingNavRef.current = () => {
+          window.history.pushState = originalPushState;
+          originalPushState(state, title, url);
+          // Force React Router to sync
+          window.dispatchEvent(new PopStateEvent("popstate", { state }));
+        };
+        setShowNavWarning(true);
+        return;
+      }
+      return originalPushState(state, title, url);
+    };
+
+    return () => {
+      window.history.pushState = originalPushState;
+    };
+  }, [quizReady]);
 
   // ── Auto-submit ────────────────────────────────────────────────────────────
   const handleAutoSubmit = useCallback(async () => {
@@ -482,8 +539,8 @@ export default function QuizDetail() {
         </div>
       </div>
 
-      {/* NAVIGATION BLOCK MODAL — fires when student clicks sidebar links */}
-      {blocker.state === "blocked" && (
+      {/* NAVIGATION WARNING MODAL */}
+      {showNavWarning && (
         <div className="quiz-modal-overlay">
           <div className="quiz-modal-box">
             <h3>Leave Quiz?</h3>
@@ -497,13 +554,22 @@ export default function QuizDetail() {
             <div className="quiz-modal-actions">
               <button
                 className="quiz-btn-cancel"
-                onClick={() => blocker.reset()}
+                onClick={() => {
+                  pendingNavRef.current = null;
+                  setShowNavWarning(false);
+                }}
               >
                 Stay in Quiz
               </button>
               <button
                 className="quiz-btn-exit"
-                onClick={() => blocker.proceed()}
+                onClick={() => {
+                  setShowNavWarning(false);
+                  if (pendingNavRef.current) {
+                    pendingNavRef.current();
+                    pendingNavRef.current = null;
+                  }
+                }}
               >
                 Leave Anyway
               </button>
