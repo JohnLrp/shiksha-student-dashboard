@@ -49,11 +49,13 @@ export default function QuizList() {
         const completed = [];
 
         res.data.forEach((quiz) => {
-          // Always show in pending — students can always re-attempt
-          pending.push(quiz);
-          // Also show in completed if they have a submission to review
-          if (quiz.status === "SUBMITTED") {
+          // status comes from backend: "SUBMITTED" | "PENDING" | "NOT_STARTED"
+          // also check attempts_count as a fallback in case status is wrong
+          const isDone = quiz.status === "SUBMITTED" || quiz.attempts_count > 0;
+          if (isDone) {
             completed.push(quiz);
+          } else {
+            pending.push(quiz);
           }
         });
 
@@ -152,7 +154,11 @@ export default function QuizList() {
             );
             return filtered.length === 0 ? (
               <div className="quizEmpty">
-                {searchTerm ? "No matching quizzes." : "No quizzes found."}
+                {searchTerm
+                  ? "No matching quizzes."
+                  : activeTab === "pending"
+                    ? "No pending quizzes — check the Completed tab to re-attempt."
+                    : "No completed quizzes yet."}
               </div>
             ) : (
               filtered.map((quiz) => (
