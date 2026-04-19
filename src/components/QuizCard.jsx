@@ -15,7 +15,7 @@ export default function QuizCard({
       onClick={onClick}
     >
       {/* Status badge — top-right corner */}
-      {isCompleted && <span className="quizCard__badge quizCard__badge--done">✓</span>}
+      {isCompleted && <span className="quizCard__badge quizCard__badge--done">✓ Completed</span>}
       {inProgress && (
         <span className="quizCard__badge quizCard__badge--progress">
           ▶ In Progress
@@ -32,6 +32,9 @@ export default function QuizCard({
         <p className="quizCard__info">{deadline}</p>
         {badge && <span className="quizCard__attempts">{badge}</span>}
       </div>
+      {isCompleted && (
+        <p className="quizCard__reattempt">Tap to review or re-attempt →</p>
+      )}
 
       {/* Pulsing dot for in-progress */}
       {inProgress && (
