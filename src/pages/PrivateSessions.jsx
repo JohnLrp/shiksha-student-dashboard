@@ -2,7 +2,7 @@
  * FILE: STUDENT_DASHBOARD/src/pages/PrivateSessions.jsx
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import privateSession from "../api/privateSessionService";
@@ -776,16 +776,121 @@ function Step1({ data, setData }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
-   STEP 2 — Group size + student IDs
+   STEP 2 — Group size + student autocomplete picker
 ═══════════════════════════════════════════════════════════ */
+function StudentPicker({ slot, subjectId, excludeUserIds, onSelect, onClear }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const debounceRef = useRef(null);
+  const wrapRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    if (!subjectId) return;
+    clearTimeout(debounceRef.current);
+    if (!query.trim()) {
+      // On empty query still fetch full list (limited server-side)
+      debounceRef.current = setTimeout(fetchStudents, 300);
+    } else {
+      debounceRef.current = setTimeout(fetchStudents, 250);
+    }
+    return () => clearTimeout(debounceRef.current);
+  }, [query, subjectId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fetchStudents = async () => {
+    if (!subjectId) return;
+    setLoading(true);
+    try {
+      const list = await privateSession.getCourseStudents(subjectId, query.trim());
+      // Filter out already-selected students
+      setResults(list.filter((s) => !excludeUserIds.includes(s.user_id)));
+    } catch {
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFocus = () => {
+    setOpen(true);
+    if (!query) fetchStudents();
+  };
+
+  const handleSelect = (student) => {
+    onSelect(student);
+    setQuery("");
+    setOpen(false);
+    setResults([]);
+  };
+
+  // If a student is already selected for this slot, show their pill
+  if (slot.valid) {
+    return (
+      <div className="ps__pickerPill">
+        <span className="ps__pickerPillAvatar">{slot.name.charAt(0).toUpperCase()}</span>
+        <span className="ps__pickerPillName">{slot.name}</span>
+        {slot.student_id && <span className="ps__pickerPillId">#{slot.student_id}</span>}
+        <button className="ps__pickerPillClear" onClick={onClear} title="Remove">✕</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ps__pickerWrap" ref={wrapRef}>
+      <div className="ps__pickerInputRow">
+        <span className="ps__pickerSearchIcon">🔍</span>
+        <input
+          className="ps__pickerInput"
+          placeholder="Search by name or student ID..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={handleFocus}
+          autoComplete="off"
+        />
+        {loading && <span className="ps__pickerSpinner" />}
+      </div>
+      {open && (
+        <div className="ps__pickerDropdown">
+          {results.length === 0 && !loading && (
+            <div className="ps__pickerEmpty">
+              {query ? "No students found" : "No enrolled students available"}
+            </div>
+          )}
+          {results.map((s) => (
+            <div
+              key={s.user_id}
+              className="ps__pickerOption"
+              onMouseDown={(e) => { e.preventDefault(); handleSelect(s); }}
+            >
+              <span className="ps__pickerOptionAvatar">{s.name.charAt(0).toUpperCase()}</span>
+              <span className="ps__pickerOptionName">{s.name}</span>
+              {s.student_id && <span className="ps__pickerOptionId">#{s.student_id}</span>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Step2({ data, setData, displayName }) {
   const [groupInput, setGroupInput] = useState(String(data.groupSize));
-  const [validating, setValidating] = useState({});
 
   const applyGroupSize = (n) => {
     const size = Math.max(1, Math.min(10, n));
     const students = Array(Math.max(0, size - 1)).fill(null).map((_, i) =>
-      data.students[i] || { studentId: "", name: "", userId: "", valid: false }
+      data.students[i] || { name: "", userId: "", student_id: "", valid: false }
     );
     setData({ ...data, groupSize: size, students });
     setGroupInput(String(size));
@@ -806,35 +911,25 @@ function Step2({ data, setData, displayName }) {
     else applyGroupSize(n);
   };
 
-  const setStudentId = async (i, val) => {
+  const handleSelect = (i, student) => {
     const students = [...data.students];
-    students[i] = { studentId: val, name: "", userId: "", valid: false };
+    students[i] = {
+      name: student.name,
+      userId: student.user_id,
+      student_id: student.student_id,
+      valid: true,
+    };
     setData({ ...data, students });
-    if (!val.trim()) return;
-    setValidating((prev) => ({ ...prev, [i]: true }));
-    try {
-      const result = await privateSession.validateStudentId(val.trim());
-      setData((prev) => {
-        const updated = [...prev.students];
-        if (updated[i]?.studentId === val) {
-          updated[i] = {
-            studentId: val,
-            name: result.valid ? result.name : "",
-            userId: result.valid ? result.user_id : "",
-            valid: result.valid,
-          };
-        }
-        return { ...prev, students: updated };
-      });
-    } catch {}
-    finally { setValidating((prev) => ({ ...prev, [i]: false })); }
   };
 
-  const clearStudent = (i) => {
+  const handleClear = (i) => {
     const students = [...data.students];
-    students[i] = { studentId: "", name: "", userId: "", valid: false };
+    students[i] = { name: "", userId: "", student_id: "", valid: false };
     setData({ ...data, students });
   };
+
+  // IDs already selected (to exclude from dropdowns)
+  const selectedIds = data.students.filter((s) => s.valid).map((s) => s.userId);
 
   return (
     <div>
@@ -846,27 +941,34 @@ function Step2({ data, setData, displayName }) {
           <button className="ps__groupBtn" onClick={() => applyGroupSize(data.groupSize + 1)}>+</button>
         </div>
       </div>
+
+      {data.groupSize > 1 && (
+        <p className="ps__pickerHint">
+          Select up to <strong>{data.groupSize - 1}</strong> more student{data.groupSize > 2 ? "s" : ""} from your course.
+        </p>
+      )}
+
       <div className="ps__studentInputs">
+        {/* Slot 1 is always the requesting student */}
         <div className="ps__studentRow">
           <span className="ps__slotNum">1.</span>
-          <input className="ps__studentInput ps__studentInput--you" value={`${displayName} (You)`} readOnly />
-          <span className="ps__youTag">You</span>
+          <div className="ps__pickerPill ps__pickerPill--you">
+            <span className="ps__pickerPillAvatar">{(displayName || "Y").charAt(0).toUpperCase()}</span>
+            <span className="ps__pickerPillName">{displayName}</span>
+            <span className="ps__youTag">You</span>
+          </div>
         </div>
+
         {data.students.map((s, i) => (
           <div key={i} className="ps__studentRow">
             <span className="ps__slotNum">{i + 2}.</span>
-            <input
-              className={`ps__studentInput ${s.valid ? "ps__studentInput--valid" : s.studentId ? "ps__studentInput--invalid" : ""}`}
-              placeholder="Enter Student ID"
-              value={s.studentId}
-              onChange={(e) => setStudentId(i, e.target.value)}
+            <StudentPicker
+              slot={s}
+              subjectId={data.subject_id}
+              excludeUserIds={selectedIds}
+              onSelect={(student) => handleSelect(i, student)}
+              onClear={() => handleClear(i)}
             />
-            {validating[i]
-              ? <span style={{ fontSize: 11, color: "#6b7280" }}>...</span>
-              : s.valid
-                ? <span className="ps__validTag">✓ {s.name}</span>
-                : <button className="ps__clearBtn" onClick={() => clearStudent(i)}>✕</button>
-            }
           </div>
         ))}
       </div>
