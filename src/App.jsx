@@ -35,6 +35,7 @@ import PrivateSessions from "./pages/PrivateSessions";
 import PrivateSessionLive from "./pages/PrivateSessionLive";
 
 import Quiz from "./pages/Quiz";
+import Teachers from "./pages/Teachers";
 
 function RequireStudentAuth({ children }) {
   return children;
@@ -147,6 +148,8 @@ export default function App() {
               />
 
               <Route path="quiz" element={<Quiz />} />
+
+              <Route path="teachers" element={<Teachers />} />
             </Route>
 
             <Route

@@ -10,6 +10,7 @@ import { BsBook } from "react-icons/bs";
 import { BiVideo } from "react-icons/bi";
 import { FaClipboardList, FaBookOpen } from "react-icons/fa";
 import { RiLiveLine, RiLockLine } from "react-icons/ri";
+import { FaChalkboardTeacher } from "react-icons/fa";
 import { AiOutlineFileDone, AiOutlineClose } from "react-icons/ai";
 
 console.log("SIDEBAR LOADED - NEW VERSION");
@@ -138,6 +139,18 @@ export default function Sidebar({ setMenuOpen }) {
             <RiLockLine />
           </span>
           Private Sessions
+        </NavLink>
+
+        {/* Teachers */}
+        <NavLink
+          className="sidebar__link"
+          to="/teachers"
+          onClick={() => setMenuOpen(false)}
+        >
+          <span className="sidebar__icon">
+            <FaChalkboardTeacher />
+          </span>
+          Teachers
         </NavLink>
 
       </nav>
