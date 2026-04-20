@@ -113,9 +113,7 @@ export default function Profile() {
       if (tempAvatarType === "image" && tempAvatarFile) {
         const formData = new FormData();
         formData.append("avatar_image", tempAvatarFile);
-        await api.patch("/accounts/me/", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await api.patch("/accounts/me/", formData);
       }
       await fetchProfile();
       setShowPicker(false);
@@ -168,7 +166,8 @@ export default function Profile() {
               </div>
 
               {showPicker && (
-                <div className="avatarPicker">
+                <div className="avatarPicker__backdrop" onClick={handlePickerCancel}>
+                  <div className="avatarPicker" onClick={(e) => e.stopPropagation()}>
                   <div className="avatarPicker__header">
                     <span>{avatar ? "Change Avatar" : "Choose Avatar"}</span>
                     <button className="avatarPicker__close" onClick={handlePickerCancel}>×</button>
@@ -214,6 +213,7 @@ export default function Profile() {
                   <div className="avatarPicker__actions">
                     <button className="avatarPicker__cancelBtn" onClick={handlePickerCancel}>Cancel</button>
                     <button className="avatarPicker__saveBtn" onClick={handleAvatarSave} disabled={!tempAvatar}>Save</button>
+                  </div>
                   </div>
                 </div>
               )}

@@ -398,16 +398,26 @@
 }
 
 /* ─── Avatar Picker ──────────────────────────────── */
+.avatarPicker__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
 .avatarPicker {
-  position: absolute;
-  top: 118px;
-  left: 0;
   background: #fff;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  padding: 16px;
-  width: 280px;
-  z-index: 100;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  padding: 18px;
+  width: 320px;
+  max-width: 100%;
+  max-height: 88vh;
+  overflow-y: auto;
 }
 
 .avatarPicker__header {
@@ -908,15 +918,8 @@
   }
 
   .avatarPicker {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: calc(100vw - 40px);
-    max-width: 320px;
-    max-height: 80vh;
-    overflow-y: auto;
-    z-index: 1000;
+    width: 100%;
+    max-width: 360px;
   }
 
   .editModal {
