@@ -396,3 +396,134 @@ button.pd-yn-btn:hover:not(.pd-yn-btn--active) {
     grid-column: 1;
   }
 }
+
+/* ===== PAGE LAYOUT (added) ===== */
+.pd-page {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.pd-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 4px 2px;
+}
+
+.pd-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.pd-back {
+  background: transparent;
+  border: 1.5px solid #bcd;
+  color: #0a4d55;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pd-back:hover {
+  background: rgba(10, 77, 85, 0.06);
+  border-color: #0a4d55;
+}
+
+.pd-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.pd-edit-btn,
+.pd-cancel-btn,
+.pd-save-btn {
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.pd-edit-btn {
+  background: #0a4d55;
+  color: #fff;
+  border: 1.5px solid #0a4d55;
+}
+
+.pd-edit-btn:hover {
+  background: #0a6d75;
+  border-color: #0a6d75;
+}
+
+.pd-cancel-btn {
+  background: #fff;
+  color: #555;
+  border: 1.5px solid #ddd;
+}
+
+.pd-cancel-btn:hover {
+  background: #f5f5f5;
+}
+
+.pd-save-btn {
+  background: #0a4d55;
+  color: #fff;
+  border: 1.5px solid #0a4d55;
+}
+
+.pd-save-btn:hover:not(:disabled) {
+  background: #0a6d75;
+  border-color: #0a6d75;
+}
+
+.pd-save-btn:disabled,
+.pd-cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pd-loading,
+.pd-error {
+  padding: 40px;
+  text-align: center;
+  color: #6b7280;
+  background: #fff;
+  border-radius: 16px;
+}
+
+.pd-error {
+  color: #c0392b;
+}
+
+.pd-page .pd-section {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px 28px;
+}
+
+.pd-page .pd-section h2 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1a5f70;
+  padding-bottom: 10px;
+  border-bottom: 1.5px solid rgba(26, 95, 112, 0.15);
+}
+
+@media (max-width: 768px) {
+  .pd-header {
+    flex-wrap: wrap;
+  }
+  .pd-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
