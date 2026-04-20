@@ -778,6 +778,13 @@ function Step1({ data, setData }) {
 /* ═══════════════════════════════════════════════════════════
    STEP 2 — Group size + student autocomplete picker
 ═══════════════════════════════════════════════════════════ */
+/* helper — trim UUID-style student IDs to a short readable form */
+function shortId(id) {
+  if (!id) return "";
+  // If it looks like a UUID keep first 8 chars, else keep as-is (max 12)
+  return id.length > 12 ? id.slice(0, 8).toUpperCase() : id;
+}
+
 function StudentPicker({ slot, subjectId, excludeUserIds, onSelect, onClear }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -785,6 +792,7 @@ function StudentPicker({ slot, subjectId, excludeUserIds, onSelect, onClear }) {
   const [open, setOpen] = useState(false);
   const debounceRef = useRef(null);
   const wrapRef = useRef(null);
+  const inputRef = useRef(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -795,25 +803,11 @@ function StudentPicker({ slot, subjectId, excludeUserIds, onSelect, onClear }) {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  // Debounced search
-  useEffect(() => {
-    if (!subjectId) return;
-    clearTimeout(debounceRef.current);
-    if (!query.trim()) {
-      // On empty query still fetch full list (limited server-side)
-      debounceRef.current = setTimeout(fetchStudents, 300);
-    } else {
-      debounceRef.current = setTimeout(fetchStudents, 250);
-    }
-    return () => clearTimeout(debounceRef.current);
-  }, [query, subjectId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const fetchStudents = async () => {
+  const fetchStudents = async (q = "") => {
     if (!subjectId) return;
     setLoading(true);
     try {
-      const list = await privateSession.getCourseStudents(subjectId, query.trim());
-      // Filter out already-selected students
+      const list = await privateSession.getCourseStudents(subjectId, q.trim());
       setResults(list.filter((s) => !excludeUserIds.includes(s.user_id)));
     } catch {
       setResults([]);
@@ -822,9 +816,18 @@ function StudentPicker({ slot, subjectId, excludeUserIds, onSelect, onClear }) {
     }
   };
 
+  // Debounce typed queries
+  const handleChange = (e) => {
+    const val = e.target.value;
+    setQuery(val);
+    setOpen(true);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => fetchStudents(val), 250);
+  };
+
   const handleFocus = () => {
     setOpen(true);
-    if (!query) fetchStudents();
+    if (results.length === 0 && !loading) fetchStudents(query);
   };
 
   const handleSelect = (student) => {
@@ -834,48 +837,75 @@ function StudentPicker({ slot, subjectId, excludeUserIds, onSelect, onClear }) {
     setResults([]);
   };
 
-  // If a student is already selected for this slot, show their pill
+  // ── Selected pill ──────────────────────────────────────
   if (slot.valid) {
     return (
       <div className="ps__pickerPill">
         <span className="ps__pickerPillAvatar">{slot.name.charAt(0).toUpperCase()}</span>
-        <span className="ps__pickerPillName">{slot.name}</span>
-        {slot.student_id && <span className="ps__pickerPillId">#{slot.student_id}</span>}
+        <div className="ps__pickerPillInfo">
+          <span className="ps__pickerPillName">{slot.name}</span>
+          {slot.student_id && (
+            <span className="ps__pickerPillId">{shortId(slot.student_id)}</span>
+          )}
+        </div>
         <button className="ps__pickerPillClear" onClick={onClear} title="Remove">✕</button>
       </div>
     );
   }
 
+  // ── Search input + dropdown ────────────────────────────
   return (
     <div className="ps__pickerWrap" ref={wrapRef}>
-      <div className="ps__pickerInputRow">
-        <span className="ps__pickerSearchIcon">🔍</span>
+      <div className={`ps__pickerInputRow ${open ? "ps__pickerInputRow--open" : ""}`}>
+        <svg className="ps__pickerSearchIcon" viewBox="0 0 20 20" fill="none">
+          <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.6"/>
+          <path d="M13 13l3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+        </svg>
         <input
+          ref={inputRef}
           className="ps__pickerInput"
-          placeholder="Search by name or student ID..."
+          placeholder="Search by name or ID..."
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={handleChange}
           onFocus={handleFocus}
           autoComplete="off"
+          spellCheck={false}
         />
-        {loading && <span className="ps__pickerSpinner" />}
+        {loading
+          ? <span className="ps__pickerSpinner" />
+          : query && (
+            <button className="ps__pickerClearQuery" onClick={() => { setQuery(""); fetchStudents(""); }}>✕</button>
+          )
+        }
       </div>
+
       {open && (
         <div className="ps__pickerDropdown">
-          {results.length === 0 && !loading && (
-            <div className="ps__pickerEmpty">
-              {query ? "No students found" : "No enrolled students available"}
+          {loading && results.length === 0 && (
+            <div className="ps__pickerLoading">
+              <span className="ps__pickerSpinner" /> Searching...
             </div>
           )}
-          {results.map((s) => (
+          {!loading && results.length === 0 && (
+            <div className="ps__pickerEmpty">
+              <span className="ps__pickerEmptyIcon">👤</span>
+              {query ? `No students found for "${query}"` : "No other enrolled students"}
+            </div>
+          )}
+          {results.map((s, idx) => (
             <div
               key={s.user_id}
               className="ps__pickerOption"
               onMouseDown={(e) => { e.preventDefault(); handleSelect(s); }}
             >
               <span className="ps__pickerOptionAvatar">{s.name.charAt(0).toUpperCase()}</span>
-              <span className="ps__pickerOptionName">{s.name}</span>
-              {s.student_id && <span className="ps__pickerOptionId">#{s.student_id}</span>}
+              <div className="ps__pickerOptionInfo">
+                <span className="ps__pickerOptionName">{s.name}</span>
+                {s.student_id && (
+                  <span className="ps__pickerOptionId">{shortId(s.student_id)}</span>
+                )}
+              </div>
+              <span className="ps__pickerOptionAdd">+ Add</span>
             </div>
           ))}
         </div>
@@ -928,11 +958,13 @@ function Step2({ data, setData, displayName }) {
     setData({ ...data, students });
   };
 
-  // IDs already selected (to exclude from dropdowns)
   const selectedIds = data.students.filter((s) => s.valid).map((s) => s.userId);
+  const filledCount = data.students.filter((s) => s.valid).length;
+  const totalSlots = data.groupSize - 1;
 
   return (
-    <div>
+    <div className="ps__step2Wrap">
+      {/* Group size control */}
       <div className="ps__groupRow">
         <label className="ps__fieldLabel">Group Strength</label>
         <div className="ps__groupCtrl">
@@ -942,26 +974,38 @@ function Step2({ data, setData, displayName }) {
         </div>
       </div>
 
-      {data.groupSize > 1 && (
-        <p className="ps__pickerHint">
-          Select up to <strong>{data.groupSize - 1}</strong> more student{data.groupSize > 2 ? "s" : ""} from your course.
-        </p>
+      {/* Progress hint */}
+      {totalSlots > 0 && (
+        <div className="ps__pickerProgress">
+          <div className="ps__pickerProgressBar">
+            <div
+              className="ps__pickerProgressFill"
+              style={{ width: `${((filledCount + 1) / data.groupSize) * 100}%` }}
+            />
+          </div>
+          <span className="ps__pickerProgressText">
+            {filledCount + 1} / {data.groupSize} students selected
+          </span>
+        </div>
       )}
 
+      {/* Student slots */}
       <div className="ps__studentInputs">
-        {/* Slot 1 is always the requesting student */}
+        {/* Slot 1 — always the requesting student */}
         <div className="ps__studentRow">
-          <span className="ps__slotNum">1.</span>
+          <span className="ps__slotNum">1</span>
           <div className="ps__pickerPill ps__pickerPill--you">
             <span className="ps__pickerPillAvatar">{(displayName || "Y").charAt(0).toUpperCase()}</span>
-            <span className="ps__pickerPillName">{displayName}</span>
-            <span className="ps__youTag">You</span>
+            <div className="ps__pickerPillInfo">
+              <span className="ps__pickerPillName">{displayName}</span>
+              <span className="ps__pickerPillId">You</span>
+            </div>
           </div>
         </div>
 
         {data.students.map((s, i) => (
           <div key={i} className="ps__studentRow">
-            <span className="ps__slotNum">{i + 2}.</span>
+            <span className="ps__slotNum">{i + 2}</span>
             <StudentPicker
               slot={s}
               subjectId={data.subject_id}

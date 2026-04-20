@@ -334,7 +334,6 @@
   box-shadow: 0 2px 14px rgba(0,0,0,0.07);
 }
 
-/* Back button wrapper — positioned above the detail card */
 .ps__sidebarBack {
   padding: 12px 20px 0;
 }
@@ -463,7 +462,6 @@
 
 .ps__formTitle { font-size: 19px; font-weight: 700; color: var(--ps-text-dark); margin-bottom: 16px; }
 
-/* Stepper */
 .ps__stepper { display: flex; align-items: center; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
 .ps__stepGroup { display: flex; align-items: center; flex-shrink: 0; }
 
@@ -484,7 +482,6 @@
 
 .ps__formBody { margin-bottom: 20px; }
 
-/* Field rows */
 .ps__fieldRow { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
 .ps__fieldLabel { font-size: 13px; font-weight: 600; color: var(--ps-text-dark); min-width: 70px; flex-shrink: 0; }
 .ps__fieldVal { font-size: 13px; color: var(--ps-text-muted); }
@@ -498,7 +495,6 @@
 
 .ps__sectionLabel { font-size: 14px; font-weight: 700; color: var(--ps-text-dark); margin-bottom: 14px; margin-top: 18px; }
 
-/* Teacher cards */
 .ps__teacherGrid { display: flex; flex-direction: column; gap: 10px; }
 
 .ps__teacherCard {
@@ -542,34 +538,6 @@
   font-size: 14px; height: 30px; outline: none; background: white; color: var(--ps-text-dark);
 }
 
-/* Student inputs (Step 2) */
-.ps__studentInputs { display: flex; flex-direction: column; gap: 8px; }
-.ps__studentRow { display: flex; align-items: center; gap: 8px; }
-.ps__slotNum { font-size: 12px; color: var(--ps-text-muted); width: 18px; text-align: right; flex-shrink: 0; }
-.ps__studentInput {
-  flex: 1; padding: 9px 12px; border: 1.5px solid var(--ps-border); border-radius: 8px;
-  font-size: 13px; outline: none; color: var(--ps-text-dark); background: white; min-width: 0;
-  font-family: inherit;
-}
-.ps__studentInput::placeholder { color: #9ca3af; }
-.ps__studentInput:focus { border-color: var(--ps-accent); }
-.ps__studentInput--you { background: #f9fafb; color: var(--ps-text-muted); cursor: not-allowed; }
-.ps__studentInput--valid { background: var(--ps-accent-light); border-color: var(--ps-accent); color: var(--ps-primary); font-weight: 500; }
-.ps__studentInput--invalid { border-color: #fca5a5; background: #fef2f2; }
-
-.ps__youTag {
-  font-size: 11px; background: var(--ps-primary); color: white;
-  padding: 3px 9px; border-radius: 12px; white-space: nowrap; flex-shrink: 0;
-}
-.ps__validTag { font-size: 11px; color: var(--ps-success); font-weight: 600; white-space: nowrap; flex-shrink: 0; }
-.ps__clearBtn {
-  width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid #fecaca;
-  background: #fef2f2; color: var(--ps-danger); font-size: 11px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-  font-weight: 700;
-}
-.ps__clearBtn:hover { background: var(--ps-danger); color: white; border-color: var(--ps-danger); }
-
 /* Time slot & duration buttons (Step 3) */
 .ps__slotBtns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
 .ps__slotBtn {
@@ -599,7 +567,6 @@
 .ps__summaryKey { color: var(--ps-text-muted); font-weight: 500; min-width: 90px; flex-shrink: 0; }
 .ps__summaryVal { color: var(--ps-text-dark); font-weight: 600; text-align: right; flex: 1; }
 
-/* Form actions */
 .ps__formActions {
   display: flex; justify-content: flex-end; gap: 10px; padding-top: 18px;
   border-top: 1px solid var(--ps-border);
@@ -634,20 +601,45 @@
   height: auto; min-height: 0;
 }
 
-.ps__historyLeft { flex: 1; min-width: 180px; }
+.ps__historyLeft { flex: 1; min-width: 180px; word-wrap: break-word; overflow-wrap: break-word; }
 .ps__historyBadge {
   font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600;
   display: inline-block; margin-bottom: 8px;
 }
 .ps__historyBadge--completed { background: #dcfce7; color: #16a34a; }
 .ps__historyBadge--cancelled { background: #fef2f2; color: #dc2626; }
+.ps__historyBadge--declined  { background: #fef2f2; color: #dc2626; }
+.ps__historyBadge--expired   { background: #f9fafb; color: #6b7280; }
+.ps__historyBadge--withdrawn { background: #f3f4f6; color: #6b7280; }
+.ps__historyBadge--noshow    { background: #fffbeb; color: #d97706; }
 
-.ps__historySubject { font-size: 15px; font-weight: 700; color: var(--ps-text-dark); }
+.ps__historySubject { font-size: 15px; font-weight: 700; color: var(--ps-text-dark); word-wrap: break-word; }
 .ps__historyTopic { font-size: 12px; color: var(--ps-text-muted); margin-bottom: 4px; }
 .ps__historyTeacher { font-size: 13px; color: var(--ps-text-dark); font-weight: 500; }
 
-.ps__historyRight { display: flex; flex-direction: column; gap: 4px; text-align: right; }
-.ps__historyMeta { font-size: 12px; color: var(--ps-text-muted); }
+.ps__historyRight { display: flex; flex-direction: column; gap: 4px; text-align: right; white-space: normal; }
+.ps__historyMeta { font-size: 12px; color: var(--ps-text-muted); white-space: normal; }
+
+.ps__historyCard--clickable {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+.ps__historyCard--clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  border-color: var(--ps-accent);
+}
+
+.ps__historyFilterRow {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px; gap: 12px; flex-wrap: wrap;
+}
+.ps__historyFilter {
+  padding: 7px 12px; border: 1.5px solid var(--ps-border); border-radius: 8px;
+  font-size: 13px; color: var(--ps-text-dark); background: white; outline: none;
+  cursor: pointer; font-family: inherit;
+}
+.ps__historyFilter:focus { border-color: var(--ps-accent); }
 
 /* ═════════════════════════════════════════════════════
    EMPTY STATES
@@ -657,52 +649,52 @@
 .ps__empty p { font-size: 14px; }
 
 /* ═════════════════════════════════════════════════════
-   RESPONSIVE
+   SEARCH BAR
 ═════════════════════════════════════════════════════ */
-@media (max-width: 768px) {
-  .ps__headerBox { padding: 14px 16px; border-radius: 0; }
-  .ps__bodyBox { padding: 16px; border-radius: 0; }
+.ps__searchWrap { position: relative; margin-bottom: 16px; max-width: 420px; }
+.ps__searchIcon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  font-size: 14px; pointer-events: none;
+}
+.ps__searchInput {
+  width: 100%; padding: 9px 14px 9px 36px; border: 1.5px solid var(--ps-border);
+  border-radius: 8px; font-size: 13px; color: var(--ps-text-dark); outline: none;
+  font-family: inherit; background: white; transition: border-color 0.2s;
+}
+.ps__searchInput::placeholder { color: #9ca3af; }
+.ps__searchInput:focus { border-color: var(--ps-accent); }
 
-  .ps__tabs { width: 100%; }
-  .ps__tab { flex: 1; text-align: center; padding: 8px 6px; font-size: 12px; }
+/* ═════════════════════════════════════════════════════
+   STATUS BAR VARIANTS
+═════════════════════════════════════════════════════ */
+.ps__statusBar--pending   { background: #fffbeb; color: #d97706; border-bottom: 1px solid #fcd34d; }
+.ps__statusBar--completed { background: #f0fdf4; color: #16a34a; border-bottom: 1px solid #bbf7d0; }
+.ps__statusBar--cancelled { background: #fef2f2; color: #dc2626; border-bottom: 1px solid #fecaca; }
+.ps__statusBar--declined  { background: #fef2f2; color: #dc2626; border-bottom: 1px solid #fecaca; }
+.ps__statusBar--expired   { background: #f9fafb; color: #6b7280; border-bottom: 1px solid #d1d5db; }
+.ps__statusBar--withdrawn { background: #f9fafb; color: #6b7280; border-bottom: 1px solid #d1d5db; }
+.ps__statusBar--noshow    { background: #fffbeb; color: #d97706; border-bottom: 1px solid #fcd34d; }
 
-  .ps__cardGrid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  .psCard {
-    width: 100%; height: auto; min-height: 108px;
-    border-radius: 14px; justify-content: center;
-    align-items: center; text-align: center;
-    padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);
-  }
+/* ═════════════════════════════════════════════════════
+   RESCHEDULE BANNER
+═════════════════════════════════════════════════════ */
+.ps__reschedBanner {
+  display: flex; align-items: flex-start; gap: 14px;
+  background: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px;
+  padding: 16px 20px; margin: 0 20px 16px;
+}
+.ps__reschedBannerIcon { font-size: 22px; flex-shrink: 0; }
+.ps__reschedBannerText { flex: 1; }
+.ps__reschedBannerText strong { font-size: 14px; color: var(--ps-text-dark); display: block; margin-bottom: 4px; }
+.ps__reschedBannerText p { font-size: 12px; color: var(--ps-text-muted); line-height: 1.6; }
 
-  .ps__reconfirmBanner { flex-direction: column; padding: 14px; }
-  .ps__reconfirmActions { width: 100%; flex-direction: row; }
-  .ps__confirmBtn, .ps__declineBtn { flex: 1; text-align: center; }
-
-  .ps__reqGrid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-  .ps__detailBody { flex-direction: column; }
-  .ps__detailRight { width: 100%; }
-
-  .ps__teacherCard { flex-wrap: wrap; }
-  .ps__select { max-width: 100%; }
-
-  .ps__formActions { flex-direction: column-reverse; gap: 8px; }
-  .ps__formBackBtn, .ps__formNextBtn, .ps__formSubmitBtn { width: 100%; text-align: center; }
+.ps__modalInfoLabel {
+  color: var(--ps-text-muted); font-weight: 500; min-width: 80px; display: inline-block;
 }
 
-@media (max-width: 480px) {
-  .ps__cardGrid { grid-template-columns: 1fr; gap: 10px; }
-  .ps__reqGrid { grid-template-columns: 1fr; gap: 10px; }
-  .ps__summaryRow { flex-direction: column; gap: 4px; }
-  .ps__summaryVal { text-align: left; }
-  .ps__historyCard { flex-direction: column; }
-  .ps__historyRight { text-align: left; }
-  .ps__stepper { gap: 0; }
-  .ps__stepLabel { display: none; }
-  .ps__stepLine { width: 16px; }
-  .ps__slotBtns { gap: 6px; }
-  .ps__slotBtn { padding: 8px 10px; font-size: 11px; min-height: 40px; }
-}
-/* ── Live Session States ── */
+/* ═════════════════════════════════════════════════════
+   LIVE SESSION STATES
+═════════════════════════════════════════════════════ */
 .tps__live-loading {
   display: flex; flex-direction: column; align-items: center;
   justify-content: center; min-height: 60vh; gap: 16px;
@@ -721,153 +713,362 @@
 .tps__live-error h2 { color: #1e293b; margin: 0 0 8px; font-size: 20px; }
 .tps__live-error p { color: #64748b; margin: 0 0 24px; max-width: 400px; }
 
+/* ═════════════════════════════════════════════════════
+   STEP 2 — STUDENT AUTOCOMPLETE PICKER
+═════════════════════════════════════════════════════ */
 
-/* ── Pending status bar ── */
-.ps__statusBar--pending {
-  background: #fffbeb;
-  color: #d97706;
-  border-bottom: 1px solid #fcd34d;
-}
-
-/* ── Status bar colors for history ── */
-.ps__statusBar--completed { background: #f0fdf4; color: #16a34a; border-bottom: 1px solid #bbf7d0; }
-.ps__statusBar--cancelled { background: #fef2f2; color: #dc2626; border-bottom: 1px solid #fecaca; }
-.ps__statusBar--declined { background: #fef2f2; color: #dc2626; border-bottom: 1px solid #fecaca; }
-.ps__statusBar--expired { background: #f9fafb; color: #6b7280; border-bottom: 1px solid #d1d5db; }
-.ps__statusBar--withdrawn { background: #f9fafb; color: #6b7280; border-bottom: 1px solid #d1d5db; }
-.ps__statusBar--noshow { background: #fffbeb; color: #d97706; border-bottom: 1px solid #fcd34d; }
-
-/* ── Reschedule banner in request detail ── */
-.ps__reschedBanner {
+/* Step 2 outer wrapper */
+.ps__step2Wrap {
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
-  background: #eff6ff;
-  border: 1.5px solid #bfdbfe;
-  border-radius: 10px;
-  padding: 16px 20px;
-  margin: 0 20px 16px;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.ps__reschedBannerIcon { font-size: 22px; flex-shrink: 0; }
+/* ── Progress bar ─────────────────────────────────── */
+.ps__pickerProgress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-.ps__reschedBannerText { flex: 1; }
-.ps__reschedBannerText strong { font-size: 14px; color: var(--ps-text-dark); display: block; margin-bottom: 4px; }
-.ps__reschedBannerText p { font-size: 12px; color: var(--ps-text-muted); line-height: 1.6; }
+.ps__pickerProgressBar {
+  flex: 1;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 99px;
+  overflow: hidden;
+}
 
-/* ── Modal info label styling ── */
-.ps__modalInfoLabel {
-  color: var(--ps-text-muted);
+.ps__pickerProgressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #015865, #0891b2);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.ps__pickerProgressText {
+  font-size: 12px;
+  color: #6b7280;
+  white-space: nowrap;
   font-weight: 500;
-  min-width: 80px;
+}
+
+/* ── Student slot rows ────────────────────────────── */
+.ps__studentInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ps__studentRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ps__slotNum {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 1.5px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Selected student pill ────────────────────────── */
+.ps__pickerPill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f0fafa;
+  border: 1.5px solid #a7d8de;
+  border-radius: 10px;
+  padding: 8px 10px;
+  min-height: 44px;
+}
+
+.ps__pickerPill--you {
+  background: #f0fdf4;
+  border-color: #86efac;
+  cursor: default;
+}
+
+.ps__pickerPillAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #015865, #0891b2);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ps__pickerPill--you .ps__pickerPillAvatar {
+  background: linear-gradient(135deg, #16a34a, #4ade80);
+}
+
+.ps__pickerPillInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ps__pickerPillName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ps__pickerPillId {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.ps__pickerPill--you .ps__pickerPillId {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.ps__pickerPillClear {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #9ca3af;
+  flex-shrink: 0;
+  transition: background 0.12s, color 0.12s;
+}
+
+.ps__pickerPillClear:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* ── Search input ─────────────────────────────────── */
+.ps__pickerWrap {
+  flex: 1;
+  position: relative;
+}
+
+.ps__pickerInputRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
+  padding: 0 12px;
+  background: #fff;
+  height: 44px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ps__pickerInputRow--open,
+.ps__pickerInputRow:focus-within {
+  border-color: #015865;
+  box-shadow: 0 0 0 3px rgba(1, 88, 101, 0.08);
+}
+
+.ps__pickerSearchIcon {
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.ps__pickerInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 13.5px;
+  background: transparent;
+  color: #1f2937;
+  min-width: 0;
+}
+
+.ps__pickerInput::placeholder { color: #b0b7c3; }
+
+.ps__pickerClearQuery {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  transition: color 0.12s;
+}
+.ps__pickerClearQuery:hover { color: #6b7280; }
+
+/* ── Spinner ──────────────────────────────────────── */
+.ps__pickerSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #015865;
+  border-radius: 50%;
+  animation: ps__spin 0.6s linear infinite;
+  flex-shrink: 0;
   display: inline-block;
 }
 
-/* ── History card clickable ── */
-.ps__historyCard--clickable {
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-}
+@keyframes ps__spin { to { transform: rotate(360deg); } }
 
-.ps__historyCard--clickable:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  border-color: var(--ps-accent);
-}
-
-/* ── History badge additional colors ── */
-.ps__historyBadge--declined { background: #fef2f2; color: #dc2626; }
-.ps__historyBadge--expired { background: #f9fafb; color: #6b7280; }
-.ps__historyBadge--withdrawn { background: #f3f4f6; color: #6b7280; }
-.ps__historyBadge--noshow { background: #fffbeb; color: #d97706; }
-
-/* ── History filter row ── */
-.ps__historyFilterRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.ps__historyFilter {
-  padding: 7px 12px;
-  border: 1.5px solid var(--ps-border);
-  border-radius: 8px;
-  font-size: 13px;
-  color: var(--ps-text-dark);
-  background: white;
-  outline: none;
-  cursor: pointer;
-  font-family: inherit;
-}
-.ps__historyFilter:focus { border-color: var(--ps-accent); }
-
-/* ═════════════════════════════════════════════════════
-   SEARCH BAR
-═════════════════════════════════════════════════════ */
-.ps__searchWrap {
-  position: relative;
-  margin-bottom: 16px;
-  max-width: 420px;
-}
-
-.ps__searchIcon {
+/* ── Dropdown ─────────────────────────────────────── */
+.ps__pickerDropdown {
   position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 14px;
-  pointer-events: none;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.10), 0 2px 8px rgba(0,0,0,0.06);
+  z-index: 300;
+  max-height: 240px;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.ps__searchInput {
-  width: 100%;
-  padding: 9px 14px 9px 36px;
-  border: 1.5px solid var(--ps-border);
-  border-radius: 8px;
+.ps__pickerDropdown::-webkit-scrollbar { width: 5px; }
+.ps__pickerDropdown::-webkit-scrollbar-track { background: transparent; }
+.ps__pickerDropdown::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 99px; }
+
+.ps__pickerEmpty,
+.ps__pickerLoading {
+  padding: 18px 16px;
   font-size: 13px;
-  color: var(--ps-text-dark);
-  outline: none;
-  font-family: inherit;
-  background: white;
-  transition: border-color 0.2s;
-}
-
-.ps__searchInput::placeholder {
   color: #9ca3af;
-}
-
-.ps__searchInput:focus {
-  border-color: var(--ps-accent);
-}
-
-/* ── History card content wrapping fixes ── */
-.ps__historyLeft {
-  flex: 1;
-  min-width: 180px;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
-.ps__historyRight {
+  text-align: center;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  text-align: right;
-  white-space: normal;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
-.ps__historySubject {
-  font-size: 15px;
+.ps__pickerEmptyIcon { font-size: 20px; }
+
+/* ── Dropdown option ──────────────────────────────── */
+.ps__pickerOption {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background 0.1s;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.ps__pickerOption:last-child { border-bottom: none; }
+.ps__pickerOption:first-child { border-radius: 10px 10px 0 0; }
+.ps__pickerOption:hover { background: #f0fafa; }
+.ps__pickerOption:hover .ps__pickerOptionAdd { opacity: 1; }
+
+.ps__pickerOptionAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #015865, #0891b2);
+  color: #fff;
+  font-size: 13px;
   font-weight: 700;
-  color: var(--ps-text-dark);
-  word-wrap: break-word;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.ps__historyMeta {
-  font-size: 12px;
-  color: var(--ps-text-muted);
-  white-space: normal;
+.ps__pickerOptionInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ps__pickerOptionName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1f2937;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ps__pickerOptionId {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.ps__pickerOptionAdd {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #015865;
+  background: #e0f2f4;
+  padding: 3px 8px;
+  border-radius: 99px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+/* ═════════════════════════════════════════════════════
+   RESPONSIVE
+═════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .ps__headerBox { padding: 14px 16px; border-radius: 0; }
+  .ps__bodyBox { padding: 16px; border-radius: 0; }
+  .ps__tabs { width: 100%; }
+  .ps__tab { flex: 1; text-align: center; padding: 8px 6px; font-size: 12px; }
+  .ps__cardGrid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .psCard { width: 100%; height: auto; min-height: 108px; border-radius: 14px; justify-content: center; align-items: center; text-align: center; padding: 16px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+  .ps__reconfirmBanner { flex-direction: column; padding: 14px; }
+  .ps__reconfirmActions { width: 100%; flex-direction: row; }
+  .ps__confirmBtn, .ps__declineBtn { flex: 1; text-align: center; }
+  .ps__reqGrid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  .ps__detailBody { flex-direction: column; }
+  .ps__detailRight { width: 100%; }
+  .ps__teacherCard { flex-wrap: wrap; }
+  .ps__select { max-width: 100%; }
+  .ps__formActions { flex-direction: column-reverse; gap: 8px; }
+  .ps__formBackBtn, .ps__formNextBtn, .ps__formSubmitBtn { width: 100%; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  .ps__cardGrid { grid-template-columns: 1fr; gap: 10px; }
+  .ps__reqGrid { grid-template-columns: 1fr; gap: 10px; }
+  .ps__summaryRow { flex-direction: column; gap: 4px; }
+  .ps__summaryVal { text-align: left; }
+  .ps__historyCard { flex-direction: column; }
+  .ps__historyRight { text-align: left; }
+  .ps__stepper { gap: 0; }
+  .ps__stepLabel { display: none; }
+  .ps__stepLine { width: 16px; }
+  .ps__slotBtns { gap: 6px; }
+  .ps__slotBtn { padding: 8px 10px; font-size: 11px; min-height: 40px; }
 }
