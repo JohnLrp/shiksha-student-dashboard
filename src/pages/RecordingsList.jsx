@@ -86,12 +86,12 @@ export default function RecordingsList() {
                   sessionTitle={item.title}
                   teacher={item.uploaded_by_name || "Teacher"}
                   sessionDate={item.session_date}
+                  thumbnail={item.thumbnail_url}
                   onClick={() =>
                     navigate(`/subjects/recordings/${subjectId}/video/${item.id}`)
                   }
                 />
 
-                {/* Progress bar on card */}
                 {pct !== null && (
                   <div className="recordingCardProgress">
                     <div className="recordingCardProgressBar">
