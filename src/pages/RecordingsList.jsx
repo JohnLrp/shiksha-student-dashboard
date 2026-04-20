@@ -10,21 +10,45 @@ export default function RecordingsList() {
   const { subjectId } = useParams();
 
   const [recordingsData, setRecordingsData] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [progressMap, setProgressMap]       = useState({});
+  const [searchTerm, setSearchTerm]         = useState("");
+  const [loading, setLoading]               = useState(true);
 
   useEffect(() => {
     if (!subjectId) return;
 
-    const fetchRecordings = async () => {
+    const fetchAll = async () => {
       try {
         const res = await api.get(`/courses/subjects/${subjectId}/recordings/`);
-        setRecordingsData(res.data || []);
+        const recordings = res.data || [];
+        setRecordingsData(recordings);
+
+        // Fetch progress for all recordings in parallel
+        const progressResults = await Promise.allSettled(
+          recordings.map((r) =>
+            api.get(`/courses/recordings/${r.id}/progress/`).then((p) => ({
+              id: r.id,
+              ...p.data,
+            }))
+          )
+        );
+
+        const map = {};
+        progressResults.forEach((result) => {
+          if (result.status === "fulfilled") {
+            map[result.value.id] = result.value;
+          }
+        });
+        setProgressMap(map);
+
       } catch (err) {
         console.error("Failed to load recordings", err);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchRecordings();
+    fetchAll();
   }, [subjectId]);
 
   const filteredRecordings = recordingsData.filter((item) =>
@@ -42,19 +66,51 @@ export default function RecordingsList() {
       </div>
 
       <div className="recordingsBodyBox">
+
+        {loading && <p style={{ padding: "20px", opacity: 0.6 }}>Loading recordings...</p>}
+
+        {!loading && filteredRecordings.length === 0 && (
+          <p style={{ padding: "20px", opacity: 0.6 }}>No recordings found.</p>
+        )}
+
         <div className="recordingsGrid">
-          {filteredRecordings.map((item) => (
-            <RecordingCard
-              key={item.id}
-              subject="Session"
-              sessionTitle={item.title}
-              teacher="Teacher"
-              sessionDate={item.session_date}
-              onClick={() =>
-                navigate(`/subjects/recordings/${subjectId}/video/${item.id}`)
-              }
-            />
-          ))}
+          {filteredRecordings.map((item) => {
+            const prog = progressMap[item.id];
+            const pct  = prog?.percent_complete ?? null;
+            const done = prog?.completed ?? false;
+
+            return (
+              <div key={item.id} className="recordingCardWrapper">
+                <RecordingCard
+                  subject="Session"
+                  sessionTitle={item.title}
+                  teacher={item.uploaded_by_name || "Teacher"}
+                  sessionDate={item.session_date}
+                  thumbnail={item.thumbnail_url}
+                  onClick={() =>
+                    navigate(`/subjects/recordings/${subjectId}/video/${item.id}`)
+                  }
+                />
+
+                {pct !== null && (
+                  <div className="recordingCardProgress">
+                    <div className="recordingCardProgressBar">
+                      <div
+                        className="recordingCardProgressFill"
+                        style={{
+                          width: `${Math.min(pct, 100)}%`,
+                          background: done ? "#16a34a" : "#2563eb",
+                        }}
+                      />
+                    </div>
+                    <span className="recordingCardProgressLabel">
+                      {done ? "✓ Completed" : `${pct}%`}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

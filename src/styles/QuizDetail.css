@@ -382,3 +382,34 @@
   from { transform: scale(0.9); opacity: 0; }
   to   { transform: scale(1);   opacity: 1; }
 }  
+
+
+.quiz-tab-warning {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 9999;
+  background: #b71c1c;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 12px 48px 12px 20px;
+  text-align: center;
+  animation: slideDown .25s ease;
+}
+@keyframes slideDown {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+}
+.quiz-tab-warning-close {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: .8;
+}
+.quiz-tab-warning-close:hover { opacity: 1; }

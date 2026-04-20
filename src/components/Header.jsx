@@ -4,6 +4,7 @@ import { HiOutlineMenu, HiOutlineX } from "react-icons/hi";
 import { useCourse } from "../contexts/CourseContext";
 import { useAuth } from "../contexts/AuthContext";
 import "../styles/header.css";
+import NotificationBell from "./NotificationBell";
 
 const DEFAULT_AVATAR =
   "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100";
@@ -22,7 +23,6 @@ export default function Header({ toggleMenu, menuOpen }) {
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // Outside click handler
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
@@ -32,6 +32,7 @@ export default function Header({ toggleMenu, menuOpen }) {
         setProfileOpen(false);
       }
     };
+
     document.addEventListener("mousedown", handleOutsideClick);
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
@@ -70,24 +71,25 @@ export default function Header({ toggleMenu, menuOpen }) {
     );
   };
 
-  const displayName = user?.profile?.full_name || user?.email || "Student";
+  const rawName = user?.profile?.full_name || user?.email || "Student";
+  const firstName = rawName.includes("@")
+    ? rawName.split("@")[0]
+    : rawName.trim().split(" ")[0];
+  const displayName = `Hi, ${firstName}`;
 
   return (
     <header className="header">
-
-      {/* Hamburger (Mobile Only) */}
       <div className="header__hamburger" onClick={toggleMenu}>
         {menuOpen ? <HiOutlineX size={26} /> : <HiOutlineMenu size={26} />}
       </div>
 
       {isDashboard && (
         <div className="header__left">
-          <h3 className="header__title">Welcome Back {displayName}</h3>
+          <h3 className="header__title">Welcome Back</h3>
           <p className="header__subtitle">Let's learn something new today</p>
         </div>
       )}
 
-      {/* Course Dropdown */}
       <div className="header__courseWrap" ref={dropdownRef}>
         <button
           className="header__btn"
@@ -96,7 +98,13 @@ export default function Header({ toggleMenu, menuOpen }) {
           {activeCourse?.title || "Select Course"}
           <span className={`header__chevron ${open ? "header__chevron--up" : ""}`}>
             <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-              <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path
+                d="M1 1.5L6 6.5L11 1.5"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </span>
         </button>
@@ -119,8 +127,9 @@ export default function Header({ toggleMenu, menuOpen }) {
         )}
       </div>
 
-      {/* Profile */}
       <div className="header__right" ref={profileRef}>
+        <NotificationBell />
+
         <div
           className="header__avatar"
           onClick={() => setProfileOpen((prev) => !prev)}
@@ -136,50 +145,74 @@ export default function Header({ toggleMenu, menuOpen }) {
                 {renderAvatar("large")}
               </div>
             </div>
+
             <div className="header__profileDivider" />
+
             <div className="header__profileMenu">
               <div
                 className="header__profileItem"
-                onClick={() => { setProfileOpen(false); navigate("/profile"); }}
+                onClick={() => {
+                  setProfileOpen(false);
+                  navigate("/profile");
+                }}
               >
                 <span>Profile</span>
                 <span className="header__profileArrow">
                   <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
-                    <path d="M1.5 1L6.5 6L1.5 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path
+                      d="M1.5 1L6.5 6L1.5 11"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </span>
               </div>
-              <div
-  className="header__profileItem"
-  onClick={() => {
-    setProfileOpen(false);
-    window.location.href = import.meta.env.VITE_HOME_URL || "https://shikshacom.com/";
-  }}
->
-  <span>Return to Homepage</span>
-  <span className="header__profileArrow">
-    <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
-      <path
-        d="M1.5 1L6.5 6L1.5 11"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  </span>
-</div>
+
               <div
                 className="header__profileItem"
-                onClick={() => { setProfileOpen(false); navigate("/change-password"); }}
+                onClick={() => {
+                  setProfileOpen(false);
+                  window.location.href =
+                    import.meta.env.VITE_HOME_URL || "https://shikshacom.com/";
+                }}
+              >
+                <span>Return to Homepage</span>
+                <span className="header__profileArrow">
+                  <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
+                    <path
+                      d="M1.5 1L6.5 6L1.5 11"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </span>
+              </div>
+
+              <div
+                className="header__profileItem"
+                onClick={() => {
+                  setProfileOpen(false);
+                  navigate("/change-password");
+                }}
               >
                 <span>Change Password</span>
                 <span className="header__profileArrow">
                   <svg width="8" height="12" viewBox="0 0 8 12" fill="none">
-                    <path d="M1.5 1L6.5 6L1.5 11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path
+                      d="M1.5 1L6.5 6L1.5 11"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
                 </span>
               </div>
+
               <div
                 className="header__profileItem header__profileLogout"
                 onClick={handleLogout}
