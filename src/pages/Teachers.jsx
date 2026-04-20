@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/apiClient";
 import "../styles/teachers.css";
 
 export default function Teachers() {
+  const navigate = useNavigate();
   const [teachers, setTeachers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -42,39 +44,47 @@ export default function Teachers() {
         />
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="teachers-empty">No teachers found.</div>
-      ) : (
-        <div className="teachers-grid">
-          {filtered.map((t) => (
-            <div key={t.id} className="teacher-card">
-              <div className="teacher-card__avatar">
-                {t.avatar ? (
-                  typeof t.avatar === "string" && t.avatar.length <= 4 ? (
-                    <span className="teacher-card__emoji">{t.avatar}</span>
+      <div className="teachers-container">
+        {filtered.length === 0 ? (
+          <div className="teachers-empty">No teachers found.</div>
+        ) : (
+          <div className="teachers-list">
+            {filtered.map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                className="teacher-row"
+                onClick={() => navigate(`/teachers/${t.id}`)}
+              >
+                <div className="teacher-row__avatar">
+                  {t.avatar ? (
+                    typeof t.avatar === "string" && t.avatar.length <= 4 ? (
+                      <span className="teacher-row__emoji">{t.avatar}</span>
+                    ) : (
+                      <img src={t.avatar} alt={t.name} />
+                    )
                   ) : (
-                    <img src={t.avatar} alt={t.name} />
-                  )
-                ) : (
-                  <span className="teacher-card__fallback">
-                    {t.name?.[0]?.toUpperCase() || "T"}
-                  </span>
-                )}
-              </div>
-              <div className="teacher-card__info">
-                <h3 className="teacher-card__name">{t.name}</h3>
-                {t.subject && <p className="teacher-card__subject">{t.subject}</p>}
-                {t.qualification && (
-                  <p className="teacher-card__qual">{t.qualification}</p>
-                )}
+                    <span className="teacher-row__fallback">
+                      {t.name?.[0]?.toUpperCase() || "T"}
+                    </span>
+                  )}
+                </div>
+                <div className="teacher-row__info">
+                  <div className="teacher-row__name">{t.name}</div>
+                  <div className="teacher-row__meta">
+                    {t.subject && <span>{t.subject}</span>}
+                    {t.qualification && <span> • {t.qualification}</span>}
+                  </div>
+                </div>
                 {t.rating != null && (
-                  <p className="teacher-card__rating">★ {t.rating.toFixed(1)}</p>
+                  <div className="teacher-row__rating">★ {t.rating.toFixed(1)}</div>
                 )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+                <span className="teacher-row__chevron">›</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
