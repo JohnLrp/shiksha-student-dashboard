@@ -139,8 +139,8 @@ if (!isPresenter && sessionStatus === "PAUSED") {
         {isPresenter && <TeacherControls sessionId={sessionId} onLeave={onLeave} />}
         <div className="video-overlay-actions">
           <button className="ov-btn" onClick={() => setSidebarOpen((v) => !v)}>
-            <IoChatbubblesOutline size={17} />
-          </button>
+  {sidebarOpen ? "✕" : <IoChatbubblesOutline size={17} />}
+</button>
           <button className="ov-btn" onClick={toggleFullscreen}>
             {isFullscreen ? <MdFullscreenExit size={19} /> : <MdFullscreen size={19} />}
           </button>
@@ -148,14 +148,18 @@ if (!isPresenter && sessionStatus === "PAUSED") {
       </div>
 
       {sidebarOpen && (
-        <div className="right-sidebar">
-          <ParticipantsPanel raisedHands={raisedHands} />
-          <ChatPanel role={role} messages={chatMessages} onSendMessage={sendMessage} />
-        </div>
-      )}
+  <div className="right-sidebar">
+    <ParticipantsPanel raisedHands={raisedHands} />
+    <ChatPanel role={role} messages={chatMessages} onSendMessage={sendMessage} />
+    {!isPresenter && (
+      <div className="chat-raise-hand-wrap">
+        <RaiseHandButton />
+      </div>
+    )}
+  </div>
+)}
 
-      <ControlBar onLeave={onLeave} />
-      {!isPresenter && <RaiseHandButton />}
+<ControlBar onLeave={onLeave} />
     </div>
   );
 }
