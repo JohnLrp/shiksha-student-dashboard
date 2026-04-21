@@ -744,21 +744,16 @@
     border-radius: 10px;
   }
 
-  .video-overlay-actions {
+   .video-overlay-actions {
     top: 8px;
     right: 8px;
-    z-index: 130;
+    z-index: 300;
     gap: 6px;
-  }
-
-  .ov-btn {
-    width: 36px;
-    height: 36px;
   }
 
   .right-sidebar {
     position: absolute;
-    top: 0;
+    top: 52px;
     left: 0;
     right: 0;
     bottom: 72px;
@@ -768,6 +763,12 @@
     border-radius: 14px;
     overflow: hidden;
   }
+
+  .ov-btn {
+    width: 36px;
+    height: 36px;
+  }
+
 
   .right-sidebar > :first-child {
     max-height: 160px;
@@ -865,17 +866,18 @@
   .video-overlay-actions {
     top: 6px;
     right: 6px;
+    z-index: 300;
     gap: 5px;
   }
 
+  .right-sidebar {
+    top: 48px;
+    bottom: 68px;
+    border-radius: 12px;
+  }
   .ov-btn {
     width: 34px;
     height: 34px;
-  }
-
-  .right-sidebar {
-    bottom: 68px;
-    border-radius: 12px;
   }
 
   .right-sidebar > :first-child {
