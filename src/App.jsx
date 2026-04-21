@@ -7,6 +7,7 @@ import StudentLayout from "./layout/StudentLayout";
 
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
+import PrivateDetails from "./pages/PrivateDetails";
 import ChangePassword from "./pages/ChangePassword";
 
 import Subjects from "./pages/Subjects";
@@ -34,6 +35,8 @@ import PrivateSessions from "./pages/PrivateSessions";
 import PrivateSessionLive from "./pages/PrivateSessionLive";
 
 import Quiz from "./pages/Quiz";
+import Teachers from "./pages/Teachers";
+import TeacherDetail from "./pages/TeacherDetail";
 
 function RequireStudentAuth({ children }) {
   return children;
@@ -56,6 +59,7 @@ export default function App() {
               <Route index element={<Dashboard />} />
 
               <Route path="profile" element={<Profile />} />
+              <Route path="private-details" element={<PrivateDetails />} />
               <Route path="change-password" element={<ChangePassword />} />
 
               <Route path="subjects" element={<Subjects />} />
@@ -145,6 +149,9 @@ export default function App() {
               />
 
               <Route path="quiz" element={<Quiz />} />
+
+              <Route path="teachers" element={<Teachers />} />
+              <Route path="teachers/:id" element={<TeacherDetail />} />
             </Route>
 
             <Route

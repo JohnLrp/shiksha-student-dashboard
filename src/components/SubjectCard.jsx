@@ -1,6 +1,6 @@
 import "../styles/subjectCard.css";
 
-export default function SubjectCard({ img, subject, teacher, onClick }) {
+export default function SubjectCard({ img, subject, teacher, recordingsCount, onClick }) {
   return (
     <div
       className="subjectCard"
@@ -20,6 +20,11 @@ export default function SubjectCard({ img, subject, teacher, onClick }) {
       <div className="subjectCard__body">
         <h4 className="subjectCard__title">{subject}</h4>
         <p className="subjectCard__teacher">{teacher}</p>
+        {recordingsCount !== undefined && (
+          <p className="subjectCard__count">
+            🎬 {recordingsCount} video{recordingsCount !== 1 ? "s" : ""}
+          </p>
+        )}
       </div>
     </div>
   );

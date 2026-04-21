@@ -84,15 +84,8 @@ export default function SubjectsRecordings() {
 
   function getSubjectImage(subjectName) {
     const normalized = subjectName?.toLowerCase().trim() || "";
-
-    const sortedKeys = Object.keys(subjectImages).sort(
-      (a, b) => b.length - a.length
-    );
-
-    const matchedKey = sortedKeys.find((key) =>
-      normalized.includes(key.toLowerCase())
-    );
-
+    const sortedKeys = Object.keys(subjectImages).sort((a, b) => b.length - a.length);
+    const matchedKey = sortedKeys.find((key) => normalized.includes(key.toLowerCase()));
     return matchedKey ? subjectImages[matchedKey] : "/images/default.png";
   }
 
@@ -130,6 +123,7 @@ export default function SubjectsRecordings() {
               subject={item.name}
               teacher={item.teachers?.[0]?.name || "Teacher"}
               img={getSubjectImage(item.name)}
+              recordingsCount={item.recordings_count ?? 0}
               onClick={() => handleSubjectClick(item.id)}
             />
           ))}

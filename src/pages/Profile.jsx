@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api/apiClient";
 import "../styles/profile.css";
 
 export default function Profile() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [avatar, setAvatar] = useState(null);
   const [avatarType, setAvatarType] = useState(null);
@@ -30,19 +32,33 @@ export default function Profile() {
 
   const fetchProfile = async () => {
     try {
-      const res = await api.get("/accounts/me/");
-      const data = res.data;
+      const [meRes, spRes] = await Promise.all([
+        api.get("/accounts/me/"),
+        api.get("/accounts/student/profile/"),
+      ]);
+      const me = meRes.data;
+      const sp = spRes.data;
 
       setStudentInfo({
-        name: data.profile.full_name,
-        email: data.email,
-        studentId: data.profile.student_id,
-        phone: data.profile.phone,
+        name: sp.name || me.profile.full_name,
+        email: sp.email || me.email,
+        studentId: sp.student_id || me.profile.student_id,
+        phone: sp.phone || me.profile.phone,
+        gender: sp.gender,
+        dateOfBirth: sp.date_of_birth,
+        state: sp.state,
+        district: sp.district,
+        city: sp.city_town,
+        pinCode: sp.pin_code,
+        currentClass: sp.current_class,
+        stream: sp.stream,
+        board: sp.board,
+        schoolName: sp.school_name,
       });
 
-      setAvatar(data.profile.avatar);
-      setAvatarType(data.profile.avatar_type);
-      setCourses(data.enrollments || []);
+      setAvatar(sp.photo || me.profile.avatar);
+      setAvatarType(me.profile.avatar_type);
+      setCourses(me.enrollments || []);
     } catch (err) {
       console.error("Failed to load profile", err);
     } finally {
@@ -51,24 +67,17 @@ export default function Profile() {
   };
 
   const handleEditClick = () => {
-    setEditValues({ name: studentInfo.name, phone: studentInfo.phone });
+    setEditValues({ name: studentInfo.name || "", phone: studentInfo.phone || "" });
     setIsEditing(true);
   };
 
   const handleEditSave = async () => {
     try {
-      const res = await api.patch("/accounts/me/", {
+      await api.patch("/accounts/me/", {
         username: editValues.name,
         profile: { full_name: editValues.name, phone: editValues.phone },
       });
-
-      setStudentInfo({
-        name: res.data.profile.full_name,
-        email: res.data.email,
-        studentId: res.data.profile.student_id,
-        phone: res.data.profile.phone,
-      });
-
+      await fetchProfile();
       setIsEditing(false);
     } catch (err) {
       console.error("Profile update failed", err);
@@ -101,15 +110,11 @@ export default function Profile() {
           profile: { avatar_emoji: tempAvatar },
         });
       }
-
       if (tempAvatarType === "image" && tempAvatarFile) {
         const formData = new FormData();
         formData.append("avatar_image", tempAvatarFile);
-        await api.patch("/accounts/me/", formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+        await api.patch("/accounts/me/", formData);
       }
-
       await fetchProfile();
       setShowPicker(false);
       setTempAvatar(null);
@@ -127,148 +132,150 @@ export default function Profile() {
     setTempAvatarFile(null);
   };
 
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <div className="profileLoading">Loading...</div>;
+
+  const metaBits = [
+    studentInfo?.currentClass && `Class ${studentInfo.currentClass}`,
+    studentInfo?.stream,
+    studentInfo?.board?.toUpperCase(),
+  ].filter(Boolean);
+
+  const locationBits = [studentInfo?.city, studentInfo?.district, studentInfo?.state]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <div className="profilePage">
-      <div className="profileCard">
-        <div className="profileCard__content">
-
-          {/* AVATAR */}
-          <div className="profileCard__avatarWrap">
-            <div className="profileCard__avatar" onClick={handleOpenPicker}>
-              {avatar ? (
-                <>
-                  {avatarType === "emoji" ? (
-                    <span className="profileCard__emoji">{avatar}</span>
+      <div className="profileContainer">
+        <div className="profileHeader">
+          <div className="profileHeader__left">
+            <div className="profileHeader__avatarWrap">
+              <div className="profileHeader__avatar" onClick={handleOpenPicker} style={{ cursor: "pointer" }}>
+                {avatar ? (
+                  avatarType === "emoji" ? (
+                    <span className="profileHeader__avatarEmoji">{avatar}</span>
                   ) : (
                     <img src={avatar} alt={studentInfo?.name} />
-                  )}
-                  <div className="profileCard__avatarOverlay">
-                    <span className="profileCard__avatarEdit">Edit</span>
+                  )
+                ) : (
+                  <span className="profileHeader__avatarFallback">
+                    {studentInfo?.name?.[0]?.toUpperCase() || "?"}
+                  </span>
+                )}
+                <div className="profileHeader__avatarOverlay">Edit</div>
+              </div>
+
+              {showPicker && (
+                <div className="avatarPicker__backdrop" onClick={handlePickerCancel}>
+                  <div className="avatarPicker" onClick={(e) => e.stopPropagation()}>
+                  <div className="avatarPicker__header">
+                    <span>{avatar ? "Change Avatar" : "Choose Avatar"}</span>
+                    <button className="avatarPicker__close" onClick={handlePickerCancel}>×</button>
                   </div>
-                </>
-              ) : (
-                <div className="profileCard__addImage">
-                  <span className="profileCard__addIcon">+</span>
-                  <span className="profileCard__addText">Add Image</span>
+
+                  <div className="avatarPicker__preview">
+                    <div className="avatarPicker__previewCircle">
+                      {tempAvatar ? (
+                        tempAvatarType === "emoji" ? (
+                          <span className="avatarPicker__previewEmoji">{tempAvatar}</span>
+                        ) : (
+                          <img src={tempAvatar} alt="Preview" className="avatarPicker__previewImg" />
+                        )
+                      ) : (
+                        <span className="avatarPicker__previewPlaceholder">Preview</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="avatarPicker__section">
+                    <p className="avatarPicker__label">Upload Image</p>
+                    <label className="avatarPicker__uploadBtn">
+                      <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
+                      Choose File
+                    </label>
+                  </div>
+
+                  <div className="avatarPicker__section">
+                    <p className="avatarPicker__label">Or Select Emoji</p>
+                    <div className="avatarPicker__emojiGrid">
+                      {emojis.map((emoji, idx) => (
+                        <button
+                          key={idx}
+                          className={`avatarPicker__emojiBtn ${tempAvatar === emoji ? "avatarPicker__emojiBtn--selected" : ""}`}
+                          onClick={() => handleEmojiSelect(emoji)}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="avatarPicker__actions">
+                    <button className="avatarPicker__cancelBtn" onClick={handlePickerCancel}>Cancel</button>
+                    <button className="avatarPicker__saveBtn" onClick={handleAvatarSave} disabled={!tempAvatar}>Save</button>
+                  </div>
+                  </div>
                 </div>
               )}
             </div>
 
-            {showPicker && (
-              <div className="profileCard__picker">
-                <div className="profileCard__pickerHeader">
-                  <span>{avatar ? "Change Avatar" : "Choose Avatar"}</span>
-                  <button className="profileCard__pickerClose" onClick={handlePickerCancel}>×</button>
+            <div className="profileHeader__info">
+              <h2 className="profileHeader__name">{studentInfo?.name}</h2>
+              {metaBits.length > 0 && (
+                <div className="profileHeader__metaRow">
+                  <span>• {metaBits.join(" • ")}</span>
                 </div>
-
-                <div className="profileCard__pickerPreview">
-                  <div className="profileCard__previewCircle">
-                    {tempAvatar ? (
-                      tempAvatarType === "emoji" ? (
-                        <span className="profileCard__previewEmoji">{tempAvatar}</span>
-                      ) : (
-                        <img src={tempAvatar} alt="Preview" className="profileCard__previewImg" />
-                      )
-                    ) : (
-                      <span className="profileCard__previewPlaceholder">Preview</span>
-                    )}
-                  </div>
+              )}
+              {studentInfo?.schoolName && (
+                <div className="profileHeader__metaRow">
+                  <span>• {studentInfo.schoolName}</span>
                 </div>
-
-                <div className="profileCard__pickerSection">
-                  <p className="profileCard__pickerLabel">Upload Image</p>
-                  <label className="profileCard__uploadBtn">
-                    <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
-                    Choose File
-                  </label>
+              )}
+              {studentInfo?.studentId && (
+                <div className="profileHeader__metaRow">
+                  <span>• Student ID: {studentInfo.studentId}</span>
                 </div>
-
-                <div className="profileCard__pickerSection">
-                  <p className="profileCard__pickerLabel">Or Select Emoji</p>
-                  <div className="profileCard__emojiGrid">
-                    {emojis.map((emoji, idx) => (
-                      <button
-                        key={idx}
-                        className={`profileCard__emojiBtn ${tempAvatar === emoji ? "profileCard__emojiBtn--selected" : ""}`}
-                        onClick={() => handleEmojiSelect(emoji)}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
+              )}
+              {studentInfo?.email && (
+                <div className="profileHeader__metaRow">
+                  <span>• {studentInfo.email}</span>
                 </div>
-
-                <div className="profileCard__pickerActions">
-                  <button className="profileCard__cancelBtn" onClick={handlePickerCancel}>Cancel</button>
-                  <button className="profileCard__saveBtn" onClick={handleAvatarSave} disabled={!tempAvatar}>Save</button>
+              )}
+              {studentInfo?.phone && (
+                <div className="profileHeader__metaRow">
+                  <span>• {studentInfo.phone}</span>
                 </div>
+              )}
+              {locationBits && (
+                <div className="profileHeader__metaRow">
+                  <span>• {locationBits}{studentInfo?.pinCode ? ` - ${studentInfo.pinCode}` : ""}</span>
+                </div>
+              )}
+              <div className="profileHeader__badges">
+                <span className="profileBadge profileBadge--online">
+                  <span className="profileBadge__dot" />
+                  Online
+                </span>
               </div>
-            )}
+            </div>
           </div>
 
-          {/* INFO */}
-          <div className="profileCard__info">
-            {isEditing ? (
-              <>
-                <input
-                  type="text"
-                  className="profileCard__input profileCard__input--name"
-                  value={editValues.name}
-                  onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
-                  placeholder="Name"
-                />
-                <div className="profileCard__detail">
-                  <span className="profileCard__icon">✉</span>
-                  <span>{studentInfo?.email}</span>
-                </div>
-                <div className="profileCard__detail">
-                  <span className="profileCard__icon">◉</span>
-                  <span>Student ID- {studentInfo?.studentId}</span>
-                </div>
-                <div className="profileCard__detail">
-                  <span className="profileCard__icon">✆</span>
-                  <input
-                    type="tel"
-                    className="profileCard__input"
-                    value={editValues.phone}
-                    onChange={(e) => setEditValues({ ...editValues, phone: e.target.value })}
-                    placeholder="Phone"
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <h2 className="profileCard__name">{studentInfo?.name}</h2>
-                <div className="profileCard__detail">
-                  <span className="profileCard__icon">✉</span>
-                  <span>{studentInfo?.email}</span>
-                </div>
-                <div className="profileCard__detail">
-                  <span className="profileCard__icon">◉</span>
-                  <span>Student ID- {studentInfo?.studentId}</span>
-                </div>
-                <div className="profileCard__detail">
-                  <span className="profileCard__icon">✆</span>
-                  <span>{studentInfo?.phone}</span>
-                </div>
-              </>
-            )}
+          <div className="profileHeader__actions">
+            <div className="profileHeader__editBtns">
+              <button className="profileBtn profileBtn--outline" onClick={handleEditClick}>
+                Edit
+              </button>
+            </div>
+            <button
+              className="profileBtn profileBtn--outline profileBtn--private"
+              onClick={() => navigate("/private-details")}
+            >
+              Private Details
+            </button>
           </div>
         </div>
-
-        {isEditing ? (
-          <div className="profileCard__editActions">
-            <button className="profileCard__editCancelBtn" onClick={() => setIsEditing(false)}>Cancel</button>
-            <button className="profileCard__editSaveBtn" onClick={handleEditSave}>Save</button>
-          </div>
-        ) : (
-          <button className="profileCard__editBtn" onClick={handleEditClick}>EDIT</button>
-        )}
       </div>
 
-      {/* Courses Enrolled */}
       <div className="coursesSection">
         <div className="coursesSection__table">
           <div className="coursesSection__header">
@@ -285,6 +292,41 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {isEditing && (
+        <div className="editModal__backdrop" onClick={() => setIsEditing(false)}>
+          <div className="editModal" onClick={(e) => e.stopPropagation()}>
+            <div className="editModal__header">
+              <h3 className="editModal__title">Edit Profile</h3>
+              <button className="editModal__close" onClick={() => setIsEditing(false)}>×</button>
+            </div>
+            <div className="editModal__body">
+              <div className="editModal__field">
+                <label className="editModal__label">Name</label>
+                <input
+                  type="text"
+                  className="editModal__input"
+                  value={editValues.name}
+                  onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
+                />
+              </div>
+              <div className="editModal__field">
+                <label className="editModal__label">Phone</label>
+                <input
+                  type="tel"
+                  className="editModal__input"
+                  value={editValues.phone}
+                  onChange={(e) => setEditValues({ ...editValues, phone: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="editModal__footer">
+              <button className="editModal__cancelBtn" onClick={() => setIsEditing(false)}>Cancel</button>
+              <button className="editModal__saveBtn" onClick={handleEditSave}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
