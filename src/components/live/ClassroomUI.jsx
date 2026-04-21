@@ -13,7 +13,7 @@ import { IoChatbubblesOutline } from "react-icons/io5";
 
 export default function ClassroomUI({ role, sessionId: sessionIdProp, onLeave }) {
   const isPresenter = role === "PRESENTER";
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 900);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [raisedHands, setRaisedHands] = useState({});
   const [raiseHandToasts, setRaiseHandToasts] = useState([]);
