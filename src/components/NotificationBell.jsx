@@ -1,29 +1,31 @@
+// ============================================================
+// STUDENT — src/components/NotificationBell.jsx (FULL REPLACEMENT)
+// ============================================================
+
 import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoNotificationsOutline, IoNotificationsSharp } from "react-icons/io5";
 import useNotificationSocket from "../hooks/useNotificationSocket";
 
 const TYPE_ICONS = {
-  assignment: "📝",
-  quiz: "📊",
-  live_session: "🎥",
-  material: "📚",
-  forum: "💬",
+  ASSIGNMENT: "📝",
+  QUIZ:       "📊",
+  SESSION:    "🎥",
+  SUBMISSION: "📬",
 };
 
 const TYPE_COLORS = {
-  assignment: "#f59e0b",
-  quiz: "#8b5cf6",
-  live_session: "#ef4444",
-  material: "#10b981",
-  forum: "#3b82f6",
+  ASSIGNMENT: "#f59e0b",
+  QUIZ:       "#8b5cf6",
+  SESSION:    "#ef4444",
+  SUBMISSION: "#2563eb",
 };
 
 function timeAgo(isoString) {
   if (!isoString) return "";
   const diff = Math.floor((Date.now() - new Date(isoString)) / 1000);
-  if (diff < 60) return "just now";
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 60)    return "just now";
+  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   return `${Math.floor(diff / 86400)}d ago`;
 }
@@ -32,14 +34,19 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const navigate = useNavigate();
-  const { notifications, unreadCount, markAllRead, clearNotifications } =
-    useNotificationSocket();
+
+  const {
+    notifications,
+    unreadCount,
+    loading,
+    markAllRead,
+    markOneRead,
+    clearNotifications,
+  } = useNotificationSocket();
 
   useEffect(() => {
     const handler = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) {
-        setOpen(false);
-      }
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -47,60 +54,27 @@ export default function NotificationBell() {
 
   const handleOpen = () => {
     setOpen((prev) => !prev);
-    if (!open) markAllRead();
+    if (!open && unreadCount > 0) markAllRead();
   };
 
   const handleNotifClick = (notif) => {
-    const type = notif?.type || notif?.data?.type;
-    const subjectId = notif?.subject_id || notif?.data?.subject_id;
+    const { type, subject_id, id } = notif;
+    if (id) markOneRead(id);
 
-    // Route using subject_id when available for precise navigation
-    if (subjectId) {
-      if (type === "assignment") {
-        navigate(`/subjects/${subjectId}/assignments`);
-      } else if (type === "quiz") {
-        navigate(`/subjects/quiz/${subjectId}`);
-      } else if (type === "live_session") {
-        navigate(`/live-sessions`);
-      } else {
-        navigate(`/subjects/${subjectId}`);
-      }
+    if (subject_id) {
+      if (type === "ASSIGNMENT") navigate(`/subjects/${subject_id}/assignments`);
+      else if (type === "QUIZ")  navigate(`/subjects/quiz/${subject_id}`);
+      else if (type === "SESSION") navigate(`/live-sessions`);
+      else                       navigate(`/subjects/${subject_id}`);
     } else {
-      // Fallback routes
       const fallback = {
-        assignment:   "/assignments",
-        quiz:         "/subjects/quiz",
-        live_session: "/live-sessions",
-        material:     "/subjects",
-        forum:        "/forum",
+        ASSIGNMENT: "/assignments",
+        QUIZ:       "/subjects/quiz",
+        SESSION:    "/live-sessions",
       };
-      const route = fallback[type];
-      if (route) navigate(route);
+      if (fallback[type]) navigate(fallback[type]);
     }
-
     setOpen(false);
-  };
-
-  const getTitle = (notif) => {
-    return (
-      notif?.title ||
-      notif?.data?.title ||
-      notif?.message ||
-      notif?.data?.message ||
-      "New notification"
-    );
-  };
-
-  const getSubjectName = (notif) => {
-    return notif?.subject_name || notif?.data?.subject_name || "";
-  };
-
-  const getType = (notif) => {
-    return notif?.type || notif?.data?.type;
-  };
-
-  const getTime = (notif) => {
-    return notif?.time || notif?.data?.time || notif?.created_at;
   };
 
   return (
@@ -124,37 +98,42 @@ export default function NotificationBell() {
             <span>Notifications</span>
             {notifications.length > 0 && (
               <button className="notif-clear-btn" onClick={clearNotifications}>
-                Clear all
+                Clear
               </button>
             )}
           </div>
 
           <div className="notif-bell-list">
-            {notifications.length === 0 ? (
-              <div className="notif-bell-empty">No new notifications</div>
+            {loading ? (
+              <div className="notif-bell-empty">Loading...</div>
+            ) : notifications.length === 0 ? (
+              <div className="notif-bell-empty">No notifications</div>
             ) : (
               notifications.map((notif, i) => (
                 <div
-                  key={i}
-                  className="notif-bell-item"
+                  key={notif.id || i}
+                  className={`notif-bell-item ${!notif.is_read ? "notif-bell-item--unread" : ""}`}
                   onClick={() => handleNotifClick(notif)}
                   style={{
-                    borderLeft: `3px solid ${TYPE_COLORS[getType(notif)] || "#6b7280"}`,
+                    borderLeft: `3px solid ${TYPE_COLORS[notif.type] || "#6b7280"}`,
                     cursor: "pointer",
                   }}
                 >
-                  <span className="notif-bell-icon">
-                    {TYPE_ICONS[getType(notif)] || "🔔"}
+                  <span className="notif-bell-icon" style={{ fontSize: 16 }}>
+                    {TYPE_ICONS[notif.type] || "🔔"}
                   </span>
                   <div className="notif-bell-content">
-                    <p className="notif-bell-title">{getTitle(notif)}</p>
-                    {getSubjectName(notif) && (
-                      <p className="notif-bell-subject" style={{ fontSize: "0.75rem", color: "#6b7280", margin: "2px 0" }}>
-                        {getSubjectName(notif)}
-                      </p>
+                    <p className="notif-bell-title">{notif.title}</p>
+                    {notif.subject_name && (
+                      <p className="notif-bell-subject">{notif.subject_name}</p>
                     )}
-                    <p className="notif-bell-time">{timeAgo(getTime(notif))}</p>
+                    <p className="notif-bell-time">
+                      {timeAgo(notif.created_at)}
+                    </p>
                   </div>
+                  {!notif.is_read && (
+                    <span className="notif-bell-dot" />
+                  )}
                 </div>
               ))
             )}

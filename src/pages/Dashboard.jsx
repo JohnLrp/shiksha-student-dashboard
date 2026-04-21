@@ -1,3 +1,7 @@
+// ============================================================
+// STUDENT — src/pages/Dashboard.jsx  (FULL REPLACEMENT)
+// ============================================================
+
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import SessionCard from "../components/SessionCard";
@@ -7,15 +11,18 @@ import DropdownMenu from "../components/DropdownMenu";
 import TopSliderTabs from "../components/TopSliderTabs";
 import api from "../api/apiClient";
 import { useCourse } from "../contexts/CourseContext";
+import useNotificationSocket from "../hooks/useNotificationSocket";
 import "../styles/dashboard.css";
 
 const DATE_FORMAT = { day: "2-digit", month: "short", year: "numeric" };
 
 function formatDate(dateStr) {
+  if (!dateStr) return "";
   return new Date(dateStr).toLocaleDateString("en-GB", DATE_FORMAT);
 }
 
 function toDateKey(dateStr) {
+  if (!dateStr) return null;
   const d = new Date(dateStr);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
@@ -28,16 +35,18 @@ function isSameDay(a, b) {
   );
 }
 
+// Event colours for calendar dots
 const EVENT_COLORS = {
-  assignment: "#57D982",
-  quiz: "#93A1E5",
-  "private-session": "#FF8A65",
+  assignment:       "#57D982",
+  quiz:             "#93A1E5",
+  "live-session":   "#38bdf8",
+  "private-session":"#FF8A65",
 };
 
 const SCHEDULE_TYPE_LABELS = {
-  "live-session": "Live Session",
-  assignment: "Assignment",
-  quiz: "Quiz",
+  "live-session":    "Live Session",
+  assignment:        "Assignment",
+  quiz:              "Quiz",
   "private-session": "Private Session",
 };
 
@@ -45,61 +54,48 @@ export default function Dashboard() {
   const { activeCourse } = useCourse();
   const navigate = useNavigate();
 
-  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDate, setSelectedDate]       = useState(null);
   const [showAllSessions, setShowAllSessions] = useState(false);
   const [showAssignments, setShowAssignments] = useState(true);
+  const [showQuizzes, setShowQuizzes]         = useState(true);
   const [notificationFilter, setNotificationFilter] = useState("All");
-  const [scheduleFilter, setScheduleFilter] = useState("All");
+  const [scheduleFilter, setScheduleFilter]   = useState("All");
   const [activeMobileTab, setActiveMobileTab] = useState("sessions");
 
-  // --- CALENDAR LOGIC STATE ---
+  // Calendar state
   const today = new Date();
   const [currMonth, setCurrMonth] = useState(today.getMonth());
-  const [currYear, setCurrYear] = useState(today.getFullYear());
+  const [currYear, setCurrYear]   = useState(today.getFullYear());
 
-  const months = [
-    "January","February","March","April","May","June",
-    "July","August","September","October","November","December"
-  ];
+  const months = ["January","February","March","April","May","June",
+                  "July","August","September","October","November","December"];
+  const years  = Array.from({ length: 81 }, (_, i) => 1970 + i);
 
-  const years = Array.from({ length: 81 }, (_, i) => 1970 + i);
-
-  const daysInMonth = new Date(currYear, currMonth + 1, 0).getDate();
-  const firstDayIndex = new Date(currYear, currMonth, 1).getDay();
-  const startOffset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+  const daysInMonth  = new Date(currYear, currMonth + 1, 0).getDate();
+  const firstDayIdx  = new Date(currYear, currMonth, 1).getDay();
+  const startOffset  = firstDayIdx === 0 ? 6 : firstDayIdx - 1;
 
   const goToPrevMonth = () => {
-    if (currMonth === 0) {
-      setCurrMonth(11);
-      setCurrYear(currYear - 1);
-    } else {
-      setCurrMonth(currMonth - 1);
-    }
+    if (currMonth === 0) { setCurrMonth(11); setCurrYear((y) => y - 1); }
+    else setCurrMonth((m) => m - 1);
   };
-
   const goToNextMonth = () => {
-    if (currMonth === 11) {
-      setCurrMonth(0);
-      setCurrYear(currYear + 1);
-    } else {
-      setCurrMonth(currMonth + 1);
-    }
+    if (currMonth === 11) { setCurrMonth(0); setCurrYear((y) => y + 1); }
+    else setCurrMonth((m) => m + 1);
   };
 
-  // =============================
-  // DASHBOARD DATA STATE
-  // =============================
-
-  const [data, setData] = useState(null);
+  // Dashboard API data
+  const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // =============================
-  // FETCH DASHBOARD DATA
-  // =============================
+  // Notification hook — persisted feed + live WS
+  const { markOneRead } = useNotificationSocket();
 
   useEffect(() => {
-    if (!activeCourse) return;
-
+    if (!activeCourse) {
+      setLoading(false);
+      return;
+    }
     const fetchDashboard = async () => {
       try {
         setLoading(true);
@@ -111,107 +107,111 @@ export default function Dashboard() {
         setLoading(false);
       }
     };
-
     fetchDashboard();
   }, [activeCourse]);
 
-  const sessions = data?.sessions ?? [];
-  const assignments = data?.assignments ?? [];
-  const quizzes = data?.quizzes ?? [];
+  const sessions        = data?.sessions        ?? [];
+  const allSessions     = data?.all_sessions    ?? [];  // FIX: was never read before
+  const assignments     = data?.assignments     ?? [];
+  const quizzes         = data?.quizzes         ?? [];
   const privateSessions = data?.private_sessions ?? [];
-  const notifications = data?.notifications ?? [];
+  const notifications   = data?.notifications   ?? [];
 
-  // --- Calendar events map (assignments, quizzes, private sessions) ---
+  const collapsedSessions = sessions.slice(0, 3);
+
+  // Calendar event map — FIX: live sessions now included
   const calendarEvents = useMemo(() => {
     const map = {};
-    const addEvent = (dateStr, type) => {
-      if (!dateStr) return;
+    const add = (dateStr, type) => {
       const key = toDateKey(dateStr);
+      if (!key) return;
       if (!map[key]) map[key] = [];
       if (!map[key].includes(type)) map[key].push(type);
     };
-    assignments.forEach((a) => addEvent(a.due, "assignment"));
-    quizzes.forEach((q) => addEvent(q.due, "quiz"));
-    privateSessions.forEach((ps) => addEvent(ps.date, "private-session"));
+    assignments.forEach((a)     => add(a.due,      "assignment"));
+    quizzes.forEach((q)         => add(q.due,      "quiz"));
+    privateSessions.forEach((p) => add(p.date,     "private-session"));
+    allSessions.forEach((s)     => add(s.dateTime, "live-session")); // FIX: was missing
     return map;
-  }, [assignments, quizzes, privateSessions]);
+  }, [assignments, quizzes, privateSessions, allSessions]);
 
-  // --- Combined schedule items ---
+  // Unified schedule — FIX: uses allSessions (future), not just today's sessions
   const scheduleItems = useMemo(() => {
     const items = [];
-    sessions.forEach((s) =>
+    allSessions.forEach((s) =>
       items.push({
-        id: `session-${s.id}`,
-        type: "live-session",
-        title: `${s.subject} - ${s.topic}`,
-        date: s.dateTime,
+        id:      `session-${s.id}`,
+        type:    "live-session",
+        title:   `${s.subject} - ${s.topic}`,
+        date:    s.dateTime,
         teacher: s.teacher,
         subject: s.subject,
-        link: `/live/${s.id}`,
+        link:    `/live/${s.id}`,
       })
     );
     assignments.forEach((a) =>
       items.push({
-        id: `assignment-${a.id}`,
-        type: "assignment",
-        title: a.title,
-        date: a.due,
+        id:      `assignment-${a.id}`,
+        type:    "assignment",
+        title:   a.title,
+        date:    a.due,
         teacher: a.teacher,
         subject: a.subject_name || "",
-        link: a.subject_id ? `/subjects/${a.subject_id}/assignments/${a.id}` : null,
+        link:    a.subject_id ? `/subjects/${a.subject_id}/assignments` : null,
       })
     );
     quizzes.forEach((q) =>
       items.push({
-        id: `quiz-${q.id}`,
-        type: "quiz",
-        title: q.title,
-        date: q.due,
+        id:      `quiz-${q.id}`,
+        type:    "quiz",
+        title:   q.title,
+        date:    q.due,
         teacher: q.teacher,
         subject: q.subject_name || "",
-        link: q.subject_id ? `/subjects/quiz/${q.subject_id}` : null,
+        link:    q.subject_id ? `/subjects/quiz/${q.subject_id}` : null,
       })
     );
     privateSessions.forEach((ps) =>
       items.push({
-        id: `private-${ps.id}`,
-        type: "private-session",
-        title: `${ps.subject}`,
-        date: ps.date,
+        id:      `private-${ps.id}`,
+        type:    "private-session",
+        title:   ps.subject,
+        date:    ps.date,
         teacher: ps.teacher_name,
         subject: ps.subject,
-        link: `/private-sessions`,
+        link:    `/private-sessions`,
       })
     );
     items.sort((a, b) => new Date(a.date) - new Date(b.date));
     return items;
-  }, [sessions, assignments, quizzes, privateSessions]);
+  }, [allSessions, assignments, quizzes, privateSessions]);
 
-  if (loading) {
-    return <div style={{ padding: 20 }}>Loading dashboard...</div>;
+  if (loading) return <div style={{ padding: 20 }}>Loading dashboard...</div>;
+
+  // Empty state — FIX: was stuck on "Loading..." if no course
+  if (!activeCourse) {
+    return (
+      <div style={{ padding: 20 }}>
+        <p>No course selected. Please select a course to view your dashboard.</p>
+      </div>
+    );
   }
 
-  const collapsedSessions = sessions.slice(0, 3);
-
+  // Filtered notifications (type filter uses uppercase Activity types)
   const filteredNotifications =
     notificationFilter === "All"
       ? notifications
       : notifications.filter((n) => n.type === notificationFilter);
 
-  // Filter schedule by selected date + type filter
+  // Filtered schedule
   const filteredSchedule = scheduleItems.filter((item) => {
     if (selectedDate) {
       const itemDate = new Date(item.date);
-      const selDate = new Date(selectedDate.year, selectedDate.month, selectedDate.day);
+      const selDate  = new Date(selectedDate.year, selectedDate.month, selectedDate.day);
       if (!isSameDay(itemDate, selDate)) return false;
     }
     if (scheduleFilter !== "All") {
-      // Map backend filter values to our schedule types
-      const filterMap = {
-        ASSIGNMENT: "assignment",
-        SESSION: "live-session",
-        QUIZ: "quiz",
-      };
+      const filterMap = { ASSIGNMENT: "assignment", SESSION: "live-session", QUIZ: "quiz" };
       const mapped = filterMap[scheduleFilter] || scheduleFilter;
       if (item.type !== mapped) return false;
     }
@@ -231,42 +231,27 @@ export default function Dashboard() {
     }
   };
 
-  // --- Calendar date style helper ---
   function getDateStyle(dateKey) {
     const types = calendarEvents[dateKey];
     if (!types || types.length === 0) return {};
     const colors = types.map((t) => EVENT_COLORS[t]).filter(Boolean);
     if (colors.length === 0) return {};
     if (colors.length === 1) return { background: colors[0], color: "#1f2d3d" };
-    return {
-      background: `linear-gradient(135deg, ${colors.join(", ")})`,
-      color: "#1f2d3d",
-    };
+    return { background: `linear-gradient(135deg, ${colors.join(", ")})`, color: "#1f2d3d" };
   }
 
-  // --- Render calendar grid (shared between mobile and desktop) ---
   const renderCalendarGrid = () => (
     <>
       <div className="calendarHeader">
         <span className="calNavBtn" onClick={goToPrevMonth}>◀</span>
         <div className="calendarHeader__mid">
-          <select
-            className="calendarSelect"
-            value={currMonth}
-            onChange={(e) => setCurrMonth(parseInt(e.target.value))}
-          >
-            {months.map((m, i) => (
-              <option key={m} value={i}>{m.substring(0, 3)}</option>
-            ))}
+          <select className="calendarSelect" value={currMonth}
+            onChange={(e) => setCurrMonth(parseInt(e.target.value))}>
+            {months.map((m, i) => <option key={m} value={i}>{m.substring(0, 3)}</option>)}
           </select>
-          <select
-            className="calendarSelect"
-            value={currYear}
-            onChange={(e) => setCurrYear(parseInt(e.target.value))}
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>{y}</option>
-            ))}
+          <select className="calendarSelect" value={currYear}
+            onChange={(e) => setCurrYear(parseInt(e.target.value))}>
+            {years.map((y) => <option key={y} value={y}>{y}</option>)}
           </select>
         </div>
         <span className="calNavBtn" onClick={goToNextMonth}>▶</span>
@@ -276,11 +261,9 @@ export default function Dashboard() {
         {["Mo","Tu","We","Th","Fr","Sa","Su"].map((d) => (
           <div key={d} className="calDayName">{d}</div>
         ))}
-
         {Array.from({ length: startOffset }).map((_, i) => (
           <div key={`empty-${i}`} className="calDate" style={{ visibility: "hidden" }} />
         ))}
-
         {Array.from({ length: daysInMonth }, (_, i) => {
           const day = i + 1;
           const isToday =
@@ -293,7 +276,8 @@ export default function Dashboard() {
             selectedDate.month === currMonth &&
             selectedDate.year === currYear;
           const dateKey = `${currYear}-${String(currMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const eventStyle = (!isToday && !isSelected && calendarEvents[dateKey]) ? getDateStyle(dateKey) : {};
+          const eventStyle = !isToday && !isSelected && calendarEvents[dateKey]
+            ? getDateStyle(dateKey) : {};
 
           return (
             <div
@@ -308,30 +292,29 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Legend */}
+      {/* Legend — FIX: live session dot added */}
       <div className="calLegend">
         <span className="calLegend__item">
-          <span className="calLegend__dot" style={{ background: "#57D982" }} />
-          Assignment
+          <span className="calLegend__dot" style={{ background: "#57D982" }} />Assignment
         </span>
         <span className="calLegend__item">
-          <span className="calLegend__dot" style={{ background: "#93A1E5" }} />
-          Quiz
+          <span className="calLegend__dot" style={{ background: "#93A1E5" }} />Quiz
         </span>
         <span className="calLegend__item">
-          <span className="calLegend__dot" style={{ background: "#FF8A65" }} />
-          Private Session
+          <span className="calLegend__dot" style={{ background: "#38bdf8" }} />Live Session
+        </span>
+        <span className="calLegend__item">
+          <span className="calLegend__dot" style={{ background: "#FF8A65" }} />Private Session
         </span>
       </div>
     </>
   );
 
-  // --- Render schedule item ---
   const renderScheduleItem = (item, idx) => {
     const typeClass =
-      item.type === "live-session" ? "livesessions"
-      : item.type === "assignment" ? "assignments"
-      : item.type === "quiz" ? "quiz"
+      item.type === "live-session"    ? "livesessions"
+      : item.type === "assignment"    ? "assignments"
+      : item.type === "quiz"          ? "quiz"
       : item.type === "private-session" ? "privatesession"
       : "";
 
@@ -349,14 +332,13 @@ export default function Dashboard() {
           </span>
         </div>
         <p className="scheduleTitle">{item.title}</p>
-        <div>
-          <p className="scheduleSub">{item.subject}</p>
-          <p className="scheduleSub">{item.teacher}</p>
-        </div>
+        <p className="scheduleSub">{item.subject}</p>
+        <p className="scheduleSub">{item.teacher}</p>
       </div>
     );
   };
 
+  // ── MOBILE ──────────────────────────────────────────────────
   const renderMobileSection = () => {
     switch (activeMobileTab) {
       case "sessions":
@@ -365,7 +347,7 @@ export default function Dashboard() {
             {(showAllSessions ? sessions : collapsedSessions).map((s, idx) => (
               <SessionCard key={idx} {...s} />
             ))}
-            {(showAllSessions ? sessions : collapsedSessions).length === 0 && (
+            {sessions.length === 0 && (
               <div className="emptyState">No upcoming live sessions</div>
             )}
           </div>
@@ -381,24 +363,16 @@ export default function Dashboard() {
       case "assign":
         return (
           <div className="mobileSectionContent">
-            {assignments.map((a, idx) => (
-              <AssignmentCard key={idx} {...a} />
-            ))}
-            {assignments.length === 0 && (
-              <div className="emptyState">No assignments</div>
-            )}
+            {assignments.map((a, idx) => <AssignmentCard key={idx} {...a} />)}
+            {assignments.length === 0 && <div className="emptyState">No assignments</div>}
           </div>
         );
 
       case "quiz":
         return (
           <div className="mobileSectionContent">
-            {quizzes.map((q, idx) => (
-              <AssignmentCard key={idx} {...q} />
-            ))}
-            {quizzes.length === 0 && (
-              <div className="emptyState">No quizzes</div>
-            )}
+            {quizzes.map((q, idx) => <AssignmentCard key={idx} {...q} />)}
+            {quizzes.length === 0 && <div className="emptyState">No quizzes</div>}
           </div>
         );
 
@@ -406,14 +380,11 @@ export default function Dashboard() {
         return (
           <>
             <div className="mobileSectionTopAction">
-              <DropdownMenu
-                value={notificationFilter}
-                onChange={setNotificationFilter}
-              />
+              <DropdownMenu value={notificationFilter} onChange={setNotificationFilter} />
             </div>
             <div className="mobileSectionContent">
-              {filteredNotifications.map((n, idx) => (
-                <NotificationCard key={idx} {...n} />
+              {filteredNotifications.map((n) => (
+                <NotificationCard key={n.id} notification={n} onRead={markOneRead} />
               ))}
               {filteredNotifications.length === 0 && (
                 <div className="emptyState">No notifications</div>
@@ -426,16 +397,11 @@ export default function Dashboard() {
         return (
           <>
             <div className="mobileSectionTopAction">
-              <DropdownMenu
-                value={scheduleFilter}
-                onChange={setScheduleFilter}
-              />
+              <DropdownMenu value={scheduleFilter} onChange={setScheduleFilter} />
             </div>
             <div className="mobileSectionContent">
               {filteredSchedule.map((item, idx) => renderScheduleItem(item, idx))}
-              {filteredSchedule.length === 0 && (
-                <div className="emptyState">No schedule</div>
-              )}
+              {filteredSchedule.length === 0 && <div className="emptyState">No schedule</div>}
             </div>
           </>
         );
@@ -445,145 +411,130 @@ export default function Dashboard() {
     }
   };
 
+  // ── RENDER ───────────────────────────────────────────────────
   return (
     <div className="dashExact">
+
+      {/* ── DESKTOP ── */}
       <div className="desktopOnly">
-        {/* Top Section */}
+        {/* Top row: sessions + calendar */}
         <div className="dashExact__top">
-          {/* Upcoming Sessions */}
           <div className="whiteCard">
             <div className="cardHeader">
               <h3>Upcoming Live Sessions</h3>
-              <button
-                className="arrowBtn"
-                onClick={() => setShowAllSessions(!showAllSessions)}
-              >
-                <span
-                  className={`arrowBtn__chevron ${
-                    showAllSessions ? "arrowBtn__chevron--up" : ""
-                  }`}
-                >
+              <button className="arrowBtn" onClick={() => setShowAllSessions(!showAllSessions)}>
+                <span className={`arrowBtn__chevron ${showAllSessions ? "arrowBtn__chevron--up" : ""}`}>
                   <svg width="14" height="10" viewBox="0 0 12 8" fill="none">
-                    <path
-                      d="M1 1.5L6 6.5L11 1.5"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
+                    <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2"
+                      strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </span>
               </button>
             </div>
-
-            <div
-              className={
-                showAllSessions
-                  ? "sessionsGridExpanded"
-                  : "sessionsGridCollapsed"
-              }
-            >
+            <div className={showAllSessions ? "sessionsGridExpanded" : "sessionsGridCollapsed"}>
               {(showAllSessions ? sessions : collapsedSessions).map((s, idx) => (
                 <SessionCard key={idx} {...s} />
               ))}
-              {(showAllSessions ? sessions : collapsedSessions).length === 0 && (
+              {sessions.length === 0 && (
                 <div className="emptyState">No upcoming live sessions for today</div>
               )}
             </div>
           </div>
 
-          {/* Calendar */}
-          <div className="calendarBox">
-            {renderCalendarGrid()}
-          </div>
+          <div className="calendarBox">{renderCalendarGrid()}</div>
         </div>
 
-        {/* Bottom Section */}
-        
-          <div className="dashExact__bottom">
-            {/* Assignments */}
-            <div className="dashExact__leftCol">
-              <div className="whiteCard">
-                <div
-                  className="cardHeader cardHeader--clickable"
-                  onClick={() => setShowAssignments(!showAssignments)}
-                >
-                  <h3>Assignment</h3>
-                  <button className="arrowBtn">
-                    <span
-                      className={`arrowBtn__chevron ${
-                        showAssignments ? "arrowBtn__chevron--up" : ""
-                      }`}
-                    >
-                      <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-                        <path
-                          d="M1 1.5L6 6.5L11 1.5"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </span>
-                  </button>
+        {/* Bottom row: assignments + quizzes + notifications + schedule */}
+        <div className="dashExact__bottom">
+
+          {/* Assignments */}
+          <div className="dashExact__leftCol">
+            <div className="whiteCard">
+              <div className="cardHeader cardHeader--clickable"
+                onClick={() => setShowAssignments(!showAssignments)}>
+                <h3>Assignments</h3>
+                <button className="arrowBtn">
+                  <span className={`arrowBtn__chevron ${showAssignments ? "arrowBtn__chevron--up" : ""}`}>
+                    <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                      <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2"
+                        strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                </button>
+              </div>
+              {showAssignments && (
+                <div className="listBody">
+                  {assignments.map((a, idx) => <AssignmentCard key={idx} {...a} />)}
+                  {assignments.length === 0 && <div className="emptyState">No assignments</div>}
                 </div>
-
-                {showAssignments && (
-                  <div className="listBody">
-                    {assignments.map((a, idx) => (
-                      <AssignmentCard key={idx} {...a} />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Notifications */}
-            <div className="whiteCard">
-              <div className="cardHeader">
-                <h3>Notification</h3>
-                <DropdownMenu
-                  value={notificationFilter}
-                  onChange={setNotificationFilter}
-                />
-              </div>
-              <div className="notifBody">
-                {filteredNotifications.map((n, idx) => (
-                  <NotificationCard key={idx} {...n} />
-                ))}
-                {filteredNotifications.length === 0 && (
-                  <div className="emptyState">No notifications</div>
-                )}
-              </div>
-            </div>
-
-            {/* Schedule (filtered by calendar date) */}
-            <div className="whiteCard">
-              <div className="cardHeader">
-                <h3>
-                  Schedule
-                  {selectedDate && (
-                    <span style={{ fontWeight: 400, fontSize: "0.8rem", marginLeft: 8 }}>
-                      — {new Date(selectedDate.year, selectedDate.month, selectedDate.day).toLocaleDateString("en-GB", DATE_FORMAT)}
-                    </span>
-                  )}
-                </h3>
-                <DropdownMenu
-                  value={scheduleFilter}
-                  onChange={setScheduleFilter}
-                />
-              </div>
-              <div className="scheduleList">
-                {filteredSchedule.map((item, idx) => renderScheduleItem(item, idx))}
-                {filteredSchedule.length === 0 && (
-                  <div className="emptyState">No schedule</div>
-                )}
-              </div>
+              )}
             </div>
           </div>
-        
+
+          {/* FIX: Quiz card — was completely missing on desktop */}
+          <div className="dashExact__leftCol">
+            <div className="whiteCard">
+              <div className="cardHeader cardHeader--clickable"
+                onClick={() => setShowQuizzes(!showQuizzes)}>
+                <h3>Quizzes</h3>
+                <button className="arrowBtn">
+                  <span className={`arrowBtn__chevron ${showQuizzes ? "arrowBtn__chevron--up" : ""}`}>
+                    <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                      <path d="M1 1.5L6 6.5L11 1.5" stroke="currentColor" strokeWidth="2"
+                        strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </span>
+                </button>
+              </div>
+              {showQuizzes && (
+                <div className="listBody">
+                  {quizzes.map((q, idx) => <AssignmentCard key={idx} {...q} />)}
+                  {quizzes.length === 0 && <div className="emptyState">No quizzes</div>}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Notifications — FIX: passes notification object + onRead handler */}
+          <div className="whiteCard">
+            <div className="cardHeader">
+              <h3>Notifications</h3>
+              <DropdownMenu value={notificationFilter} onChange={setNotificationFilter} />
+            </div>
+            <div className="notifBody">
+              {filteredNotifications.map((n) => (
+                <NotificationCard key={n.id} notification={n} onRead={markOneRead} />
+              ))}
+              {filteredNotifications.length === 0 && (
+                <div className="emptyState">No notifications</div>
+              )}
+            </div>
+          </div>
+
+          {/* Schedule */}
+          <div className="whiteCard">
+            <div className="cardHeader">
+              <h3>
+                Schedule
+                {selectedDate && (
+                  <span style={{ fontWeight: 400, fontSize: "0.8rem", marginLeft: 8 }}>
+                    — {new Date(selectedDate.year, selectedDate.month, selectedDate.day)
+                        .toLocaleDateString("en-GB", DATE_FORMAT)}
+                  </span>
+                )}
+              </h3>
+              <DropdownMenu value={scheduleFilter} onChange={setScheduleFilter} />
+            </div>
+            <div className="scheduleList">
+              {filteredSchedule.map((item, idx) => renderScheduleItem(item, idx))}
+              {filteredSchedule.length === 0 && <div className="emptyState">No schedule</div>}
+            </div>
+          </div>
+
+        </div>
       </div>
 
+      {/* ── MOBILE ── */}
       <div className="mobileOnly">
         <div className="topSliderTabs">
           <TopSliderTabs active={activeMobileTab} setActive={setActiveMobileTab} />
@@ -592,6 +543,7 @@ export default function Dashboard() {
           {renderMobileSection()}
         </div>
       </div>
+
     </div>
   );
 }
