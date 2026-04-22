@@ -14,7 +14,7 @@
 /* Sessions + Calendar */
 .dashExact__top {
   display: grid;
-  grid-template-columns: 2fr 0.95fr;
+  grid-template-columns: 2.1fr 0.95fr;
   gap: 14px;
   align-items: stretch;
   flex-shrink: 0;
@@ -152,7 +152,7 @@
 
 .liveEmptyState {
   min-height: 148px;
-  display: flex;
+  display: contents;
   align-items: center;
   justify-content: center;
   gap: 16px;
