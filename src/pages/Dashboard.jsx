@@ -90,7 +90,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   // Notification hook — persisted feed + live WS
-  const { markOneRead } = useNotificationSocket();
+  const { notifications: liveNotifications, markOneRead } = useNotificationSocket();
 
   useEffect(() => {
     if (!activeCourse) {
@@ -116,7 +116,22 @@ export default function Dashboard() {
   const assignments     = data?.assignments     ?? [];
   const quizzes         = data?.quizzes         ?? [];
   const privateSessions = data?.private_sessions ?? [];
-  const notifications   = data?.notifications   ?? [];
+  const apiNotifications = data?.notifications ?? [];
+
+  // Merge live WebSocket notifications with the REST API ones.
+  // Live ones come first (most recent), deduped by id.
+  const notifications = (() => {
+    const seen = new Set();
+    const merged = [];
+    for (const n of [...liveNotifications, ...apiNotifications]) {
+      const key = n.id || JSON.stringify(n);
+      if (!seen.has(key)) {
+        seen.add(key);
+        merged.push(n);
+      }
+    }
+    return merged;
+  })();
 
   const collapsedSessions = sessions.slice(0, 3);
 
