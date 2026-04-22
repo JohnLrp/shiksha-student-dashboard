@@ -10,6 +10,11 @@ export default function ControlBar({ onLeave }) {
 
   const [micOn, setMicOn] = useState(false);
 
+  // Ensure mic starts muted on join
+  useEffect(() => {
+    localParticipant.setMicrophoneEnabled(false);
+  }, []);
+
   const toggleMic = async () => {
     const next = !micOn;
     await localParticipant.setMicrophoneEnabled(next);
@@ -25,6 +30,10 @@ export default function ControlBar({ onLeave }) {
         if (msg.type === "force-mute") {
           localParticipant.setMicrophoneEnabled(false);
           setMicOn(false);
+        }
+        if (msg.type === "force-unmute") {
+          localParticipant.setMicrophoneEnabled(true);
+          setMicOn(true);
         }
       } catch {}
     };

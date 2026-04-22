@@ -62,6 +62,17 @@ export default function ClassroomUI({ role, sessionId: sessionIdProp, onLeave })
     setSessionStatus(hookStatus);
   }, [hookStatus]);
 
+  // Listen for local raise-hand (own client doesn't get dataReceived echo)
+  useEffect(() => {
+    const handleLocal = (e) => {
+      const { type, identity } = e.detail;
+      if (type === "raise-hand") setRaisedHands((prev) => ({ ...prev, [identity]: true }));
+      if (type === "lower-hand") setRaisedHands((prev) => { const u = { ...prev }; delete u[identity]; return u; });
+    };
+    window.addEventListener("raise-hand-local", handleLocal);
+    return () => window.removeEventListener("raise-hand-local", handleLocal);
+  }, []);
+
   useEffect(() => {
     const handleData = (payload, participant) => {
       try {

@@ -197,7 +197,8 @@
   .liveSessionsBodyBox { padding: 16px; border-radius: 0; }
   .liveGrid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .liveCard__thumb { height: 90px; }
-  .liveCard__overlay { display: none; }
+  .liveCard__overlay { opacity: 0; transition: opacity 0.25s ease; }
+  .liveCard.tapped .liveCard__overlay { opacity: 1; }
 }
 
 @media (max-width: 400px) {

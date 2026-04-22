@@ -1,3 +1,4 @@
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { useCourse } from "../contexts/CourseContext";
@@ -50,6 +51,7 @@ const STATUS_CONFIG = {
 
 function LiveCard({ session, onClick, tick }) {
   void tick;
+  const [tapped, setTapped] = React.useState(false);
   const status = computeStatus(session);
   const canJoin = computeCanJoin(session);
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.SCHEDULED;
@@ -61,8 +63,14 @@ function LiveCard({ session, onClick, tick }) {
 
   return (
     <div
-      className={"liveCard" + (canJoin ? "" : " liveCard--disabled")}
-      onClick={() => canJoin && onClick(session)}
+      className={"liveCard" + (canJoin ? "" : " liveCard--disabled") + (tapped ? " tapped" : "")}
+      onClick={() => {
+        if (window.matchMedia("(hover: none)").matches) {
+          if (!tapped) { setTapped(true); return; }
+        }
+        canJoin && onClick(session);
+      }}
+      onBlur={() => setTapped(false)}
       role="button"
       tabIndex={canJoin ? 0 : -1}
       onKeyDown={(e) => e.key === "Enter" && canJoin && onClick(session)}
