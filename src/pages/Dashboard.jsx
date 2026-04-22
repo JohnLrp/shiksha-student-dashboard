@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import SessionCard from "../components/SessionCard";
 import AssignmentCard from "../components/AssignmentCard";
+import QuizCard from "../components/QuizCard";
 import NotificationCard from "../components/NotificationCard";
 import DropdownMenu from "../components/DropdownMenu";
 import TopSliderTabs from "../components/TopSliderTabs";
@@ -404,7 +405,17 @@ export default function Dashboard() {
       case "quiz":
         return (
           <div className="mobileSectionContent">
-            {quizzes.map((q, idx) => <AssignmentCard key={idx} {...q} />)}
+            {quizzes.map((q) => (
+              <QuizCard
+                key={q.id}
+                title={q.title}
+                teacher={q.teacher}
+                deadline={q.due ? new Date(q.due).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }) : "No due date"}
+                isCompleted={false}
+                inProgress={false}
+                onClick={() => navigate(q.subject_id ? `/subjects/quiz/${q.subject_id}` : "/subjects/quiz")}
+              />
+            ))}
             {quizzes.length === 0 && <div className="emptyState">No quizzes</div>}
           </div>
         );
@@ -519,7 +530,17 @@ export default function Dashboard() {
               </div>
               {showQuizzes && (
                 <div className="listBody">
-                  {quizzes.map((q, idx) => <AssignmentCard key={idx} {...q} />)}
+                  {quizzes.map((q) => (
+              <QuizCard
+                key={q.id}
+                title={q.title}
+                teacher={q.teacher}
+                deadline={q.due ? new Date(q.due).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true }) : "No due date"}
+                isCompleted={false}
+                inProgress={false}
+                onClick={() => navigate(q.subject_id ? `/subjects/quiz/${q.subject_id}` : "/subjects/quiz")}
+              />
+            ))}
                   {quizzes.length === 0 && <div className="emptyState">No quizzes</div>}
                 </div>
               )}

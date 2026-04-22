@@ -1,5 +1,5 @@
 // ============================================================
-// STUDENT — src/components/NotificationCard.jsx (FULL REPLACEMENT)
+// STUDENT — src/components/NotificationCard.jsx  (FULL REPLACEMENT)
 // ============================================================
 
 import { useState } from "react";
@@ -24,37 +24,25 @@ export default function NotificationCard({ notification, onRead }) {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
 
-  // Support both the old flat-prop API and the new object API
   const item = notification || {};
-  const {
-    id,
-    type,
-    title,
-    subject_name,
-    subject_id,
-    due_date,
-    created_at,
-    is_read,
-    object_id,
-  } = item;
+  const { id, type, title, subject_name, subject_id, due_date, created_at, is_read } = item;
 
-  const typeClass   = TYPE_CLASSES[type] || "";
-  const displayLabel = TYPE_LABELS[type] || type;
+  const typeClass    = TYPE_CLASSES[type] || "";
+  const displayLabel = TYPE_LABELS[type]  || type;
 
   const handleClick = () => {
     if (!is_read && id && onRead) onRead(id);
     setExpanded((prev) => !prev);
   };
 
-  const handleNavigate = (e) => {
+  const handleView = (e) => {
     e.stopPropagation();
     if (!is_read && id && onRead) onRead(id);
-
     if (subject_id) {
-      if (type === "ASSIGNMENT") navigate(`/subjects/${subject_id}/assignments`);
-      else if (type === "QUIZ")   navigate(`/subjects/quiz/${subject_id}`);
+      if (type === "ASSIGNMENT")   navigate(`/subjects/${subject_id}/assignments`);
+      else if (type === "QUIZ")    navigate(`/subjects/quiz/${subject_id}`);
       else if (type === "SESSION") navigate(`/live-sessions`);
-      else                        navigate(`/subjects/${subject_id}`);
+      else                         navigate(`/subjects/${subject_id}`);
     } else {
       const fallback = {
         ASSIGNMENT: "/assignments",
@@ -68,6 +56,7 @@ export default function NotificationCard({ notification, onRead }) {
   const formattedDue = due_date
     ? new Date(due_date).toLocaleDateString("en-GB", {
         day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit", hour12: true,
       })
     : null;
 
@@ -87,7 +76,6 @@ export default function NotificationCard({ notification, onRead }) {
     >
       <div className="notifItem__bar" />
 
-      {/* Unread dot */}
       {!is_read && <span className="notifItem__unreadDot" />}
 
       <div className="notifItem__content">
@@ -95,9 +83,7 @@ export default function NotificationCard({ notification, onRead }) {
           <span className={`notifItem__badge notifItem__badge--${typeClass}`}>
             {displayLabel}
           </span>
-          <span className="notifItem__chevron">
-            {expanded ? "▴" : "▾"}
-          </span>
+          <span className="notifItem__chevron">{expanded ? "▴" : "▾"}</span>
         </div>
 
         <p className="notifItem__title">{title}</p>
@@ -110,7 +96,6 @@ export default function NotificationCard({ notification, onRead }) {
           <p className="notifItem__time">{formattedCreated}</p>
         )}
 
-        {/* Expanded detail */}
         {expanded && (
           <div className="notifItem__expand">
             {formattedDue && (
@@ -125,7 +110,7 @@ export default function NotificationCard({ notification, onRead }) {
                 <span>{subject_name}</span>
               </p>
             )}
-            <button className="notifItem__viewBtn" onClick={handleNavigate}>
+            <button className="notifItem__viewBtn" onClick={handleView}>
               View →
             </button>
           </div>
