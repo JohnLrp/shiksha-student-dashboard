@@ -282,15 +282,6 @@ export default function Dashboard() {
     }
   };
 
-  function getDateStyle(dateKey) {
-    const types = calendarEvents[dateKey];
-    if (!types || types.length === 0) return {};
-    const colors = types.map((t) => EVENT_COLORS[t]).filter(Boolean);
-    if (colors.length === 0) return {};
-    if (colors.length === 1) return { background: colors[0], color: "#1f2d3d" };
-    return { background: `linear-gradient(135deg, ${colors.join(", ")})`, color: "#1f2d3d" };
-  }
-
   const renderCalendarGrid = () => (
     <>
       <div className="calendarHeader">
@@ -315,32 +306,46 @@ export default function Dashboard() {
         {Array.from({ length: startOffset }).map((_, i) => (
           <div key={`empty-${i}`} className="calDate" style={{ visibility: "hidden" }} />
         ))}
-        {Array.from({ length: daysInMonth }, (_, i) => {
-          const day = i + 1;
-          const isToday =
-            day === today.getDate() &&
-            currMonth === today.getMonth() &&
-            currYear === today.getFullYear();
-          const isSelected =
-            selectedDate &&
-            selectedDate.day === day &&
-            selectedDate.month === currMonth &&
-            selectedDate.year === currYear;
-          const dateKey = `${currYear}-${String(currMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const eventStyle = !isToday && !isSelected && calendarEvents[dateKey]
-            ? getDateStyle(dateKey) : {};
+       {Array.from({ length: daysInMonth }, (_, i) => {
+  const day = i + 1;
 
-          return (
-            <div
-              key={day}
-              className={`calDate ${isToday ? "calToday" : ""} ${isSelected ? "calSelected" : ""}`}
-              style={eventStyle}
-              onClick={() => handleDateClick(day)}
-            >
-              {day}
-            </div>
-          );
-        })}
+  const isToday =
+    day === today.getDate() &&
+    currMonth === today.getMonth() &&
+    currYear === today.getFullYear();
+
+  const isSelected =
+    selectedDate &&
+    selectedDate.day === day &&
+    selectedDate.month === currMonth &&
+    selectedDate.year === currYear;
+
+  const dateKey = `${currYear}-${String(currMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  const dayEvents = calendarEvents[dateKey] || [];
+
+  return (
+    <button
+      key={day}
+      type="button"
+      className={`calDate ${isToday ? "calToday" : ""} ${isSelected ? "calSelected" : ""}`}
+      onClick={() => handleDateClick(day)}
+    >
+      <span className="calDate__num">{day}</span>
+
+      {dayEvents.length > 0 && (
+        <span className="calDate__dots">
+          {dayEvents.slice(0, 3).map((type) => (
+            <span
+              key={type}
+              className="calDate__dot"
+              style={{ background: EVENT_COLORS[type] }}
+            />
+          ))}
+        </span>
+      )}
+    </button>
+  );
+})}
       </div>
 
       {/* Legend — FIX: live session dot added */}
