@@ -1216,7 +1216,10 @@ export default function PrivateSessions() {
   // ── Global per-user WebSocket for real-time session updates ──
   useEffect(() => {
     const proto = window.location.protocol === "https:" ? "wss" : "ws";
-    const ws = new WebSocket(`${proto}://${window.location.host}/ws/private-session/notify/`);
+    const wsHost = import.meta.env.VITE_WS_HOST || window.location.host;
+    const token = localStorage.getItem("access") || sessionStorage.getItem("access") || "";
+    const url = `${proto}://${wsHost}/ws/private-session/notify/${token ? `?token=${token}` : ""}`;
+    const ws = new WebSocket(url);
 
     ws.onmessage = (e) => {
       try {
