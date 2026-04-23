@@ -120,6 +120,9 @@ const sessions = data?.sessions?.length ? data.sessions : (data?.all_sessions ??
   const quizzes = data?.quizzes ?? [];
   const privateSessions = data?.private_sessions ?? [];
   const apiNotifications = data?.notifications ?? [];
+  console.log("FULL DASHBOARD DATA:", data);
+console.log("sessions:", data?.sessions);
+console.log("all_sessions:", data?.all_sessions);
 
   const notifications = (() => {
     const seen = new Set();
