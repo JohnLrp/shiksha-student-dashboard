@@ -71,7 +71,6 @@
 
 .dashboardCard--assignments,
 .dashboardCard--notifications,
-.dashboardCard--calendar,
 .dashboardCard--schedule {
   min-height: 0;
 }
@@ -316,7 +315,7 @@
   border-radius: 18px;
   border: 1px solid rgba(8, 60, 69, 0.08);
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
-  padding: 14px 16px 12px;
+  padding: 14px 30px 12px;
   min-height: 0;
   height: 100%;
   overflow: hidden;
@@ -382,7 +381,6 @@
   grid-template-columns: repeat(7, minmax(0, 1fr));
   grid-template-rows: 18px repeat(6, 25px);
   row-gap: 5px;
-  column-gap: 3px;
   width: 100%;
   justify-items: center;
   align-content: start;
@@ -476,12 +474,8 @@
 /* Legend visible */
 .calLegend {
   display: flex;
-  justify-content: center;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  margin-top: 10px;
-  padding: 10px 14px;
+  gap: 6px;
   background: #f2f4f5;
   border-radius: 12px;
   border-top: none;
@@ -511,7 +505,7 @@
 
 @media (max-width: 1200px) {
   .dashboardCard--calendar {
-    padding: 14px 16px 12px;
+    padding: 14px 30px 12px;
   }
 
   .calendarHeader {
