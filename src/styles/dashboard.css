@@ -45,12 +45,6 @@
   min-height: 0;
 }
 
-.dashboardRight {
-  display: grid;
-  grid-template-rows: 260px minmax(0, 1fr);
-  gap: 14px;
-  min-height: 0;
-}
 
 /* =========================
    CARD BASE
@@ -250,7 +244,7 @@
 
 .dashboardRight {
   display: grid;
-  grid-template-rows: 210px minmax(0, 1fr);
+  grid-template-rows: 260px minmax(0, 1fr);
   gap: 14px;
   min-height: 0;
 }
