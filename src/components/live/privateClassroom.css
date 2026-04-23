@@ -6,10 +6,20 @@
    Scoped with pvt- prefix to avoid conflicts.
    ===================================================== */
 
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 .pvt-room {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
   width: 100%;
   background: #0d1117;
   color: #e8eaf2;
@@ -52,6 +62,7 @@
 .pvt-main {
   display: flex;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
 }
 
@@ -63,27 +74,29 @@
   gap: 10px;
   overflow: hidden;
   min-width: 0;
+  min-height: 0;
 }
 
 /* ── Video Grid ── */
 .pvt-video-grid {
   flex: 1;
+  min-height: 0;
   display: grid;
   gap: 8px;
   overflow: hidden;
-  align-content: center;
-  justify-content: center;
+  align-content: stretch;
+  justify-content: stretch;
   width: 100%;
-  height: 100%;
+  height: auto;
 }
 
 /* Google Meet-style grid — tiles always fill evenly, no irregular shapes */
-.pvt-grid-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; }
-.pvt-grid-2 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
-.pvt-grid-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-.pvt-grid-6 { grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; }
-.pvt-grid-9 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); }
-.pvt-grid-many { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); grid-auto-rows: 1fr; }
+.pvt-grid-1 { grid-template-columns: 1fr; grid-template-rows: 1fr; height: 100%; }
+.pvt-grid-2 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; height: 100%; }
+.pvt-grid-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; height: 100%; }
+.pvt-grid-6 { grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; height: 100%; }
+.pvt-grid-9 { grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); height: 100%; }
+.pvt-grid-many { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); grid-auto-rows: 1fr; height: 100%; }
 
 /* ── Video Tile ── */
 .pvt-tile {
@@ -246,11 +259,13 @@
   gap: 6px;
   overflow: hidden;
   height: 100%;
+  min-height: 0;
 }
 
 .pvt-screen-main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   height: 100%;
   border-radius: 10px;
   overflow: hidden;
@@ -270,6 +285,7 @@
   width: 180px;
   flex-shrink: 0;
   overflow-y: auto;
+  min-height: 0;
 }
 
 /* ── Control Bar ── */
@@ -354,6 +370,8 @@
 /* ── Sidebar ── */
 .pvt-sidebar {
   width: 300px;
+  height: 100%;
+  min-height: 0;
   background: #161b27;
   border-left: 1px solid rgba(255,255,255,0.08);
   display: flex;
@@ -381,6 +399,7 @@
 
 .pvt-sidebar-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -454,19 +473,204 @@
 }
 
 /* ── Responsive ── */
+@media (max-width: 1100px) {
+  .pvt-sidebar { width: 260px; }
+  .pvt-video-area { padding: 10px; }
+  .pvt-controls { padding: 10px 12px; }
+  .pvt-grid-6 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(3, 1fr); }
+  .pvt-screen-strip { width: 140px; }
+}
+
+@media (max-width: 900px) {
+  .pvt-main {
+    flex-direction: column;
+  }
+
+  .pvt-video-area {
+    width: 100%;
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .pvt-sidebar {
+    width: 100%;
+    height: 280px;
+    border-left: none;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .pvt-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .pvt-ctrl-left,
+  .pvt-ctrl-center,
+  .pvt-ctrl-right {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .pvt-ctrl-center {
+    flex: 0 0 100%;
+    order: 1;
+  }
+
+  .pvt-ctrl-left {
+    order: 2;
+  }
+
+  .pvt-ctrl-right {
+    order: 3;
+  }
+
+  .pvt-topbar {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+  }
+
+  .pvt-topbar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pvt-grid-2,
+  .pvt-grid-4,
+  .pvt-grid-6 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pvt-grid-9 {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-rows: auto;
+  }
+
+  .pvt-grid-many {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pvt-screen-layout {
+    flex-direction: column;
+  }
+
+  .pvt-screen-strip {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 4px;
+  }
+
+  .pvt-tile-sm {
+    width: 180px;
+    min-width: 180px;
+    height: 110px;
+  }
+}
+
 @media (max-width: 768px) {
-  .pvt-sidebar { display: none; }
+  .pvt-room {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  .pvt-sidebar {
+    display: flex;
+    height: 240px;
+  }
+
   .pvt-ctrl-btn { width: 42px; height: 42px; font-size: 16px; }
   .pvt-controls { padding: 10px 12px; gap: 6px; }
   .pvt-topbar { padding: 10px 14px; }
   .pvt-video-area { padding: 10px; gap: 8px; }
   .pvt-leave-btn { padding: 0 14px; font-size: 12px; }
+  .pvt-session-name { font-size: 13px; }
+  .pvt-session-sub { font-size: 10px; }
+  .pvt-timer,
+  .pvt-count,
+  .pvt-rec-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+  .pvt-video-grid { gap: 6px; }
+  .pvt-grid-2,
+  .pvt-grid-4,
+  .pvt-grid-6,
+  .pvt-grid-9,
+  .pvt-grid-many {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;
+  }
+  .pvt-tile-label {
+    font-size: 11px;
+    padding: 4px 8px;
+    bottom: 8px;
+    left: 8px;
+  }
+  .chat-bubble { max-width: 88%; }
 }
 
 @media (max-width: 480px) {
+  .pvt-topbar {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .pvt-topbar-right {
+    gap: 6px;
+  }
+
+  .pvt-video-area {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .pvt-controls {
+    padding: 8px;
+    gap: 8px;
+  }
+
   .pvt-ctrl-btn { width: 38px; height: 38px; font-size: 15px; }
   .pvt-grid-2 { grid-template-columns: 1fr; }
   .pvt-timer { display: none; }
+
+  .pvt-leave-btn {
+    height: 38px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  .pvt-sidebar {
+    height: 220px;
+  }
+
+  .pvt-grid-4,
+  .pvt-grid-6,
+  .pvt-grid-9,
+  .pvt-grid-many {
+    grid-template-columns: 1fr;
+  }
+
+  .pvt-tile-sm {
+    width: 140px;
+    min-width: 140px;
+    height: 90px;
+  }
+
+  .chat-input-area {
+    padding: 8px 10px;
+  }
+
+  .chat-input-area input {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .chat-send-btn {
+    width: 32px;
+    height: 32px;
+  }
 }
 
 /* ══════════════════════════════════════════════════════
