@@ -148,6 +148,38 @@
 }
 
 
+.sidebar__courseToggle {
+  background: transparent;
+  border: none;
+  width: 100%;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.sidebar__courseLabel {
+  flex: 1;
+}
+
+.sidebar__chev {
+  font-size: 14px;
+  transition: transform 0.2s ease;
+  opacity: 0.8;
+}
+
+.sidebar__chev--open {
+  transform: rotate(180deg);
+}
+
+.sidebar__courseItem {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  font-weight: 500;
+}
+
 @media (max-width: 768px) {
   .sidebar__closeBtn {
     display: block;
