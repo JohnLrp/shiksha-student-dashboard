@@ -33,7 +33,7 @@
 
 .dashboardLeft {
   display: grid;
-  grid-template-rows: 248px minmax(0, 1fr);
+  grid-template-rows: 294px minmax(0, 1fr);
   gap: 14px;
   min-height: 0;
 }
@@ -302,7 +302,7 @@
 
 .dashboardRight {
   display: grid;
-  grid-template-rows: 236px minmax(0, 1fr);
+  grid-template-rows: 294px minmax(0, 1fr);
   gap: 14px;
   min-height: 0;
 }
@@ -316,7 +316,7 @@
   border-radius: 18px;
   border: 1px solid rgba(8, 60, 69, 0.08);
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
-  padding: 16px 18px 14px;
+  padding: 14px 16px 12px;
   min-height: 0;
   height: 100%;
   overflow: hidden;
@@ -380,8 +380,8 @@
 .calendarGrid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-template-rows: 20px repeat(6, 36px);
-  row-gap: 8px;
+  grid-template-rows: 18px repeat(6, 30px);
+  row-gap: 5px;
   column-gap: 0;
   width: 100%;
   justify-items: center;
@@ -402,7 +402,7 @@
 
 .calDate {
   width: 100%;
-  height: 36px;
+  height: 32px;
   border: none;
   background: transparent;
   border-radius: 12px;
@@ -414,7 +414,6 @@
   cursor: pointer;
   transition: transform 0.15s ease, background 0.15s ease;
 }
-
 .calDate:hover {
   transform: translateY(-1px);
 }
@@ -479,9 +478,9 @@
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 8px 12px;
-  margin-top: 10px;
-  padding-top: 9px;
+  gap: 6px 10px;
+  margin-top: 8px;
+  padding-top: 7px;
   border-top: 1px solid rgba(15, 23, 42, 0.06);
   flex-shrink: 0;
 }
@@ -490,7 +489,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 10px;
+  font-size: 9px;
   line-height: 1;
   color: #5f6e7f;
   white-space: nowrap;
