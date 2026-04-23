@@ -33,7 +33,7 @@
 
 .dashboardLeft {
   display: grid;
-  grid-template-rows: 205px minmax(0, 1fr);
+  grid-template-rows: 250px minmax(0, 1fr);
   gap: 14px;
   min-height: 0;
 }
@@ -47,7 +47,7 @@
 
 .dashboardRight {
   display: grid;
-  grid-template-rows: 230px minmax(0, 1fr);
+  grid-template-rows: 250px minmax(0, 1fr);
   gap: 14px;
   min-height: 0;
 }
@@ -244,6 +244,7 @@
   transform: rotate(180deg);
 }
 
+
 /* =========================
    CALENDAR
 ========================= */
@@ -297,12 +298,12 @@
   cursor: pointer;
 }
 
-.calDayName {
-  text-align: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: #6b7280;
-  padding: 6px 0;
+.calendarGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  row-gap: 2px;
+  column-gap: 0;
+  width: 100%;
 }
 
 .calDayName {
@@ -317,7 +318,7 @@
   border: none;
   background: transparent;
   border-radius: 10px;
-  min-height: 38px;
+  min-height: 34px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -325,6 +326,15 @@
   padding: 3px 2px;
   cursor: pointer;
   transition: background 0.18s ease;
+}
+
+.calDate:hover {
+  background: #f3f8f8;
+}
+
+.calDate--blank {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .calDate__num {
@@ -338,17 +348,6 @@
   color: #111827;
   line-height: 1;
 }
-
-
-.calDate:hover {
-  background: #f3f8f8;
-}
-
-.calDate--blank {
-  visibility: hidden;
-  pointer-events: none;
-}
-
 
 .calDate__dots {
   display: flex;
@@ -381,6 +380,32 @@
   background: #ff6660;
   border: none;
   color: #ffffff;
+}
+
+.calLegend {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(107, 114, 128, 0.25);
+}
+
+.calLegend__item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.calLegend__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
 }
 
 /* =========================
