@@ -384,25 +384,6 @@ export default function Dashboard() {
           );
         })}
       </div>
-
-      <div className="calLegend">
-        <span className="calLegend__item">
-          <span className="calLegend__dot" style={{ background: "#57D982" }} />
-          Assignment
-        </span>
-        <span className="calLegend__item">
-          <span className="calLegend__dot" style={{ background: "#93A1E5" }} />
-          Quiz
-        </span>
-        <span className="calLegend__item">
-          <span className="calLegend__dot" style={{ background: "#38bdf8" }} />
-          Live Session
-        </span>
-        <span className="calLegend__item">
-          <span className="calLegend__dot" style={{ background: "#FF8A65" }} />
-          Private Session
-        </span>
-      </div>
     </>
   );
 
@@ -451,7 +432,7 @@ export default function Dashboard() {
         );
 
       case "calendar":
-        return <div className="calendarCard mobileCalendarCard">{renderCalendarGrid()}</div>;
+        return <div className="mobileCalendarCard">{renderCalendarGrid()}</div>;
 
       case "assign":
         return (
@@ -542,112 +523,122 @@ export default function Dashboard() {
   return (
     <div className="dashboardShell">
       <div className="desktopOnly">
-        <div className="dashboardGrid">
-          <section className="dashboardCard dashboardCard--live">
-            <div className="cardHeader liveHeader">
-              <h3>Upcoming Live Sessions</h3>
-              <p className="sessionCountText">
-                {sessions.length} Classes {sessions.length > 0 ? "(Remaining classes)" : ""}
-              </p>
-            </div>
+        <div className="dashboardMain">
+          <div className="dashboardLeft">
+            <section className="dashboardCard dashboardCard--live">
+              <div className="cardHeader liveHeader">
+                <h3>Upcoming Live Sessions</h3>
+                <p className="sessionCountText">
+                  {sessions.length} Classes {sessions.length > 0 ? "(Remaining classes)" : ""}
+                </p>
+              </div>
 
-            {sessions.length > 0 ? (
-              <div className="liveCardsRow">{sessions.map((s, idx) => renderSessionCard(s, idx))}</div>
-            ) : (
-              <div className="liveEmptyState">
-                <div className="liveEmptyState__icon">
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                    <path
-                      d="M8 2V5M16 2V5M3 9H21M5 5H19C20.1046 5 21 5.89543 21 7V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V7C3 5.89543 3.89543 5 5 5ZM12 13V17M10 15H14"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+              {sessions.length > 0 ? (
+                <div className="liveCardsRow">{sessions.map((s, idx) => renderSessionCard(s, idx))}</div>
+              ) : (
+                <div className="liveEmptyState">
+                  <div className="liveEmptyState__icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M8 2V5M16 2V5M3 9H21M5 5H19C20.1046 5 21 5.89543 21 7V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V7C3 5.89543 3.89543 5 5 5ZM12 13V17M10 15H14"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+
+                  <div className="liveEmptyState__content">
+                    <p className="liveEmptyState__title">No upcoming live sessions for today</p>
+                    <p className="liveEmptyState__text">Relax and prepare for your next class!</p>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            <div className="dashboardLeftBottom">
+              <section className="dashboardCard dashboardCard--assignments">
+                <div
+                  className="cardHeader cardHeader--clickable"
+                  onClick={() => setShowAssignments(!showAssignments)}
+                >
+                  <h3>Assignments</h3>
+
+                  <button type="button" className="arrowBtn">
+                    <span
+                      className={`arrowBtn__chevron ${showAssignments ? "arrowBtn__chevron--up" : ""}`}
+                    >
+                      <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
+                        <path
+                          d="M1 1.5L6 6.5L11 1.5"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    </span>
+                  </button>
                 </div>
 
-                <div className="liveEmptyState__content">
-                  <p className="liveEmptyState__title">No upcoming live sessions for today</p>
-                  <p className="liveEmptyState__text">Relax and prepare for your next class!</p>
-                </div>
-              </div>
-            )}
-          </section>
-
-          <section className="dashboardCard dashboardCard--calendar">
-            {renderCalendarGrid()}
-          </section>
-
-          <section className="dashboardCard dashboardCard--assignments">
-            <div
-              className="cardHeader cardHeader--clickable"
-              onClick={() => setShowAssignments(!showAssignments)}
-            >
-              <h3>Assignments</h3>
-
-              <button type="button" className="arrowBtn">
-                <span className={`arrowBtn__chevron ${showAssignments ? "arrowBtn__chevron--up" : ""}`}>
-                  <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-                    <path
-                      d="M1 1.5L6 6.5L11 1.5"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </span>
-              </button>
-            </div>
-
-            {showAssignments && (
-              <div className="cardBodyScroll">
-                {assignments.map((a, idx) => (
-                  <AssignmentCard key={idx} {...a} />
-                ))}
-                {assignments.length === 0 && <div className="emptyState">No assignments</div>}
-              </div>
-            )}
-          </section>
-
-          <section className="dashboardCard dashboardCard--notifications">
-            <div className="cardHeader">
-              <h3>Notifications</h3>
-              <DropdownMenu value={notificationFilter} onChange={setNotificationFilter} />
-            </div>
-
-            <div className="cardBodyScroll">
-              {filteredNotifications.map((n) => (
-                <NotificationCard key={n.id} notification={n} onRead={markOneRead} />
-              ))}
-              {filteredNotifications.length === 0 && <div className="emptyState">No notifications</div>}
-            </div>
-          </section>
-
-          <section className="dashboardCard dashboardCard--schedule">
-            <div className="cardHeader">
-              <h3>
-                Schedule
-                {selectedDate && (
-                  <span className="selectedDateText">
-                    —{" "}
-                    {new Date(
-                      selectedDate.year,
-                      selectedDate.month,
-                      selectedDate.day
-                    ).toLocaleDateString("en-GB", DATE_FORMAT)}
-                  </span>
+                {showAssignments && (
+                  <div className="cardBodyScroll">
+                    {assignments.map((a, idx) => (
+                      <AssignmentCard key={idx} {...a} />
+                    ))}
+                    {assignments.length === 0 && <div className="emptyState">No assignments</div>}
+                  </div>
                 )}
-              </h3>
-              <DropdownMenu value={scheduleFilter} onChange={setScheduleFilter} />
-            </div>
+              </section>
 
-            <div className="cardBodyScroll">
-              {filteredSchedule.map((item, idx) => renderScheduleItem(item, idx))}
-              {filteredSchedule.length === 0 && <div className="emptyState">No schedule</div>}
+              <section className="dashboardCard dashboardCard--notifications">
+                <div className="cardHeader">
+                  <h3>Notifications</h3>
+                  <DropdownMenu value={notificationFilter} onChange={setNotificationFilter} />
+                </div>
+
+                <div className="cardBodyScroll">
+                  {filteredNotifications.map((n) => (
+                    <NotificationCard key={n.id} notification={n} onRead={markOneRead} />
+                  ))}
+                  {filteredNotifications.length === 0 && (
+                    <div className="emptyState">No notifications</div>
+                  )}
+                </div>
+              </section>
             </div>
-          </section>
+          </div>
+
+          <div className="dashboardRight">
+            <section className="dashboardCard dashboardCard--calendar">
+              {renderCalendarGrid()}
+            </section>
+
+            <section className="dashboardCard dashboardCard--schedule">
+              <div className="cardHeader">
+                <h3>
+                  Schedule
+                  {selectedDate && (
+                    <span className="selectedDateText">
+                      —{" "}
+                      {new Date(
+                        selectedDate.year,
+                        selectedDate.month,
+                        selectedDate.day
+                      ).toLocaleDateString("en-GB", DATE_FORMAT)}
+                    </span>
+                  )}
+                </h3>
+                <DropdownMenu value={scheduleFilter} onChange={setScheduleFilter} />
+              </div>
+
+              <div className="cardBodyScroll">
+                {filteredSchedule.map((item, idx) => renderScheduleItem(item, idx))}
+                {filteredSchedule.length === 0 && <div className="emptyState">No schedule</div>}
+              </div>
+            </section>
+          </div>
         </div>
       </div>
 
