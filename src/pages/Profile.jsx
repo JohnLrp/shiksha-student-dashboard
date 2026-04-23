@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../api/apiClient";
+import { getPublicProfile, savePublicProfile } from "../utils/profileStorage";
 import "../styles/profile.css";
 
 export default function Profile() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [avatar, setAvatar] = useState(null);
   const [avatarType, setAvatarType] = useState(null);
   const [tempAvatar, setTempAvatar] = useState(null);
@@ -15,9 +17,23 @@ export default function Profile() {
 
   const [studentInfo, setStudentInfo] = useState(null);
   const [courses, setCourses] = useState([]);
-
   const [isEditing, setIsEditing] = useState(false);
-  const [editValues, setEditValues] = useState({ name: "", phone: "" });
+
+  // Public profile data (persisted in localStorage)
+  const [about, setAbout] = useState("");
+  const [subjects, setSubjects] = useState([]);
+  const [hobbies, setHobbies] = useState([]);
+  const [languages, setLanguages] = useState([]);
+
+  // Ephemeral edit-mode state
+  const [editName, setEditName] = useState("");
+  const [editAbout, setEditAbout] = useState("");
+  const [editSubjects, setEditSubjects] = useState([]);
+  const [editHobbies, setEditHobbies] = useState([]);
+  const [editLanguages, setEditLanguages] = useState([]);
+  const [newSubject, setNewSubject] = useState("");
+  const [newHobby, setNewHobby] = useState("");
+  const [newLanguage, setNewLanguage] = useState("");
 
   const emojis = [
     "😀", "😎", "🤓", "😊", "🥳", "😇", "🤩", "😍",
@@ -27,6 +43,11 @@ export default function Profile() {
   ];
 
   useEffect(() => {
+    const stored = getPublicProfile();
+    setAbout(stored.about || "");
+    setSubjects(stored.subjects || []);
+    setHobbies(stored.hobbies || []);
+    setLanguages(stored.languages || []);
     fetchProfile();
   }, []);
 
@@ -67,20 +88,45 @@ export default function Profile() {
   };
 
   const handleEditClick = () => {
-    setEditValues({ name: studentInfo.name || "", phone: studentInfo.phone || "" });
+    setEditName(studentInfo?.name || "");
+    setEditAbout(about);
+    setEditSubjects([...subjects]);
+    setEditHobbies([...hobbies]);
+    setEditLanguages([...languages]);
+    setNewSubject("");
+    setNewHobby("");
+    setNewLanguage("");
     setIsEditing(true);
   };
 
+  const handleEditCancel = () => {
+    setIsEditing(false);
+  };
+
   const handleEditSave = async () => {
+    setSaving(true);
+    savePublicProfile({
+      name: editName,
+      about: editAbout,
+      subjects: editSubjects,
+      hobbies: editHobbies,
+      languages: editLanguages,
+    });
+    setAbout(editAbout);
+    setSubjects(editSubjects);
+    setHobbies(editHobbies);
+    setLanguages(editLanguages);
     try {
       await api.patch("/accounts/me/", {
-        username: editValues.name,
-        profile: { full_name: editValues.name, phone: editValues.phone },
+        username: editName,
+        profile: { full_name: editName },
       });
       await fetchProfile();
-      setIsEditing(false);
     } catch (err) {
       console.error("Profile update failed", err);
+    } finally {
+      setSaving(false);
+      setIsEditing(false);
     }
   };
 
@@ -132,6 +178,27 @@ export default function Profile() {
     setTempAvatarFile(null);
   };
 
+  const addSubject = () => {
+    if (newSubject.trim()) {
+      setEditSubjects((p) => [...p, newSubject.trim()]);
+      setNewSubject("");
+    }
+  };
+
+  const addHobby = () => {
+    if (newHobby.trim()) {
+      setEditHobbies((p) => [...p, newHobby.trim()]);
+      setNewHobby("");
+    }
+  };
+
+  const addLanguage = () => {
+    if (newLanguage.trim()) {
+      setEditLanguages((p) => [...p, newLanguage.trim()]);
+      setNewLanguage("");
+    }
+  };
+
   if (loading) return <div className="profileLoading">Loading...</div>;
 
   const metaBits = [
@@ -143,6 +210,11 @@ export default function Profile() {
   const locationBits = [studentInfo?.city, studentInfo?.district, studentInfo?.state]
     .filter(Boolean)
     .join(", ");
+
+  const langBadgeText = languages.length > 0 ? languages.join(" & ") : null;
+
+  const displaySubjects = isEditing ? editSubjects : subjects;
+  const displayHobbies = isEditing ? editHobbies : hobbies;
 
   return (
     <div className="profilePage">
@@ -168,62 +240,75 @@ export default function Profile() {
               {showPicker && (
                 <div className="avatarPicker__backdrop" onClick={handlePickerCancel}>
                   <div className="avatarPicker" onClick={(e) => e.stopPropagation()}>
-                  <div className="avatarPicker__header">
-                    <span>{avatar ? "Change Avatar" : "Choose Avatar"}</span>
-                    <button className="avatarPicker__close" onClick={handlePickerCancel}>×</button>
-                  </div>
+                    <div className="avatarPicker__header">
+                      <span>{avatar ? "Change Avatar" : "Choose Avatar"}</span>
+                      <button className="avatarPicker__close" onClick={handlePickerCancel}>×</button>
+                    </div>
 
-                  <div className="avatarPicker__preview">
-                    <div className="avatarPicker__previewCircle">
-                      {tempAvatar ? (
-                        tempAvatarType === "emoji" ? (
-                          <span className="avatarPicker__previewEmoji">{tempAvatar}</span>
+                    <div className="avatarPicker__preview">
+                      <div className="avatarPicker__previewCircle">
+                        {tempAvatar ? (
+                          tempAvatarType === "emoji" ? (
+                            <span className="avatarPicker__previewEmoji">{tempAvatar}</span>
+                          ) : (
+                            <img src={tempAvatar} alt="Preview" className="avatarPicker__previewImg" />
+                          )
                         ) : (
-                          <img src={tempAvatar} alt="Preview" className="avatarPicker__previewImg" />
-                        )
-                      ) : (
-                        <span className="avatarPicker__previewPlaceholder">Preview</span>
-                      )}
+                          <span className="avatarPicker__previewPlaceholder">Preview</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="avatarPicker__section">
-                    <p className="avatarPicker__label">Upload Image</p>
-                    <label className="avatarPicker__uploadBtn">
-                      <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
-                      Choose File
-                    </label>
-                  </div>
-
-                  <div className="avatarPicker__section">
-                    <p className="avatarPicker__label">Or Select Emoji</p>
-                    <div className="avatarPicker__emojiGrid">
-                      {emojis.map((emoji, idx) => (
-                        <button
-                          key={idx}
-                          className={`avatarPicker__emojiBtn ${tempAvatar === emoji ? "avatarPicker__emojiBtn--selected" : ""}`}
-                          onClick={() => handleEmojiSelect(emoji)}
-                        >
-                          {emoji}
-                        </button>
-                      ))}
+                    <div className="avatarPicker__section">
+                      <p className="avatarPicker__label">Upload Image</p>
+                      <label className="avatarPicker__uploadBtn">
+                        <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
+                        Choose File
+                      </label>
                     </div>
-                  </div>
 
-                  <div className="avatarPicker__actions">
-                    <button className="avatarPicker__cancelBtn" onClick={handlePickerCancel}>Cancel</button>
-                    <button className="avatarPicker__saveBtn" onClick={handleAvatarSave} disabled={!tempAvatar}>Save</button>
-                  </div>
+                    <div className="avatarPicker__section">
+                      <p className="avatarPicker__label">Or Select Emoji</p>
+                      <div className="avatarPicker__emojiGrid">
+                        {emojis.map((emoji, idx) => (
+                          <button
+                            key={idx}
+                            className={`avatarPicker__emojiBtn ${tempAvatar === emoji ? "avatarPicker__emojiBtn--selected" : ""}`}
+                            onClick={() => handleEmojiSelect(emoji)}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="avatarPicker__actions">
+                      <button className="avatarPicker__cancelBtn" onClick={handlePickerCancel}>Cancel</button>
+                      <button className="avatarPicker__saveBtn" onClick={handleAvatarSave} disabled={!tempAvatar}>Save</button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
             <div className="profileHeader__info">
-              <h2 className="profileHeader__name">{studentInfo?.name}</h2>
+              {isEditing ? (
+                <div className="profileHeader__nameRow">
+                  <input
+                    className="profileHeader__nameInput"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="Your name"
+                  />
+                  <button className="profileHeader__nameClear" onClick={() => setEditName("")}>×</button>
+                </div>
+              ) : (
+                <h2 className="profileHeader__name">{studentInfo?.name}</h2>
+              )}
+
               {metaBits.length > 0 && (
                 <div className="profileHeader__metaRow">
-                  <span>• {metaBits.join(" • ")}</span>
+                  <span>• {metaBits.join("  •  ")}</span>
                 </div>
               )}
               {studentInfo?.schoolName && (
@@ -233,47 +318,196 @@ export default function Profile() {
               )}
               {studentInfo?.studentId && (
                 <div className="profileHeader__metaRow">
-                  <span>• Student ID: {studentInfo.studentId}</span>
+                  <span>• {studentInfo.studentId}</span>
                 </div>
               )}
-              {studentInfo?.email && (
+              {!isEditing && studentInfo?.email && (
                 <div className="profileHeader__metaRow">
                   <span>• {studentInfo.email}</span>
                 </div>
               )}
-              {studentInfo?.phone && (
+              {!isEditing && studentInfo?.phone && (
                 <div className="profileHeader__metaRow">
                   <span>• {studentInfo.phone}</span>
                 </div>
               )}
-              {locationBits && (
+              {!isEditing && locationBits && (
                 <div className="profileHeader__metaRow">
                   <span>• {locationBits}{studentInfo?.pinCode ? ` - ${studentInfo.pinCode}` : ""}</span>
                 </div>
               )}
-              <div className="profileHeader__badges">
-                <span className="profileBadge profileBadge--online">
-                  <span className="profileBadge__dot" />
-                  Online
-                </span>
-              </div>
+
+              {!isEditing && (
+                <div className="profileHeader__badges">
+                  <span className="profileBadge profileBadge--online">
+                    <span className="profileBadge__dot" />
+                    Online
+                  </span>
+                  {langBadgeText && (
+                    <span className="profileBadge profileBadge--lang">{langBadgeText}</span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
           <div className="profileHeader__actions">
-            <div className="profileHeader__editBtns">
-              <button className="profileBtn profileBtn--outline" onClick={handleEditClick}>
-                Edit
-              </button>
-            </div>
-            <button
-              className="profileBtn profileBtn--outline profileBtn--private"
-              onClick={() => navigate("/private-details")}
-            >
-              Private Details
-            </button>
+            {isEditing ? (
+              <div className="profileHeader__editBtns">
+                <button className="profileBtn profileBtn--outline" onClick={handleEditCancel}>
+                  Cancel
+                </button>
+                <button className="profileBtn profileBtn--solid" onClick={handleEditSave} disabled={saving}>
+                  {saving ? "Saving..." : "Save"}
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="profileHeader__editBtns">
+                  <button className="profileBtn profileBtn--outline" onClick={handleEditClick}>
+                    Edit Profile
+                  </button>
+                </div>
+                <button
+                  className="profileBtn profileBtn--outline profileBtn--private"
+                  onClick={() => navigate("/private-details")}
+                >
+                  Private Details
+                </button>
+              </>
+            )}
           </div>
         </div>
+
+        {/* About */}
+        <hr className="profileDivider" />
+        <div className="profileSection">
+          <h3 className="profileSection__title">About</h3>
+          {isEditing ? (
+            <textarea
+              className="profileSection__textarea"
+              value={editAbout}
+              onChange={(e) => setEditAbout(e.target.value)}
+              placeholder="Tell something about yourself..."
+            />
+          ) : about ? (
+            <p className="profileSection__text">{about}</p>
+          ) : (
+            <p className="profileSection__placeholder">Add something about yourself...</p>
+          )}
+        </div>
+
+        {/* Interests */}
+        <hr className="profileDivider" />
+        <div className="profileSection">
+          <h3 className="profileSection__title">Interests</h3>
+          <div className="interests__grid">
+            <div>
+              <h4 className="interests__colTitle">Subjects</h4>
+              {displaySubjects.map((s, i) => (
+                <div key={i} className="interests__item interests__item--narrow">
+                  <span>• {s}</span>
+                  {isEditing && (
+                    <button
+                      className="interests__removeBtn"
+                      onClick={() => setEditSubjects(editSubjects.filter((_, idx) => idx !== i))}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+              {isEditing && (
+                <div className="interests__addRow">
+                  <span className="interests__addBullet">•</span>
+                  <input
+                    className="interests__addInput"
+                    placeholder="Add Subject"
+                    value={newSubject}
+                    onChange={(e) => setNewSubject(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addSubject()}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h4 className="interests__colTitle">Hobbies</h4>
+              {displayHobbies.map((h, i) => (
+                <div key={i} className="interests__item interests__item--narrow">
+                  <span>• {h}</span>
+                  {isEditing && (
+                    <button
+                      className="interests__removeBtn"
+                      onClick={() => setEditHobbies(editHobbies.filter((_, idx) => idx !== i))}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+              {isEditing && (
+                <div className="interests__addRow">
+                  <span className="interests__addBullet">•</span>
+                  <input
+                    className="interests__addInput"
+                    placeholder="Add Hobby"
+                    value={newHobby}
+                    onChange={(e) => setNewHobby(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addHobby()}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Languages — edit mode only */}
+        {isEditing && (
+          <>
+            <hr className="profileDivider" />
+            <div className="profileSection">
+              <h3 className="profileSection__title">Languages</h3>
+              {editLanguages.map((l, i) => (
+                <div key={i} className="interests__item interests__item--narrow">
+                  <span>• {l}</span>
+                  <button
+                    className="interests__removeBtn"
+                    onClick={() => setEditLanguages(editLanguages.filter((_, idx) => idx !== i))}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+              <div className="interests__addRow">
+                <span className="interests__addBullet">•</span>
+                <input
+                  className="interests__addInput"
+                  placeholder="Add Language"
+                  value={newLanguage}
+                  onChange={(e) => setNewLanguage(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addLanguage()}
+                />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Private Session Activity — view mode only */}
+        {!isEditing && (
+          <>
+            <hr className="profileDivider" />
+            <div className="profileSection">
+              <h3 className="profileSection__title">Private Session Activity</h3>
+              <ul className="activity__list">
+                <li><strong>24/25</strong> Private Sessions Attended</li>
+                <li><strong>95%</strong> Attendance Rate</li>
+              </ul>
+            </div>
+          </>
+        )}
+
+        <hr className="profileDivider" />
       </div>
 
       <div className="coursesSection">
@@ -292,41 +526,6 @@ export default function Profile() {
           </div>
         </div>
       </div>
-
-      {isEditing && (
-        <div className="editModal__backdrop" onClick={() => setIsEditing(false)}>
-          <div className="editModal" onClick={(e) => e.stopPropagation()}>
-            <div className="editModal__header">
-              <h3 className="editModal__title">Edit Profile</h3>
-              <button className="editModal__close" onClick={() => setIsEditing(false)}>×</button>
-            </div>
-            <div className="editModal__body">
-              <div className="editModal__field">
-                <label className="editModal__label">Name</label>
-                <input
-                  type="text"
-                  className="editModal__input"
-                  value={editValues.name}
-                  onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
-                />
-              </div>
-              <div className="editModal__field">
-                <label className="editModal__label">Phone</label>
-                <input
-                  type="tel"
-                  className="editModal__input"
-                  value={editValues.phone}
-                  onChange={(e) => setEditValues({ ...editValues, phone: e.target.value })}
-                />
-              </div>
-            </div>
-            <div className="editModal__footer">
-              <button className="editModal__cancelBtn" onClick={() => setIsEditing(false)}>Cancel</button>
-              <button className="editModal__saveBtn" onClick={handleEditSave}>Save</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

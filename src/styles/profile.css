@@ -237,6 +237,23 @@
   margin-top: auto;
 }
 
+.profileBtn--solid {
+  background: #0a4d55;
+  border: 1.5px solid #0a4d55;
+  color: #fff;
+}
+
+.profileBtn--solid:hover:not(:disabled) {
+  background: #0a6d75;
+  border-color: #0a6d75;
+}
+
+.profileBtn--solid:disabled {
+  background: #ccc;
+  border-color: #ccc;
+  cursor: not-allowed;
+}
+
 /* ─── Divider ────────────────────────────────────── */
 .profileDivider {
   border: none;
