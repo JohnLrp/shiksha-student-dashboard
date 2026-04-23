@@ -20,7 +20,7 @@ export default function SessionCard({ id, subject, topic, teacher, startsIn, tim
         <div className="sessionCard__top">
           <h4 className="sessionCard__subject">{subject}</h4>
           <p className="sessionCard__topic">{topic || "Title/Topic"}</p>
-          <p className="sessionCard__teacher">{teacher}</p>
+          <p className="sessionCard__teacher">{teacher || "Teacher’s Name"}</p>
         </div>
 
         <div className="sessionCard__bottom">
