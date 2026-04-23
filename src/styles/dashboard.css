@@ -250,160 +250,159 @@
 }
 
 /* =========================
+   RIGHT COLUMN
+========================= */
+
+.dashboardRight {
+  display: grid;
+  grid-template-rows: 300px minmax(0, 1fr);
+  gap: 14px;
+  min-height: 0;
+}
+
+/* =========================
    CALENDAR
 ========================= */
 
 .dashboardCard--calendar {
   background: #f4f7f8;
-  border-radius: 22px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.10);
-  padding: 18px 18px 14px;
+  border-radius: 18px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  border: none;
   display: flex;
   flex-direction: column;
-  min-height: 300px;
+  justify-content: flex-start;
+  padding: 14px 16px 12px;
+  min-height: 0;
+  height: 100%;
   overflow: hidden;
 }
-
-/* ---------- Header ---------- */
 
 .calendarHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   flex-shrink: 0;
 }
 
 .calendarHeader__mid {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .calNavBtn {
   border: none;
   background: transparent;
-  color: #3d4b59;
-  font-size: 18px;
-  font-weight: 700;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 10px;
-  transition: background 0.2s ease, transform 0.2s ease;
+  font-size: 14px;
+  color: #343434;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 8px;
 }
 
 .calNavBtn:hover {
   background: rgba(19, 137, 155, 0.08);
-  transform: translateY(-1px);
 }
 
 .calendarSelect {
-  min-width: 76px;
-  height: 34px;
-  border: 1px solid #d8dee4;
-  border-radius: 12px;
-  background: #ffffff;
-  padding: 0 12px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #1c2733;
-  outline: none;
+  border: 1px solid #d6d6d6;
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #222;
+  background: white;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  outline: none;
 }
 
-/* ---------- Grid ---------- */
-
+/* important fix */
 .calendarGrid {
+  flex: 1;
+  min-height: 0;
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 8px 6px;
-  align-items: start;
-  justify-items: center;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: 18px repeat(6, minmax(32px, 1fr));
+  row-gap: 4px;
+  column-gap: 0;
   width: 100%;
+  align-content: start;
+  justify-items: center;
 }
 
-/* week day names */
 .calDayName {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #58677a;
-  padding-bottom: 4px;
+  padding: 0;
 }
 
-/* date cell */
 .calDate {
   width: 100%;
-  min-height: 42px;
+  min-height: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 4px;
-  padding: 4px 2px 2px;
-  border: none;
-  background: transparent;
-  border-radius: 12px;
+  padding: 2px 0 0;
   cursor: pointer;
-  transition: background 0.18s ease, transform 0.18s ease;
-  position: relative;
+  transition: background 0.15s ease;
 }
 
 .calDate:hover {
-  background: rgba(19, 137, 155, 0.07);
+  background: rgba(19, 137, 155, 0.08);
 }
 
-/* blank cells */
 .calDate--blank {
   visibility: hidden;
   pointer-events: none;
 }
 
-/* actual day number */
 .calDate__num {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
+  width: 34px;
+  height: 34px;
   display: grid;
   place-items: center;
-  font-size: 18px;
+  border-radius: 10px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1;
   color: #39485a;
   background: transparent;
-  transition: all 0.18s ease;
+  border: none;
 }
 
-/* today = soft red circle instead of box */
 .calToday .calDate__num {
   background: #ff6b63;
   color: #ffffff;
-  box-shadow: 0 6px 14px rgba(255, 107, 99, 0.28);
+  border-radius: 10px;
+  box-shadow: 0 6px 14px rgba(255, 107, 99, 0.24);
 }
 
-/* selected date = teal outline */
 .calSelected .calDate__num {
   outline: 2px solid #13899b;
   outline-offset: 2px;
 }
 
-/* if selected + today both */
-.calToday.calSelected .calDate__num {
-  outline: 2px solid #13899b;
-  outline-offset: 2px;
-}
-
-/* ---------- Event dots ---------- */
-
 .calDate__dots {
-  min-height: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  flex-wrap: nowrap;
+  min-height: 8px;
+  margin-top: 2px;
 }
 
 .calDate__dot {
@@ -411,65 +410,12 @@
   height: 6px;
   border-radius: 50%;
   flex-shrink: 0;
-  box-shadow: 0 0 0 1px #ffffff;
+  display: block;
 }
 
-/* optional class-based colors if you use classes instead of inline styles */
-.calDate__dot--assignment {
-  background: #57c271;
-}
-
-.calDate__dot--quiz {
-  background: #7b8cf5;
-}
-
-.calDate__dot--live-session {
-  background: #43b4e6;
-}
-
-.calDate__dot--private-session {
-  background: #f39a6b;
-}
-
-.calDate__dot--overdue {
-  background: #ff5b5b;
-}
-
-/* If one day has too many events, show +more badge */
-.calDate__more {
-  font-size: 10px;
-  font-weight: 700;
-  color: #7b8794;
-  line-height: 1;
-  margin-left: 2px;
-}
-
-/* ---------- Legend ---------- */
-
+/* if you had legend from previous version, keep it hidden */
 .calLegend {
-  margin-top: 14px;
-  padding-top: 10px;
-  border-top: 1px solid #e4e9ee;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px 14px;
-}
-
-.calLegend__item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #5f6e7f;
-}
-
-.calLegend__dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
+  display: absolute;
 }
 
 /* ---------- Small screen ---------- */
