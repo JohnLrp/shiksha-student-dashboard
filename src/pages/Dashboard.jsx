@@ -392,6 +392,25 @@ export default function Dashboard() {
           <div key={`empty-end-${i}`} className="calDate calDate--blank" />
         ))}
       </div>
+
+      <div className="calLegend">
+        <span className="calLegend__item">
+          <span className="calLegend__dot" style={{ background: EVENT_COLORS.assignment }} />
+          Assignment
+        </span>
+        <span className="calLegend__item">
+          <span className="calLegend__dot" style={{ background: EVENT_COLORS.quiz }} />
+          Quiz
+        </span>
+        <span className="calLegend__item">
+          <span className="calLegend__dot" style={{ background: EVENT_COLORS["live-session"] }} />
+          Live Session
+        </span>
+        <span className="calLegend__item">
+          <span className="calLegend__dot" style={{ background: EVENT_COLORS["private-session"] }} />
+          Private Session
+        </span>
+      </div>
     </>
   );
 };
