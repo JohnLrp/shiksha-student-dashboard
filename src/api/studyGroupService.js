@@ -39,9 +39,17 @@ const studyGroupService = {
   // Create / list / detail
   // ─────────────────────────────────────────────
   async createStudyGroup(payload) {
+    // Only forward the teacher id if it actually looks like a UUID;
+    // drops any accidental name-string / empty-string from a buggy dropdown.
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const rawTid = payload.invited_teacher_id;
+    const invited_teacher_id = (typeof rawTid === "string" && UUID_RE.test(rawTid))
+      ? rawTid
+      : null;
+
     const body = {
       subject_id: payload.subject_id,
-      invited_teacher_id: payload.invited_teacher_id || null,
+      invited_teacher_id,
       invited_user_ids: payload.invited_user_ids || [],
       scheduled_date: payload.scheduled_date,
       scheduled_time: payload.scheduled_time,
@@ -104,6 +112,15 @@ const studyGroupService = {
   async declineInvite(sessionId) {
     const res = await api.post(
       `/sessions/study-groups/${sessionId}/decline/`
+    );
+    return transformStudyGroup(res.data);
+  },
+
+  // Accepted invitee takes back their response — allowed any time before
+  // the room has actually opened. Keeps decline_count intact.
+  async unacceptInvite(sessionId) {
+    const res = await api.post(
+      `/sessions/study-groups/${sessionId}/unaccept/`
     );
     return transformStudyGroup(res.data);
   },
@@ -189,6 +206,26 @@ function transformStudyGroup(sg) {
   };
 }
 
+// Generic helper: pull the most user-friendly error message out of a
+// DRF/axios failure. Handles {"error": "..."}, {"detail": "..."}, and
+// {"field": ["msg"]} serializer shapes. Exported so pages can reuse it.
+export function extractApiError(err, fallback = "Something went wrong.") {
+  const data = err?.response?.data;
+  if (!data) return fallback;
+  if (typeof data === "string") return data;
+  if (data.error) return data.error;
+  if (data.detail) return data.detail;
+  if (typeof data === "object") {
+    const parts = [];
+    for (const [k, v] of Object.entries(data)) {
+      const text = Array.isArray(v) ? v.join(" ") : String(v);
+      parts.push(k === "non_field_errors" ? text : `${k}: ${text}`);
+    }
+    if (parts.length) return parts.join(" \u2022 ");
+  }
+  return fallback;
+}
+
 export const {
   getMySubjects,
   getTeachers,
@@ -201,6 +238,7 @@ export const {
   cancelStudyGroup,
   acceptInvite,
   declineInvite,
+  unacceptInvite,
   joinRoom,
   DURATIONS,
   TIME_SLOTS,

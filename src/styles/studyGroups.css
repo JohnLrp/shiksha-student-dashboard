@@ -328,6 +328,15 @@
   border-color: #c2410c;
   color: #fff;
 }
+.sg__slotBtn.disabled,
+.sg__slotBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+  background: #f1f5f9;
+}
+.sg__slotBtn.disabled:hover,
+.sg__slotBtn:disabled:hover { border-color: #e2e8f0; }
 
 /* ── PILLS (invitees) ───────────────────────────────────── */
 .sg__pillRow {
@@ -604,10 +613,12 @@
 .sg__inviteeBar {
   display: flex;
   gap: 12px;
+  align-items: center;
   justify-content: flex-end;
   margin-top: 16px;
   padding-top: 14px;
   border-top: 1px solid #f1f5f9;
+  flex-wrap: wrap;
 }
 
 .sg__inviteeNote {
@@ -619,6 +630,50 @@
   font-size: 13px;
   border-radius: 6px;
 }
+
+.sg__inviteeNote--inline {
+  margin-top: 0;
+  margin-right: auto;
+  background: #fff7ed;
+  border-left-color: #c2410c;
+  color: #7c2d12;
+}
+
+.sg__inviteeNote--past {
+  background: #f1f5f9;
+  border-left-color: #64748b;
+  color: #334155;
+}
+
+/* Cancelled / not-attended banner shown above the body in Detail */
+.sg__cancelBanner {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  margin: 12px 0 4px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-left: 4px solid #dc2626;
+  color: #991b1b;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.sg__cancelBanner strong { font-weight: 700; }
+
+.sg__cancelBannerReason {
+  font-weight: 500;
+  color: #7f1d1d;
+}
+
+.sg__cancelBanner--muted {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  border-left-color: #64748b;
+  color: #334155;
+}
+.sg__cancelBanner--muted .sg__cancelBannerReason { color: #475569; }
 
 .sg__inviteMore {
   margin-top: 14px;

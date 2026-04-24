@@ -10,7 +10,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
-import studyGroupService from "../api/studyGroupService";
+import studyGroupService, { extractApiError } from "../api/studyGroupService";
 import PrivateClassroomUI from "../components/live/PrivateClassroomUI";
 import "../styles/privateSessions.css";
 import "../styles/studyGroups.css";
@@ -48,11 +48,7 @@ export default function StudyGroupLive() {
         setRemainingMs(joinData.remaining_ms ?? null);
       } catch (err) {
         if (cancelled) return;
-        setError(
-          err?.response?.data?.error ||
-          err?.response?.data?.detail ||
-          "Unable to join study group. It may not be open yet."
-        );
+        setError(extractApiError(err, "Unable to join study group. It may not be open yet."));
       } finally {
         if (!cancelled) setLoading(false);
       }
