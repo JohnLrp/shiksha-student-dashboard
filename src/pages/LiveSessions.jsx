@@ -12,6 +12,7 @@ function computeStatus(session) {
   const end = new Date(session.end_time).getTime();
   const start = new Date(session.start_time).getTime();
   if (session.status === "CANCELLED") return "CANCELLED";
+  if (session.status === "COMPLETED") return "COMPLETED";
   if (now >= end) return "COMPLETED";
   if (session.status === "PAUSED" && !session.teacher_left_at) return "PAUSED";
   if (session.teacher_left_at) {

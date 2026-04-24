@@ -7,21 +7,16 @@ import { useState, useEffect } from "react";
 export default function ControlBar({ onLeave }) {
   const room = useRoomContext();
   const { localParticipant } = useLocalParticipant();
-
   const [micOn, setMicOn] = useState(false);
-
-  // Ensure mic starts muted on join
-  useEffect(() => {
-    localParticipant.setMicrophoneEnabled(false);
-  }, []);
+  const [canUnmute, setCanUnmute] = useState(false);
 
   const toggleMic = async () => {
+    if (!micOn && !canUnmute) return; // block self-unmute unless teacher allowed
     const next = !micOn;
     await localParticipant.setMicrophoneEnabled(next);
     setMicOn(next);
   };
 
-  // Listen for force-mute from teacher
   useEffect(() => {
     const handleData = (payload) => {
       try {
@@ -30,14 +25,15 @@ export default function ControlBar({ onLeave }) {
         if (msg.type === "force-mute") {
           localParticipant.setMicrophoneEnabled(false);
           setMicOn(false);
+          setCanUnmute(false);
         }
         if (msg.type === "force-unmute") {
+          setCanUnmute(true);
           localParticipant.setMicrophoneEnabled(true);
           setMicOn(true);
         }
       } catch {}
     };
-
     room.on("dataReceived", handleData);
     return () => room.off("dataReceived", handleData);
   }, [room, localParticipant]);
@@ -49,11 +45,10 @@ export default function ControlBar({ onLeave }) {
 
   return (
     <div className="control-bar">
-      {/* Mic toggle */}
       <button
         className={`ctrl-btn ${!micOn ? "ctrl-btn--off" : ""}`}
         onClick={toggleMic}
-        title={micOn ? "Mute microphone" : "Unmute microphone"}
+        title={micOn ? "Mute microphone" : canUnmute ? "Unmute microphone" : "Only teacher can unmute"}
       >
         {micOn ? (
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -74,7 +69,6 @@ export default function ControlBar({ onLeave }) {
         <span>{micOn ? "Mute" : "Unmute"}</span>
       </button>
 
-      {/* Leave */}
       <button className="ctrl-btn ctrl-btn--leave" onClick={leaveRoom} title="Leave class">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

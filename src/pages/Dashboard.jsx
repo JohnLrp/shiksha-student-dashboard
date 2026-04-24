@@ -302,7 +302,7 @@ export default function Dashboard() {
     <>
       <div className="calendarHeader">
         <button type="button" className="calNavBtn" onClick={goToPrevMonth}>
-          ◀
+          &#8249;
         </button>
 
         <div className="calendarHeader__mid">
@@ -332,7 +332,7 @@ export default function Dashboard() {
         </div>
 
         <button type="button" className="calNavBtn" onClick={goToNextMonth}>
-          ▶
+          &#8250;
         </button>
       </div>
 
@@ -361,29 +361,33 @@ export default function Dashboard() {
             selectedDate.month === currMonth &&
             selectedDate.year === currYear;
 
-          const dateKey = `${currYear}-${String(currMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+          const dateKey = `${currYear}-${String(currMonth + 1).padStart(2, "0")}-${String(
+            day
+          ).padStart(2, "0")}`;
+
           const dayEvents = calendarEvents[dateKey] || [];
+          const visibleEvents = dayEvents.slice(0, 4);
 
           return (
             <button
               key={day}
               type="button"
-              className={`calDate ${isToday ? "calToday" : ""} ${isSelected ? "calSelected" : ""}`}
+              className={`calDate ${isToday ? "calToday" : ""} ${
+                isSelected ? "calSelected" : ""
+              } ${dayEvents.length ? "calDate--hasEvents" : ""}`}
               onClick={() => handleDateClick(day)}
             >
               <span className="calDate__num">{day}</span>
 
-              {dayEvents.length > 0 && (
-                <span className="calDate__dots">
-                  {dayEvents.slice(0, 3).map((type) => (
-                    <span
-                      key={type}
-                      className="calDate__dot"
-                      style={{ background: EVENT_COLORS[type] }}
-                    />
-                  ))}
-                </span>
-              )}
+              <span className="calDate__dots">
+                {visibleEvents.map((type, index) => (
+                  <span
+                    key={`${type}-${index}`}
+                    className="calDate__dot"
+                    style={{ background: EVENT_COLORS[type] }}
+                  />
+                ))}
+              </span>
             </button>
           );
         })}
@@ -392,10 +396,43 @@ export default function Dashboard() {
           <div key={`empty-end-${i}`} className="calDate calDate--blank" />
         ))}
       </div>
+
+      <div className="calLegend">
+        <span className="calLegend__item">
+          <span
+            className="calLegend__dot"
+            style={{ background: EVENT_COLORS.assignment }}
+          />
+          Assignment
+        </span>
+
+        <span className="calLegend__item">
+          <span
+            className="calLegend__dot"
+            style={{ background: EVENT_COLORS.quiz }}
+          />
+          Quiz
+        </span>
+
+        <span className="calLegend__item">
+          <span
+            className="calLegend__dot"
+            style={{ background: EVENT_COLORS["live-session"] }}
+          />
+          Live Session
+        </span>
+
+        <span className="calLegend__item">
+          <span
+            className="calLegend__dot"
+            style={{ background: EVENT_COLORS["private-session"] }}
+          />
+          Private Session
+        </span>
+      </div>
     </>
   );
 };
-
   const renderScheduleItem = (item, idx) => {
     const typeClass =
       item.type === "live-session"

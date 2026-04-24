@@ -33,7 +33,7 @@
 
 .dashboardLeft {
   display: grid;
-  grid-template-rows: 250px minmax(0, 1fr);
+  grid-template-rows: 294px minmax(0, 1fr);
   gap: 14px;
   min-height: 0;
 }
@@ -45,12 +45,6 @@
   min-height: 0;
 }
 
-.dashboardRight {
-  display: grid;
-  grid-template-rows: 250px minmax(0, 1fr);
-  gap: 14px;
-  min-height: 0;
-}
 
 /* =========================
    CARD BASE
@@ -70,10 +64,13 @@
   flex-direction: column;
 }
 
-.dashboardCard--live,
+.dashboardCard--live {
+  padding: 14px 16px 12px;
+  justify-content: flex-start;
+}
+
 .dashboardCard--assignments,
 .dashboardCard--notifications,
-.dashboardCard--calendar,
 .dashboardCard--schedule {
   min-height: 0;
 }
@@ -126,29 +123,83 @@
   margin-left: 6px;
   color: #6b7280;
 }
-
 /* =========================
    LIVE SECTION
 ========================= */
 
+.dashboardCard--live {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid rgba(8, 60, 69, 0.08);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  padding: 18px 18px 16px;
+  justify-content: flex-start;
+}
+
+.liveHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+
+.dashboardCard--live .cardHeader h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.sessionCountText {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: #111827;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
 .liveCardsRow {
   display: flex;
-  gap: 10px;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  min-width: 0;
-  padding-bottom: 2px;
-  scrollbar-width: none;
+  align-items: stretch;
+  padding-bottom: 8px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+
+.liveCardsRow > * {
+  flex: 0 0 calc((100% - 24px) / 3);
+  min-width: calc((100% - 24px) / 3);
+  max-width: calc((100% - 24px) / 3);
 }
 
 .liveCardsRow::-webkit-scrollbar {
-  display: none;
+  height: 8px;
 }
 
-.liveCardsRow > * {
-  flex: 0 0 180px;
-  min-width: 180px;
-  max-width: 180px;
+.liveCardsRow::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+}
+
+.liveCardsRow::-webkit-scrollbar-thumb {
+  background: rgba(8, 60, 69, 0.28);
+  border-radius: 999px;
+}
+
+.liveCardsRow::-webkit-scrollbar-thumb:hover {
+  background: rgba(8, 60, 69, 0.4);
 }
 
 .liveEmptyState {
@@ -157,7 +208,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: 16px;
-  padding: 0 18px;
+  padding: 0 6px;
   min-height: 0;
 }
 
@@ -250,7 +301,7 @@
 
 .dashboardRight {
   display: grid;
-  grid-template-rows: 210px minmax(0, 1fr);
+  grid-template-rows: 294px minmax(0, 1fr);
   gap: 14px;
   min-height: 0;
 }
@@ -260,18 +311,24 @@
 ========================= */
 
 .dashboardCard--calendar {
+  background: #f8fbfc;
+  border-radius: 18px;
+  border: 1px solid rgba(8, 60, 69, 0.08);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+  padding: 14px 30px 12px;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  padding: 14px 16px 12px;
-  min-height: 210px;
-  overflow: hidden;
 }
 
 .calendarHeader {
-  display: flex;
+  display: grid;
+  grid-template-columns: 32px 1fr 32px;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 10px;
   flex-shrink: 0;
 }
@@ -279,78 +336,84 @@
 .calendarHeader__mid {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
 }
 
 .calNavBtn {
+  width: 32px;
+  height: 32px;
   border: none;
   background: transparent;
-  cursor: pointer;
-  font-size: 12px;
-  color: #4b5563;
-  line-height: 1;
-  padding: 4px 6px;
+  color: #374151;
   border-radius: 8px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  transition: background 0.18s ease, color 0.18s ease;
 }
 
 .calNavBtn:hover {
-  background: #f3f4f6;
+  background: rgba(19, 137, 155, 0.08);
+  color: #0f6f7c;
 }
 
 .calendarSelect {
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
-  color: #111827;
+  min-width: 74px;
+  height: 30px;
+  border: 1px solid #d7dde3;
   border-radius: 8px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  outline: none;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1f2937;
+  background: #ffffff;
   cursor: pointer;
+  outline: none;
 }
 
-/* compact, non-stretched layout */
+/* Grid */
 .calendarGrid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: 16px repeat(6, 30px);
-  row-gap: 3px;
-  column-gap: 0;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-rows: 18px repeat(6, 25px);
+  row-gap: 5px;
   width: 100%;
-  align-content: start;
   justify-items: center;
+  align-content: start;
+  flex: 0 1 auto;
 }
 
 .calDayName {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  font-size: 10px;
+  color: #5f6e7f;
+  font-size: 12px;
   font-weight: 700;
-  color: #6b7280;
-  width: 100%;
-  padding: 0;
+  line-height: 1;
 }
 
 .calDate {
+  width: 100%;
+  height: 32px;
   border: none;
   background: transparent;
-  border-radius: 8px;
-  width: 100%;
-  height: 30px;
-  min-height: 30px;
+  border-radius: 12px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 1px 0 0;
   cursor: pointer;
-  transition: background 0.18s ease;
+  transition: transform 0.15s ease, background 0.15s ease;
 }
-
 .calDate:hover {
-  background: #f3f8f8;
+  transform: translateY(-1px);
 }
 
 .calDate--blank {
@@ -359,48 +422,128 @@
 }
 
 .calDate__num {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
   display: grid;
   place-items: center;
-  border-radius: 999px;
-  font-size: 12px;
+  color: #334155;
+  font-size: 13px;
   font-weight: 700;
-  color: #111827;
   line-height: 1;
+  background: transparent;
+  transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* Only today gets filled circle */
+.calToday .calDate__num {
+  background: #ff6f66;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(255, 111, 102, 0.22);
+}
+
+/* Selected date gets outline */
+.calSelected .calDate__num {
+  outline: 2px solid #13899b;
+  outline-offset: 2px;
+}
+
+/* If selected + today both */
+.calToday.calSelected .calDate__num {
+  outline: 2px solid #13899b;
+  outline-offset: 2px;
 }
 
 .calDate__dots {
+  min-height: 8px;
+  margin-top: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 3px;
-  min-height: 6px;
-  margin-top: 1px;
 }
 
 .calDate__dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* Legend visible */
+.calLegend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f2f4f5;
+  border-radius: 12px;
+  border-top: none;
+  flex-shrink: 0;
+}
+
+.calLegend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  color: #374151;
+  white-space: nowrap;
+}
+
+.calLegend__dot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   display: inline-block;
+  flex-shrink: 0;
 }
 
-.calToday .calDate__num {
-  background: #ff6660;
-  color: #ffffff;
-}
+/* ---------- Small screen ---------- */
 
-.calSelected .calDate__num {
-  background: rgba(10, 128, 138, 0.14);
-  border: 1.5px solid #0a808a;
-  color: #0a808a;
-}
+@media (max-width: 1200px) {
+  .dashboardCard--calendar {
+    padding: 14px 30px 12px;
+  }
 
-.calDate.calToday.calSelected .calDate__num {
-  background: #ff6660;
-  border: none;
-  color: #ffffff;
+  .calendarHeader {
+    margin-bottom: 8px;
+  }
+
+  .calendarGrid {
+    grid-template-rows: 18px repeat(6, 34px);
+    row-gap: 7px;
+  }
+
+  .calDate {
+    height: 34px;
+  }
+
+  .calDate__num {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
+  }
+
+  .calendarSelect {
+    min-width: 66px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .calDayName {
+    font-size: 11px;
+  }
+
+  .calLegend {
+    gap: 6px 10px;
+  }
+
+  .calLegend__item {
+    font-size: 9px;
+  }
 }
 
 /* =========================
