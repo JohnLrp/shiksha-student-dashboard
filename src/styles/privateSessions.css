@@ -254,7 +254,7 @@
 .ps__reqCount { font-size: 13px; color: var(--ps-text-muted); }
 
 .ps__requestBtn {
-  background: var(--ps-primary);
+  background: #16a34a;
   color: white;
   border: none;
   padding: 9px 16px;
@@ -267,7 +267,7 @@
   font-family: inherit;
 }
 
-.ps__requestBtn:hover { background: var(--ps-primary-dark); }
+.ps__requestBtn:hover { background: #15803d; }
 
 .ps__reqGrid {
   display: grid;
