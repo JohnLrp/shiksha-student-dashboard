@@ -22,14 +22,15 @@
 }
 
 /* ===== parent containers ===== */
-.studentLayout__right {
+/* Scoped to the live-session page only (detected via lk-room-container) */
+.studentLayout__right:has(.lk-room-container) {
   height: 100vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 /* LiveKit room wrapper */
-.studentLayout__page {
+.studentLayout__right:has(.lk-room-container) .studentLayout__page {
   flex: 1;
   min-height: 0;
   min-width: 0;

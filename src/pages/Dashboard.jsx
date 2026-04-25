@@ -477,8 +477,39 @@ export default function Dashboard() {
           </div>
         );
 
-      case "calendar":
-        return <div className="mobileCalendarCard">{renderCalendarGrid()}</div>;
+     case "calendar":
+  return (
+    <div className="mobileCalendarScheduleStack">
+      <div className="mobileCalendarCard">{renderCalendarGrid()}</div>
+
+      <div className="mobileScheduleCard">
+        <div className="mobileScheduleHeader">
+          <h3>
+            Schedule
+            {selectedDate && (
+              <span className="selectedDateText">
+                —{" "}
+                {new Date(
+                  selectedDate.year,
+                  selectedDate.month,
+                  selectedDate.day
+                ).toLocaleDateString("en-GB", DATE_FORMAT)}
+              </span>
+            )}
+          </h3>
+
+          <DropdownMenu value={scheduleFilter} onChange={setScheduleFilter} />
+        </div>
+
+        <div className="mobileSectionContent">
+          {filteredSchedule.map((item, idx) => renderScheduleItem(item, idx))}
+          {filteredSchedule.length === 0 && (
+            <div className="emptyState">No schedule</div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 
       case "assign":
         return (

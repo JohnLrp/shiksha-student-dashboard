@@ -11,7 +11,7 @@ import { MdDashboardCustomize } from "react-icons/md";
 import { BsBook } from "react-icons/bs";
 import { BiVideo } from "react-icons/bi";
 import { FaClipboardList, FaBookOpen, FaGraduationCap } from "react-icons/fa";
-import { RiLiveLine, RiLockLine } from "react-icons/ri";
+import { RiLiveLine, RiLockLine, RiGroupLine } from "react-icons/ri";
 import { FaChalkboardTeacher } from "react-icons/fa";
 import { AiOutlineFileDone, AiOutlineClose } from "react-icons/ai";
 import { IoChevronDown } from "react-icons/io5";
@@ -185,6 +185,18 @@ export default function Sidebar({ setMenuOpen }) {
             <RiLockLine />
           </span>
           Private Sessions
+        </NavLink>
+
+        {/* Study Groups */}
+        <NavLink
+          className="sidebar__link"
+          to="/study-groups"
+          onClick={() => setMenuOpen(false)}
+        >
+          <span className="sidebar__icon">
+            <RiGroupLine />
+          </span>
+          Study Groups
         </NavLink>
 
         {/* Teachers */}

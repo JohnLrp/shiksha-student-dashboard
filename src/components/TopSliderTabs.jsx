@@ -8,7 +8,6 @@ export default function TopSliderTabs({ active, setActive }) {
     { id: "assign", label: "Assignment" },
     { id: "quiz", label: "Quiz" },
     { id: "calendar", label: "Calendar" },
-    { id: "schedule", label: "Schedule" },
   ];
 
   const currentIndex = tabs.findIndex((t) => t.id === active);

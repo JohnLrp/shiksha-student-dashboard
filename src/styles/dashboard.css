@@ -755,3 +755,33 @@
     font-size: 13px;
   }
 }
+
+.mobileCalendarScheduleStack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobileScheduleCard {
+  background: #f8fbfc;
+  border-radius: 16px;
+  border: 1px solid rgba(8, 60, 69, 0.06);
+  box-shadow: 0 1px 6px rgba(16, 24, 40, 0.05);
+  padding: 14px;
+}
+
+.mobileScheduleHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.mobileScheduleHeader h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.2;
+}
