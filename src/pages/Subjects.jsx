@@ -13,6 +13,8 @@ export default function Subjects({ mode }) {
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);  // ← fixed typo (setaLoading → setLoading)
   const [searchTerm, setSearchTerm] = useState("");
+  const [taskCounts, setTaskCounts] = useState({});
+  const [taskCountsReady, setTaskCountsReady] = useState(false);
 
   const filteredSubjects = subjects.filter((subject) =>
     subject.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -44,6 +46,29 @@ export default function Subjects({ mode }) {
     fetchSubjects();
   }, [activeCourse, courseLoading]);
 
+  useEffect(() => {
+    if (mode !== "assignments" || subjects.length === 0) return;
+
+    async function fetchTaskCounts() {
+      const results = await Promise.allSettled(
+        subjects.map(async (subject) => {
+          const res = await api.get(`/assignments/subject/${subject.id}/`);
+          return { id: subject.id, count: (res.data || []).length };
+        })
+      );
+      const counts = {};
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          counts[result.value.id] = result.value.count;
+        }
+      });
+      setTaskCounts(counts);
+      setTaskCountsReady(true);
+    }
+
+    fetchTaskCounts();
+  }, [subjects, mode]);
+
   if (loading) return <div>Loading subjects...</div>;
   if (!activeCourse) return <div>No course selected.</div>;
 
@@ -71,6 +96,7 @@ export default function Subjects({ mode }) {
                     ? subject.teachers.map((t) => t.name).join(", ")
                     : "No teacher assigned"
                 }
+                taskCount={mode === "assignments" && taskCountsReady ? (taskCounts[subject.id] ?? 0) : undefined}
                 onClick={() =>
                   mode === "assignments"
                     ? navigate(`/subjects/${subject.id}/assignments`)
