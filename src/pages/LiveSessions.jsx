@@ -41,13 +41,13 @@ function computeCanJoin(session) {
 }
 
 const STATUS_CONFIG = {
-  LIVE:               { label: "Live Now",          color: "#ef4444", bg: "rgba(239,68,68,0.15)" },
-  PAUSED:             { label: "Paused",             color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
-  RECONNECTING:       { label: "Reconnecting",       color: "#f59e0b", bg: "rgba(245,158,11,0.15)" },
-  SCHEDULED:          { label: "Scheduled",          color: "#6366f1", bg: "rgba(99,102,241,0.15)" },
-  WAITING_FOR_TEACHER:{ label: "Starting soon",      color: "#10b981", bg: "rgba(16,185,129,0.15)" },
-  COMPLETED:          { label: "Completed",          color: "#6b7280", bg: "rgba(107,114,128,0.15)" },
-  CANCELLED:          { label: "Cancelled",          color: "#6b7280", bg: "rgba(107,114,128,0.15)" },
+  LIVE:               { label: "🔴 Live Now",        color: "#fff",    bg: "#ef4444" },
+  PAUSED:             { label: "⏸ Paused",           color: "#fff",    bg: "#f59e0b" },
+  RECONNECTING:       { label: "🔄 Reconnecting",    color: "#fff",    bg: "#f59e0b" },
+  SCHEDULED:          { label: "🗓 Scheduled",        color: "#fff",    bg: "#6366f1" },
+  WAITING_FOR_TEACHER:{ label: "⏳ Starting Soon",   color: "#fff",    bg: "#10b981" },
+  COMPLETED:          { label: "✅ Completed",        color: "#fff",    bg: "#6b7280" },
+  CANCELLED:          { label: "🚫 Cancelled",        color: "#fff",    bg: "#6b7280" },
 };
 
 function LiveCard({ session, onClick, tick }) {
@@ -160,9 +160,13 @@ export default function LiveSessions() {
     return () => { ws.close(); wsRef.current = null; };
   }, [activeCourse]);
 
-  const filtered = selectedSubject
+  const filtered = (selectedSubject
     ? sessions.filter((s) => String(s.subject_id) === String(selectedSubject))
-    : sessions;
+    : sessions
+  ).filter((s) => {
+    const st = computeStatus(s);
+    return st !== "COMPLETED" && st !== "CANCELLED";
+  });
 
   if (loading) return <div className="liveSessionsPage"><div style={{padding:20,color:"#6b7280"}}>Loading sessions...</div></div>;
   if (error)   return <div className="liveSessionsPage"><div style={{padding:20,color:"red"}}>{error}</div></div>;
