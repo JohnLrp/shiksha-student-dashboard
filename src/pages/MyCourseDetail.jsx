@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useCourse } from "../contexts/CourseContext";
+import RenewSubscriptionModal from "../components/RenewSubscriptionModal";
 import "../styles/myCourseDetail.css";
 
 const DATE_FORMAT = { day: "2-digit", month: "short", year: "numeric" };
@@ -14,6 +15,9 @@ export default function MyCourseDetail() {
   const { courseId } = useParams();
   const navigate = useNavigate();
   const { courses, loading } = useCourse();
+
+  const [renewOpen, setRenewOpen] = useState(false);
+  const [justSubmitted, setJustSubmitted] = useState(false);
 
   const course = useMemo(
     () => courses?.find((c) => c.id === courseId),
@@ -87,6 +91,20 @@ export default function MyCourseDetail() {
                 {sub.is_active ? "Expires" : "Expired"} on{" "}
                 <strong>{formatDate(sub.expires_at)}</strong>
               </p>
+
+              {justSubmitted ? (
+                <p className="myCourseDetail__pendingNote">
+                  Renewal submitted — awaiting approval.
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  className="myCourseDetail__renewBtn"
+                  onClick={() => setRenewOpen(true)}
+                >
+                  {sub.is_active ? "Renew / Extend" : "Renew Subscription"}
+                </button>
+              )}
             </>
           ) : (
             <>
@@ -106,6 +124,17 @@ export default function MyCourseDetail() {
         <PlaceholderCard title="Teachers" message="Coming soon" />
         <PlaceholderCard title="Upcoming this week" message="Coming soon" />
       </section>
+
+      {renewOpen && (
+        <RenewSubscriptionModal
+          course={course}
+          onClose={() => setRenewOpen(false)}
+          onSubmitted={() => {
+            setRenewOpen(false);
+            setJustSubmitted(true);
+          }}
+        />
+      )}
     </div>
   );
 }

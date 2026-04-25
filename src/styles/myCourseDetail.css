@@ -150,6 +150,16 @@
   background: #1d4ed8;
 }
 
+.myCourseDetail__pendingNote {
+  margin: 4px 0 0;
+  padding: 8px 12px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 6px;
+  font-size: 12px;
+  text-align: right;
+}
+
 .myCourseDetail__legacyNote {
   margin: 0;
   font-size: 12px;

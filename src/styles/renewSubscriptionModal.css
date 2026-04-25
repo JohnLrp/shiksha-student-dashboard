@@ -1,0 +1,152 @@
+.renewModal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.renewModal {
+  background: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.renewModal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.renewModal__header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  color: #111827;
+}
+
+.renewModal__closeBtn {
+  background: none;
+  border: none;
+  font-size: 28px;
+  line-height: 1;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.renewModal__closeBtn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.renewModal__intro {
+  margin: 16px 24px 0;
+  font-size: 13px;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.renewModal__form {
+  padding: 16px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.renewModal__field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.renewModal__field input,
+.renewModal__field select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  background: #fff;
+  color: #111827;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.renewModal__field input:focus,
+.renewModal__field select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.renewModal__field input[type="file"] {
+  padding: 6px;
+}
+
+.renewModal__error {
+  margin: 0;
+  padding: 10px 12px;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.renewModal__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.renewModal__btn {
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.renewModal__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.renewModal__btn--primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.renewModal__btn--primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.renewModal__btn--secondary {
+  background: #fff;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.renewModal__btn--secondary:hover:not(:disabled) {
+  background: #f9fafb;
+}
