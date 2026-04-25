@@ -122,7 +122,7 @@ export default function MyCourseDetail() {
       <section className="myCourseDetail__placeholderGrid">
         <PlaceholderCard title="Progress" message="Coming soon" />
         <PlaceholderCard title="Teachers" message="Coming soon" />
-        <PlaceholderCard title="Upcoming this week" message="Coming soon" />
+        <PaymentHistoryCard history={course.payment_history} />
       </section>
 
       {renewOpen && (
@@ -145,5 +145,55 @@ function PlaceholderCard({ title, message }) {
       <h3 className="myCourseDetail__placeholderTitle">{title}</h3>
       <p className="myCourseDetail__placeholderMsg">{message}</p>
     </div>
+  );
+}
+
+function PaymentHistoryCard({ history }) {
+  if (!history || history.length === 0) {
+    return <PlaceholderCard title="Payment History" message="No payments yet" />;
+  }
+
+  return (
+    <div className="myCourseDetail__placeholder myCourseDetail__historyCard">
+      <h3 className="myCourseDetail__placeholderTitle">Payment History</h3>
+      <ul className="myCourseDetail__historyList">
+        {history.map((p) => (
+          <PaymentHistoryItem key={p.id} payment={p} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function PaymentHistoryItem({ payment }) {
+  const rupees = (payment.amount_paid / 100).toLocaleString("en-IN", {
+    maximumFractionDigits: 2,
+  });
+  const statusClass = `myCourseDetail__historyStatus--${payment.status.toLowerCase()}`;
+  const statusLabel =
+    payment.status === "APPROVED"
+      ? "Approved"
+      : payment.status === "PENDING"
+        ? "Pending"
+        : "Rejected";
+
+  return (
+    <li className="myCourseDetail__historyItem">
+      <div className="myCourseDetail__historyTop">
+        <span className="myCourseDetail__historyAmount">₹{rupees}</span>
+        <span
+          className={`myCourseDetail__historyStatus ${statusClass}`}
+        >
+          {statusLabel}
+        </span>
+      </div>
+      <div className="myCourseDetail__historyMeta">
+        <span>{formatDate(payment.payment_date)}</span>
+        <span>·</span>
+        <span>{payment.payment_method}</span>
+        <span>·</span>
+        <span className="myCourseDetail__historyUtr">{payment.utr_number}</span>
+      </div>
+    </li>
   );
 }
