@@ -16,6 +16,7 @@
 .subjectCard__img {
   width: 100%;
   height: 150px;
+  flex-shrink: 0;
   object-fit: cover;
 }
 
@@ -23,12 +24,20 @@
 .subjectCard__body {
   padding: 12px;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .subjectCard__title {
   font-size: 14px;
   font-weight: 700;
-  margin-bottom: 52px;
+  margin-bottom: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .subjectCard__teacher {
@@ -61,25 +70,18 @@
   }
 
   .subjectCard__body {
-  padding: 8px 12px; /* ← reduce top padding */
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end; /* ← pushes title + teacher to the bottom */
-}
+    padding: 8px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
 
-.subjectCard__title {
- font-size: 14px;
-  font-weight: 700;
-  margin-bottom: 2px;
-  
-    display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;               /* ← add this line to fix the warning */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-      
-}
+  .subjectCard__title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 0;
+  }
 
   .subjectCard__teacher {
     font-size: 12px;
