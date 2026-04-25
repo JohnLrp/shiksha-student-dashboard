@@ -12,6 +12,8 @@ export default function SubjectsStudyMaterial() {
   const { activeCourse } = useCourse();
 
   const [subjects, setSubjects] = useState([]);
+  const [resourceCounts, setResourceCounts] = useState({});
+  const [resourceCountsReady, setResourceCountsReady] = useState(false);
 const subjectImages = {
     "science": "/images/sci.jpeg",
     "mathematics": "/images/Math.png",
@@ -112,6 +114,29 @@ const subjectImages = {
 
   }, [activeCourse]);
 
+  useEffect(() => {
+    if (subjects.length === 0) return;
+
+    async function fetchResourceCounts() {
+      const results = await Promise.allSettled(
+        subjects.map(async (subject) => {
+          const res = await api.get(`/materials/subjects/${subject.id}/materials/`);
+          return { id: subject.id, count: (res.data || []).length };
+        })
+      );
+      const counts = {};
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          counts[result.value.id] = result.value.count;
+        }
+      });
+      setResourceCounts(counts);
+      setResourceCountsReady(true);
+    }
+
+    fetchResourceCounts();
+  }, [subjects]);
+
   const handleSubjectClick = (id) => {
     navigate(`/study-material/list/${id}`);
   };
@@ -135,10 +160,12 @@ const subjectImages = {
         item.teachers?.length
           ? item.teachers.map(t => t.name).join(", ")
           : "No teacher assigned"
-    }
-    img={getSubjectImage(item.name)}
-    onClick={() => handleSubjectClick(item.id)}
-  />
+      }
+      img={getSubjectImage(item.name)}
+      taskCount={resourceCountsReady ? (resourceCounts[item.id] ?? 0) : undefined}
+      taskLabel="Resource"
+      onClick={() => handleSubjectClick(item.id)}
+    />
 ))}
 
         </div>

@@ -1,6 +1,6 @@
 import "../styles/subjectCard.css";
 
-export default function SubjectCard({ img, subject, teacher, recordingsCount, taskCount, onClick }) {
+export default function SubjectCard({ img, subject, teacher, taskCount, taskLabel = "Task", onClick }) {
   return (
     <div
       className="subjectCard"
@@ -20,18 +20,13 @@ export default function SubjectCard({ img, subject, teacher, recordingsCount, ta
         />
         {taskCount !== undefined && (
           <span className="subjectCard__taskBadge">
-            {taskCount} {taskCount === 1 ? "Task" : "Tasks"}
+            {taskCount} {taskCount === 1 ? taskLabel : `${taskLabel}s`}
           </span>
         )}
       </div>
       <div className="subjectCard__body">
         <h4 className="subjectCard__title">{subject}</h4>
         <p className="subjectCard__teacher">{teacher}</p>
-        {recordingsCount !== undefined && (
-          <p className="subjectCard__count">
-            🎬 {recordingsCount} video{recordingsCount !== 1 ? "s" : ""}
-          </p>
-        )}
       </div>
     </div>
   );

@@ -11,6 +11,8 @@ export default function SubjectsQuiz() {
   const [subjectData, setSubjectData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [quizCounts, setQuizCounts] = useState({});
+  const [quizCountsReady, setQuizCountsReady] = useState(false);
 
  const subjectImages = {
   "science": "/images/sci.jpeg",
@@ -120,6 +122,29 @@ export default function SubjectsQuiz() {
     fetchSubjects();
   }, []);
 
+  useEffect(() => {
+    if (subjectData.length === 0) return;
+
+    async function fetchQuizCounts() {
+      const results = await Promise.allSettled(
+        subjectData.map(async (item) => {
+          const res = await api.get("/student/quizzes/", { params: { subject: item.id } });
+          return { id: item.id, count: (res.data || []).length };
+        })
+      );
+      const counts = {};
+      results.forEach((result) => {
+        if (result.status === "fulfilled") {
+          counts[result.value.id] = result.value.count;
+        }
+      });
+      setQuizCounts(counts);
+      setQuizCountsReady(true);
+    }
+
+    fetchQuizCounts();
+  }, [subjectData]);
+
   if (loading) return <div>Loading quiz subjects...</div>;
   if (error) return <div>{error}</div>;
 
@@ -140,6 +165,8 @@ export default function SubjectsQuiz() {
                 img={getSubjectImage(item.subject)}
                 subject={item.subject}
                 teacher={item.teacher}
+                taskCount={quizCountsReady ? (quizCounts[item.id] ?? 0) : undefined}
+                taskLabel="Quiz"
                 onClick={() => navigate(`/subjects/quiz/${item.id}`)}
               />
             ))

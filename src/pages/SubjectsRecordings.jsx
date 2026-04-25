@@ -123,7 +123,8 @@ export default function SubjectsRecordings() {
               subject={item.name}
               teacher={item.teachers?.[0]?.name || "Teacher"}
               img={getSubjectImage(item.name)}
-              recordingsCount={item.recordings_count ?? 0}
+              taskCount={item.recordings_count ?? 0}
+              taskLabel="Video"
               onClick={() => handleSubjectClick(item.id)}
             />
           ))}
