@@ -1,6 +1,6 @@
 console.log("=== MY NEW SIDEBAR ===");
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import "../styles/sidebar.css";
 import logo from "../assets/Vector.svg";
 import { useCourse } from "../contexts/CourseContext";
@@ -19,6 +19,7 @@ import { IoChevronDown } from "react-icons/io5";
 console.log("SIDEBAR LOADED - NEW VERSION");
 export default function Sidebar({ setMenuOpen }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { courses, activeCourse, selectCourse } = useCourse();
   const [coursesOpen, setCoursesOpen] = useState(false);
 
@@ -151,6 +152,7 @@ export default function Sidebar({ setMenuOpen }) {
                     }`}
                     onClick={() => {
                       selectCourse(c.id);
+                      navigate(`/my-courses/${c.id}`);
                       setMenuOpen(false);
                     }}
                   >

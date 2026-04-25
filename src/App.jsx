@@ -39,6 +39,7 @@ import StudyGroupLive from "./pages/StudyGroupLive";
 import Quiz from "./pages/Quiz";
 import Teachers from "./pages/Teachers";
 import TeacherDetail from "./pages/TeacherDetail";
+import MyCourseDetail from "./pages/MyCourseDetail";
 
 function RequireStudentAuth({ children }) {
   return children;
@@ -156,6 +157,8 @@ export default function App() {
 
               <Route path="teachers" element={<Teachers />} />
               <Route path="teachers/:id" element={<TeacherDetail />} />
+
+              <Route path="my-courses/:courseId" element={<MyCourseDetail />} />
             </Route>
 
             <Route

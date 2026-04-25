@@ -1,0 +1,215 @@
+.myCourseDetail {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.myCourseDetail__loading,
+.myCourseDetail__notFound {
+  padding: 40px 24px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.myCourseDetail__backBtn {
+  margin-top: 16px;
+  padding: 8px 18px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.myCourseDetail__header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 32px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  margin-bottom: 24px;
+}
+
+.myCourseDetail__headerMain {
+  min-width: 0;
+}
+
+.myCourseDetail__title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 12px;
+  color: #111827;
+}
+
+.myCourseDetail__meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.myCourseDetail__chip {
+  display: inline-block;
+  padding: 4px 12px;
+  background: #eef2ff;
+  color: #4338ca;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.myCourseDetail__desc {
+  margin: 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.myCourseDetail__subscription {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  min-width: 220px;
+  border-left: 1px solid #e5e7eb;
+  padding-left: 28px;
+}
+
+.myCourseDetail__statusBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.myCourseDetail__statusBadge--active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.myCourseDetail__statusBadge--expired {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.myCourseDetail__statusBadge--legacy {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.myCourseDetail__daysRemaining {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.myCourseDetail__daysNum {
+  font-size: 32px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1;
+}
+
+.myCourseDetail__daysLabel {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.myCourseDetail__expires {
+  margin: 0;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.myCourseDetail__expires strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+.myCourseDetail__renewBtn {
+  margin-top: 8px;
+  padding: 8px 18px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.myCourseDetail__renewBtn:hover {
+  background: #1d4ed8;
+}
+
+.myCourseDetail__legacyNote {
+  margin: 0;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: right;
+  max-width: 200px;
+}
+
+.myCourseDetail__placeholderGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.myCourseDetail__placeholder {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  min-height: 140px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+.myCourseDetail__placeholderTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: #111827;
+}
+
+.myCourseDetail__placeholderMsg {
+  margin: auto 0;
+  font-size: 13px;
+  color: #9ca3af;
+  text-align: center;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .myCourseDetail {
+    padding: 16px;
+  }
+
+  .myCourseDetail__header {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .myCourseDetail__subscription {
+    align-items: flex-start;
+    border-left: none;
+    border-top: 1px solid #e5e7eb;
+    padding-left: 0;
+    padding-top: 16px;
+  }
+
+  .myCourseDetail__legacyNote {
+    text-align: left;
+    max-width: none;
+  }
+}
