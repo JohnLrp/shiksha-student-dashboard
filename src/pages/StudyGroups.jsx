@@ -690,12 +690,13 @@ function StudyGroupDetail({ group, onBack, onChanged }) {
         </div>
       )}
 
-      {data.status === "expired" && !roomOpened && (
+      {((data.status === "expired" && !roomOpened) ||
+        (data.status === "scheduled" && isPast && !roomOpened)) && (
         <div className="sg__cancelBanner sg__cancelBanner--muted">
           <strong>Not attended.</strong>
           <span className="sg__cancelBannerReason">
-            Nobody opened the room within 6 hours of the scheduled time, so
-            this study group has been moved to History.
+            The scheduled time has passed and nobody opened the room, so this
+            study group has been moved to History.
           </span>
         </div>
       )}
@@ -830,7 +831,8 @@ function StudyGroupDetail({ group, onBack, onChanged }) {
         !roomOpened && (
           <div className="sg__inviteeBar">
             <span className="sg__inviteeNote sg__inviteeNote--inline">
-              You're in. You'll be notified when the host opens the room.
+              You're in. The room is ready - anyone in the group can open it,
+              and the timer only starts once the first person joins.
             </span>
             <button
               className="sg__btnGhost"
@@ -869,6 +871,12 @@ function InviteMoreInline({ session, onDone }) {
   const currentCount = session.invites.length;
   const remaining = session.maxInvitees - currentCount;
 
+  // The picker queries /sessions/subjects/<id>/students/, which restricts
+  // results to students enrolled in the subject's course. `subjectId` is
+  // mapped through transformStudyGroup; the legacy fallback covers any
+  // older session shape that hasn't gone through the new transform.
+  const inviteSubjectId = session.subjectId || session.subject_id || null;
+
   const submit = async () => {
     if (picked.length === 0) return;
     setBusy(true); setErr("");
@@ -879,7 +887,7 @@ function InviteMoreInline({ session, onDone }) {
       onDone?.(fresh);
       setPicked([]); setOpen(false);
     } catch (e) {
-      setErr(e?.response?.data?.error || "Failed to invite.");
+      setErr(extractApiError(e, "Failed to invite."));
     } finally { setBusy(false); }
   };
 
@@ -893,6 +901,11 @@ function InviteMoreInline({ session, onDone }) {
         </button>
       ) : (
         <>
+          <p className="sg__hint">
+            Only classmates enrolled in the same course who take this subject
+            can be invited. They'll need to accept the invitation before
+            joining the room.
+          </p>
           <div className="sg__pillRow">
             {picked.map((p) => (
               <div key={p.user_id} className="sg__pill">
@@ -906,7 +919,7 @@ function InviteMoreInline({ session, onDone }) {
             ))}
           </div>
           <InviteePicker
-            subjectId={session.subject_id || session.subject}
+            subjectId={inviteSubjectId}
             excludeUserIds={[...existingIds, ...picked.map((p) => p.user_id)]}
             onSelect={(s) => {
               if (picked.length >= remaining) return;
