@@ -129,13 +129,16 @@ export default function SubjectsQuiz() {
       const results = await Promise.allSettled(
         subjectData.map(async (item) => {
           const res = await api.get("/student/quizzes/", { params: { subject: item.id } });
-          return { id: item.id, count: (res.data || []).length };
+          const quizzes = res.data || [];
+          const pending = quizzes.filter((q) => q.status !== "SUBMITTED" && !(q.attempts_count > 0)).length;
+          const completed = quizzes.filter((q) => q.status === "SUBMITTED" || q.attempts_count > 0).length;
+          return { id: item.id, pending, completed };
         })
       );
       const counts = {};
       results.forEach((result) => {
         if (result.status === "fulfilled") {
-          counts[result.value.id] = result.value.count;
+          counts[result.value.id] = { pending: result.value.pending, completed: result.value.completed };
         }
       });
       setQuizCounts(counts);
@@ -165,8 +168,8 @@ export default function SubjectsQuiz() {
                 img={getSubjectImage(item.subject)}
                 subject={item.subject}
                 teacher={item.teacher}
-                taskCount={quizCountsReady ? (quizCounts[item.id] ?? 0) : undefined}
-                taskLabel="Quiz"
+                pendingCount={quizCountsReady ? (quizCounts[item.id]?.pending ?? 0) : undefined}
+                completedCount={quizCountsReady ? (quizCounts[item.id]?.completed ?? 0) : undefined}
                 onClick={() => navigate(`/subjects/quiz/${item.id}`)}
               />
             ))

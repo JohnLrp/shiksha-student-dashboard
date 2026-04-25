@@ -53,13 +53,16 @@ export default function Subjects({ mode }) {
       const results = await Promise.allSettled(
         subjects.map(async (subject) => {
           const res = await api.get(`/assignments/subject/${subject.id}/`);
-          return { id: subject.id, count: (res.data || []).length };
+          const assignments = res.data || [];
+          const pending = assignments.filter((a) => a.status !== "SUBMITTED").length;
+          const completed = assignments.filter((a) => a.status === "SUBMITTED").length;
+          return { id: subject.id, pending, completed };
         })
       );
       const counts = {};
       results.forEach((result) => {
         if (result.status === "fulfilled") {
-          counts[result.value.id] = result.value.count;
+          counts[result.value.id] = { pending: result.value.pending, completed: result.value.completed };
         }
       });
       setTaskCounts(counts);
@@ -96,7 +99,8 @@ export default function Subjects({ mode }) {
                     ? subject.teachers.map((t) => t.name).join(", ")
                     : "No teacher assigned"
                 }
-                taskCount={mode === "assignments" && taskCountsReady ? (taskCounts[subject.id] ?? 0) : undefined}
+                pendingCount={mode === "assignments" && taskCountsReady ? (taskCounts[subject.id]?.pending ?? 0) : undefined}
+                completedCount={mode === "assignments" && taskCountsReady ? (taskCounts[subject.id]?.completed ?? 0) : undefined}
                 onClick={() =>
                   mode === "assignments"
                     ? navigate(`/subjects/${subject.id}/assignments`)

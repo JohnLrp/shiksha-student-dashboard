@@ -1,6 +1,8 @@
 import "../styles/subjectCard.css";
 
-export default function SubjectCard({ img, subject, teacher, taskCount, taskLabel = "Task", onClick }) {
+export default function SubjectCard({ img, subject, teacher, taskCount, taskLabel = "Task", pendingCount, completedCount, onClick }) {
+  const hasDualBadge = pendingCount !== undefined && completedCount !== undefined;
+
   return (
     <div
       className="subjectCard"
@@ -18,7 +20,17 @@ export default function SubjectCard({ img, subject, teacher, taskCount, taskLabe
           alt={subject || "Subject"}
           loading="lazy"
         />
-        {taskCount !== undefined && (
+        {hasDualBadge && (
+          <div className="subjectCard__badgeGroup">
+            <span className="subjectCard__taskBadge subjectCard__taskBadge--pending">
+              {pendingCount} Pending
+            </span>
+            <span className="subjectCard__taskBadge subjectCard__taskBadge--completed">
+              {completedCount} Completed
+            </span>
+          </div>
+        )}
+        {!hasDualBadge && taskCount !== undefined && (
           <span className="subjectCard__taskBadge">
             {taskCount} {taskCount === 1 ? taskLabel : `${taskLabel}s`}
           </span>

@@ -26,6 +26,16 @@
   object-fit: cover;
 }
 
+.subjectCard__badgeGroup {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
 .subjectCard__taskBadge {
   position: absolute;
   top: 10px;
@@ -38,6 +48,18 @@
   border-radius: 999px;
   pointer-events: none;
   white-space: nowrap;
+}
+
+.subjectCard__badgeGroup .subjectCard__taskBadge {
+  position: static;
+}
+
+.subjectCard__taskBadge--pending {
+  background: #f59e0b;
+}
+
+.subjectCard__taskBadge--completed {
+  background: #10b981;
 }
 
 
