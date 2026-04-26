@@ -552,11 +552,45 @@
   letter-spacing: 0.4px;
 }
 
+/* Smaller header used between Accepted / Pending / Declined groupings */
+.sg__sectionSubHead {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  margin: 14px 0 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
 .sg__participantList {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
+
+/* "(you)" tag inline next to the name when the row matches current user */
+.sg__pSelfTag {
+  color: #c2410c;
+  font-weight: 700;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+/* Right-aligned status pill on each participant row */
+.sg__pStatusPill {
+  margin-left: auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+.sg__pStatusPill--host     { background: #fed7aa; color: #9a3412; }
+.sg__pStatusPill--accepted { background: #bbf7d0; color: #166534; }
+.sg__pStatusPill--pending  { background: #fde68a; color: #92400e; }
+.sg__pStatusPill--declined { background: #fecaca; color: #991b1b; }
 
 .sg__participant {
   display: flex;
