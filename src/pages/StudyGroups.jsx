@@ -535,10 +535,32 @@ function StudyGroupDetail({ group, onBack, onChanged }) {
   const isPast = scheduledAt ? scheduledAt.getTime() <= Date.now() : false;
   const roomOpened = Boolean(data.roomStartedAt);
 
-  const canJoin =
+  // Host is implicitly accepted, but is the only one who can start the
+  // room. Once the host has opened the room (room_started_at is set and
+  // status has flipped to live), every accepted invitee can join.
+  //
+  // Button label depends on who's looking and what state we're in:
+  //   * host & not yet opened → "Start room"  (gated on >= 1 non-host
+  //                                            invitee having accepted)
+  //   * host & live           → "Join room"
+  //   * invitee accepted & live → "Join room"
+  //   * invitee accepted & scheduled → no button, "waiting for host"
+  //                                    note shown below instead.
+  const acceptedNonHost = accepted.filter(
+    (i) => !data.hostId || String(i.userId) !== String(data.hostId)
+  );
+  const canHostStart =
+    isHost &&
+    data.status === "scheduled" &&
+    !roomOpened &&
+    !isPast &&
+    acceptedNonHost.length >= 1;
+  const canJoinLive =
     (isHost || myInviteStatus === "accepted") &&
-    (data.status === "live" ||
-      (data.status === "scheduled" && accepted.length >= 1));
+    data.status === "live" &&
+    roomOpened;
+  const canJoin = canHostStart || canJoinLive;
+  const joinLabel = canHostStart ? "START ROOM" : "JOIN ROOM";
 
   const enterRoom = async () => {
     setBusy(true); setError("");
@@ -661,7 +683,7 @@ function StudyGroupDetail({ group, onBack, onChanged }) {
             disabled={busy}
             onClick={enterRoom}
           >
-            JOIN ROOM
+            {joinLabel}
           </button>
         )}
         {isHost && data.status === "scheduled" && !roomOpened && (
@@ -729,59 +751,130 @@ function StudyGroupDetail({ group, onBack, onChanged }) {
         </div>
 
         <div className="sg__detailRight">
-          <div className="sg__sectionHead">Participants</div>
+          <div className="sg__sectionHead">
+            Participants ({1 + accepted.length + pending.length + declined.length})
+          </div>
+
+          {/* Host — always implicitly accepted, sits at the top of the
+              list as the source of truth for who started the group. */}
           <div className="sg__participantList">
             <div className="sg__participant sg__participant--host">
               <span className="sg__pAv">{(data.hostName || "?").charAt(0).toUpperCase()}</span>
               <div className="sg__pInfo">
-                <span className="sg__pName">{data.hostName}</span>
-                <span className="sg__pRole">Host</span>
+                <span className="sg__pName">
+                  {data.hostName}
+                  {isHost && <span className="sg__pSelfTag"> (you)</span>}
+                </span>
+                <span className="sg__pRole">Host · implicitly accepted</span>
               </div>
+              <span className="sg__pStatusPill sg__pStatusPill--host">Host</span>
             </div>
-            {accepted.map((inv) => (
-              <div key={inv.id} className="sg__participant sg__participant--accepted">
-                <span className="sg__pAv">{(inv.name || "?").charAt(0).toUpperCase()}</span>
-                <div className="sg__pInfo">
-                  <span className="sg__pName">{inv.name}</span>
-                  <span className="sg__pRole">
-                    {inv.role === "teacher" ? "Teacher (accepted)" : "Accepted"}
-                  </span>
-                </div>
-              </div>
-            ))}
-            {pending.map((inv) => (
-              <div key={inv.id} className="sg__participant sg__participant--pending">
-                <span className="sg__pAv">{(inv.name || "?").charAt(0).toUpperCase()}</span>
-                <div className="sg__pInfo">
-                  <span className="sg__pName">{inv.name}</span>
-                  <span className="sg__pRole">
-                    {inv.role === "teacher" ? "Teacher (pending)" : "Pending"}
-                  </span>
-                </div>
-              </div>
-            ))}
-            {declined.map((inv) => (
-              <div key={inv.id} className="sg__participant sg__participant--declined">
-                <span className="sg__pAv">{(inv.name || "?").charAt(0).toUpperCase()}</span>
-                <div className="sg__pInfo">
-                  <span className="sg__pName">{inv.name}</span>
-                  <span className="sg__pRole">Declined</span>
-                </div>
-                {isHost &&
-                 data.status === "scheduled" &&
-                 !inv.reinvitedAt &&
-                 inv.declineCount < 2 && (
-                  <button
-                    className="sg__reinviteBtn"
-                    disabled={busy}
-                    onClick={() => doReinvite(inv.userId)}
-                  >
-                    Re-invite
-                  </button>
-                )}
-              </div>
-            ))}
           </div>
+
+          {/* Accepted */}
+          {accepted.length > 0 && (
+            <>
+              <div className="sg__sectionSubHead">
+                ✅ Accepted ({accepted.length})
+              </div>
+              <div className="sg__participantList">
+                {accepted.map((inv) => (
+                  <div key={inv.id} className="sg__participant sg__participant--accepted">
+                    <span className="sg__pAv">{(inv.name || "?").charAt(0).toUpperCase()}</span>
+                    <div className="sg__pInfo">
+                      <span className="sg__pName">
+                        {inv.name}
+                        {userId && String(inv.userId) === userId && (
+                          <span className="sg__pSelfTag"> (you)</span>
+                        )}
+                      </span>
+                      <span className="sg__pRole">
+                        {inv.role === "teacher" ? "Invited teacher" : "Invited student"}
+                        {inv.studentId ? ` · ${shortId(inv.studentId)}` : ""}
+                      </span>
+                    </div>
+                    <span className="sg__pStatusPill sg__pStatusPill--accepted">
+                      Accepted
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Pending */}
+          {pending.length > 0 && (
+            <>
+              <div className="sg__sectionSubHead">
+                ⏳ Pending ({pending.length})
+              </div>
+              <div className="sg__participantList">
+                {pending.map((inv) => (
+                  <div key={inv.id} className="sg__participant sg__participant--pending">
+                    <span className="sg__pAv">{(inv.name || "?").charAt(0).toUpperCase()}</span>
+                    <div className="sg__pInfo">
+                      <span className="sg__pName">
+                        {inv.name}
+                        {userId && String(inv.userId) === userId && (
+                          <span className="sg__pSelfTag"> (you)</span>
+                        )}
+                      </span>
+                      <span className="sg__pRole">
+                        {inv.role === "teacher" ? "Invited teacher" : "Invited student"}
+                        {inv.studentId ? ` · ${shortId(inv.studentId)}` : ""}
+                      </span>
+                    </div>
+                    <span className="sg__pStatusPill sg__pStatusPill--pending">
+                      Pending
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Declined */}
+          {declined.length > 0 && (
+            <>
+              <div className="sg__sectionSubHead">
+                ✗ Declined ({declined.length})
+              </div>
+              <div className="sg__participantList">
+                {declined.map((inv) => (
+                  <div key={inv.id} className="sg__participant sg__participant--declined">
+                    <span className="sg__pAv">{(inv.name || "?").charAt(0).toUpperCase()}</span>
+                    <div className="sg__pInfo">
+                      <span className="sg__pName">
+                        {inv.name}
+                        {userId && String(inv.userId) === userId && (
+                          <span className="sg__pSelfTag"> (you)</span>
+                        )}
+                      </span>
+                      <span className="sg__pRole">
+                        {inv.role === "teacher" ? "Invited teacher" : "Invited student"}
+                        {inv.studentId ? ` · ${shortId(inv.studentId)}` : ""}
+                      </span>
+                    </div>
+                    <span className="sg__pStatusPill sg__pStatusPill--declined">
+                      Declined
+                    </span>
+                    {isHost &&
+                     data.status === "scheduled" &&
+                     !inv.reinvitedAt &&
+                     inv.declineCount < 2 && (
+                      <button
+                        className="sg__reinviteBtn"
+                        disabled={busy}
+                        onClick={() => doReinvite(inv.userId)}
+                      >
+                        Re-invite
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
 
           {isHost && data.status === "scheduled" && (
             <InviteMoreInline
@@ -831,8 +924,9 @@ function StudyGroupDetail({ group, onBack, onChanged }) {
         !roomOpened && (
           <div className="sg__inviteeBar">
             <span className="sg__inviteeNote sg__inviteeNote--inline">
-              You're in. The room is ready - anyone in the group can open it,
-              and the timer only starts once the first person joins.
+              You're in. Waiting for {data.hostName || "the host"} to start
+              the room — only the host can open it. You'll be able to join
+              the moment they do.
             </span>
             <button
               className="sg__btnGhost"
