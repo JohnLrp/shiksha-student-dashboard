@@ -1,13 +1,22 @@
 /**
  * FILE: STUDENT_DASHBOARD/src/components/live/PrivateClassroomUI.jsx
  *
- * Private session room UI — matches Teacher UI visually.
- * Student-only controls: mic, cam, screen share, raise hand, chat, leave.
- * No teacher power controls (record, mute all, mute individual, remove, end for all).
+ * Peer-only classroom UI — same look as the teacher's UI but with
+ * NO power controls (no record, no mute-all, no mute-individual, no
+ * remove, no end-for-all). Used by:
+ *   * Private sessions (student side) — chat enabled
+ *   * Study group sessions (any role: host / invited teacher / invitee)
+ *     — chat disabled because the chat backend is private-session-only
  *
  * Props:
- *   role    — "student" | "teacher"
- *   session — { subject, topic, ... }
+ *   role    — "student" | "teacher" | "host"
+ *             (no UI behaviour branches off this — it's only used for
+ *              the local chat sender pill colour)
+ *   session — { id, subject, topic, ... }
+ *   noChat  — when true, chat REST + WS init are skipped, and the
+ *             chat sidebar tab + bottom-bar chat button are hidden.
+ *             Set this for study groups since /sessions/<id>/chat/...
+ *             only resolves PrivateSession ids.
  */
 
 import {
@@ -191,7 +200,7 @@ function ParticipantsList({ participants, localId, raisedHands }) {
    MAIN COMPONENT
 ═══════════════════════════════════════════════════════════ */
 
-export default function PrivateClassroomUI({ role, session }) {
+export default function PrivateClassroomUI({ role, session, noChat = false }) {
   const room = useRoomContext();
   const { user } = useAuth();
   const myUserId = user?.id ? String(user.id) : null;
@@ -200,7 +209,9 @@ export default function PrivateClassroomUI({ role, session }) {
   const timer = useTimer();
   const { toasts, show } = useToast();
 
-  const [sidebarTab, setSidebarTab] = useState("chat");
+  // When chat is disabled, default the sidebar to the participants tab so
+  // we don't render an empty "Chat" panel that the user can't escape from.
+  const [sidebarTab, setSidebarTab] = useState(noChat ? "participants" : "chat");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
@@ -229,6 +240,7 @@ export default function PrivateClassroomUI({ role, session }) {
 
   // ── Load persisted chat messages on mount ──
   useEffect(() => {
+    if (noChat) return;
     if (!session?.id) return;
     api.get(`/sessions/${session.id}/chat/`).then((res) => {
       const msgs = (res.data || []).map((m) => {
@@ -244,10 +256,11 @@ export default function PrivateClassroomUI({ role, session }) {
       });
       setChatMessages(msgs);
     }).catch(() => {});
-  }, [session?.id, myUserId]);
+  }, [session?.id, myUserId, noChat]);
 
   // ── WebSocket for real-time chat — with token auth + auto-reconnect ──
   useEffect(() => {
+    if (noChat) return;
     if (!session?.id) return;
     let ws = null;
     let reconnectTimer = null;
@@ -294,7 +307,7 @@ export default function PrivateClassroomUI({ role, session }) {
       clearTimeout(reconnectTimer);
       if (ws) ws.close();
     };
-  }, [session?.id, myUserId]);
+  }, [session?.id, myUserId, noChat]);
 
   // Get all tracks
   const tracks = useTracks([
@@ -567,26 +580,28 @@ export default function PrivateClassroomUI({ role, session }) {
               >
                 👥
               </button>
-              <button
-                className={`pvt-ctrl-btn ${sidebarTab === "chat" && sidebarOpen ? "pvt-ctrl-active" : ""}`}
-                onClick={() => {
-                  if (window.innerWidth <= 768) {
-                    if (sidebarTab === "chat" && sidebarOpen) {
-                      setSidebarOpen(false);
-                    } else {
-                      setSidebarTab("chat");
-                      setSidebarOpen(true);
+              {!noChat && (
+                <button
+                  className={`pvt-ctrl-btn ${sidebarTab === "chat" && sidebarOpen ? "pvt-ctrl-active" : ""}`}
+                  onClick={() => {
+                    if (window.innerWidth <= 768) {
+                      if (sidebarTab === "chat" && sidebarOpen) {
+                        setSidebarOpen(false);
+                      } else {
+                        setSidebarTab("chat");
+                        setSidebarOpen(true);
+                      }
+                      return;
                     }
-                    return;
-                  }
 
-                  setSidebarTab("chat");
-                  setSidebarOpen((o) => sidebarTab === "chat" ? !o : true);
-                }}
-                title="Chat"
-              >
-                💬
-              </button>
+                    setSidebarTab("chat");
+                    setSidebarOpen((o) => sidebarTab === "chat" ? !o : true);
+                  }}
+                  title="Chat"
+                >
+                  💬
+                </button>
+              )}
             </div>
             <div className="pvt-ctrl-right">
               <button
@@ -631,15 +646,17 @@ export default function PrivateClassroomUI({ role, session }) {
               >
                 Participants ({participants.length})
               </button>
-              <button
-                className={`pvt-sidebar-tab ${sidebarTab === "chat" ? "active" : ""}`}
-                onClick={() => setSidebarTab("chat")}
-              >
-                Chat
-              </button>
+              {!noChat && (
+                <button
+                  className={`pvt-sidebar-tab ${sidebarTab === "chat" ? "active" : ""}`}
+                  onClick={() => setSidebarTab("chat")}
+                >
+                  Chat
+                </button>
+              )}
             </div>
             <div className="pvt-sidebar-body">
-              {sidebarTab === "participants" ? (
+              {sidebarTab === "participants" || noChat ? (
                 <ParticipantsList
                   participants={participants}
                   localId={localParticipant.identity}

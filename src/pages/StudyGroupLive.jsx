@@ -5,6 +5,12 @@
  * Adds a hard-duration countdown banner (bottom-right) unique to
  * study groups. On countdown end the user is booted back to the
  * Study Groups list.
+ *
+ * NOTE: noChat=true is passed to PrivateClassroomUI because chat
+ * REST + WS endpoints are private-session-only at the backend
+ * (POST /sessions/<id>/chat/send/ resolves PrivateSession ids;
+ * a study-group id would 404). Until study-group chat lands on
+ * the backend, the chat tab and bottom-bar chat button are hidden.
  */
 
 import { useEffect, useState } from "react";
@@ -149,7 +155,6 @@ export default function StudyGroupLive() {
       audio={true}
       onDisconnected={() => navigate("/study-groups")}
     >
-      {/* Dedicated countdown banner — marks room visually as a study group */}
       <div className="sgLive__banner">
         <span className="sgLive__bannerBadge">STUDY GROUP</span>
         <span className="sgLive__bannerSubject">
@@ -167,6 +172,7 @@ export default function StudyGroupLive() {
           subject: sessionDetail?.subjectName,
           topic: sessionDetail?.topic,
         }}
+        noChat={true}
       />
       <RoomAudioRenderer />
     </LiveKitRoom>
