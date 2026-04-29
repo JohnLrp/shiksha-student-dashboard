@@ -61,13 +61,22 @@ export default function NotificationBell() {
   };
 
   const handleNotifClick = (notif) => {
-    const { type, subject_id, id, is_private_session } = notif;
+    const { type, subject_id, id, is_private_session, is_study_group } = notif;
     if (id) markOneRead(id);
 
     // Private session notifications always go to /private-sessions
     // regardless of which side (student or teacher) — the page handles both.
     if (is_private_session || type === "PRIVATE_SESSION") {
       navigate("/private-sessions");
+      setOpen(false);
+      return;
+    }
+
+    // Study group notifications (sent with type === "SESSION" + the
+    // is_study_group flag from study_group_views._notify_user) must route to
+    // the Study Groups page, not /live-sessions.
+    if (is_study_group) {
+      navigate("/study-groups");
       setOpen(false);
       return;
     }
