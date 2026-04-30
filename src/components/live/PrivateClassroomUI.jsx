@@ -38,7 +38,7 @@ import {
   VideoTrack,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 import "./privateClassroom.css";
 import ChatPanel from "./ChatPanel";
@@ -100,18 +100,53 @@ function Tile({ track, localId, pinned, onPin, raisedHands, large, isScreenShare
   const isCamOff = !p.isCameraEnabled;
   const hasHand = raisedHands[p.identity];
 
+  // Click-to-spotlight: clicking the tile toggles pin (spotlight). Clicking
+  // a spotlighted tile pins it off and returns to grid view.
+  const handleTileClick = () => onPin(p.identity);
+
+  // Fullscreen toggle for shared screens (and any tile, optionally).
+  const tileRef = useRef(null);
+  const enterFullscreen = (e) => {
+    e.stopPropagation();
+    const el = tileRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+    } else {
+      (el.requestFullscreen ||
+        el.webkitRequestFullscreen ||
+        el.msRequestFullscreen)?.call(el);
+    }
+  };
+
   // Screen share tiles always show the video track
   if (isScreenShare) {
     return (
-      <div className={`pvt-tile pvt-tile-screenshare ${pinned ? "pvt-tile-pinned" : ""}`}>
+      <div
+        ref={tileRef}
+        className={`pvt-tile pvt-tile-screenshare ${pinned ? "pvt-tile-pinned" : ""}`}
+        onClick={handleTileClick}
+        role="button"
+        tabIndex={0}
+        title={pinned ? "Click to exit spotlight" : "Click to spotlight"}
+      >
         <VideoTrack trackRef={track} />
         <div className="pvt-tile-label">
           🖥️ {isLocal ? `${name} (You)` : name}'s Screen
         </div>
         <button
+          className="pvt-fullscreen-btn"
+          onClick={enterFullscreen}
+          title="Fullscreen"
+          type="button"
+        >
+          ⛶
+        </button>
+        <button
           className={`pvt-pin-btn ${pinned ? "pvt-pin-active" : ""}`}
           onClick={(e) => { e.stopPropagation(); onPin(p.identity); }}
           title={pinned ? "Unpin" : "Pin"}
+          type="button"
         >
           {pinned ? "📌" : "📍"}
         </button>
@@ -122,7 +157,14 @@ function Tile({ track, localId, pinned, onPin, raisedHands, large, isScreenShare
   return (
     <SpeakingTile track={track}>
       {(isSpeaking) => (
-        <div className={`pvt-tile ${isSpeaking ? "pvt-tile-speaking" : ""} ${pinned ? "pvt-tile-pinned" : ""}`}>
+        <div
+          ref={tileRef}
+          className={`pvt-tile ${isSpeaking ? "pvt-tile-speaking" : ""} ${pinned ? "pvt-tile-pinned" : ""}`}
+          onClick={handleTileClick}
+          role="button"
+          tabIndex={0}
+          title={pinned ? "Click to exit spotlight" : "Click to spotlight"}
+        >
           {!isCamOff && (track.publication?.isSubscribed || isLocal) ? (
             <VideoTrack trackRef={track} />
           ) : (
@@ -142,6 +184,7 @@ function Tile({ track, localId, pinned, onPin, raisedHands, large, isScreenShare
             className={`pvt-pin-btn ${pinned ? "pvt-pin-active" : ""}`}
             onClick={(e) => { e.stopPropagation(); onPin(p.identity); }}
             title={pinned ? "Unpin" : "Pin"}
+            type="button"
           >
             {pinned ? "📌" : "📍"}
           </button>
@@ -297,8 +340,17 @@ export default function PrivateClassroomUI({
 
     const connect = () => {
       if (unmounted) return;
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsHost = import.meta.env.VITE_WS_HOST || window.location.host;
+      // Always force wss in production — the API host runs https, while
+      // `window.location.protocol` reflects the dashboard host. Defaulting
+      // wsHost to the dashboard host (window.location.host) was the bug
+      // that made chat one-way: the WS would never reach the backend.
+      const isLocalDev =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+      const wsHost =
+        import.meta.env.VITE_WS_HOST ||
+        (isLocalDev ? window.location.host : "api.shikshacom.com");
+      const protocol = isLocalDev && window.location.protocol !== "https:" ? "ws:" : "wss:";
       const token = localStorage.getItem("access") || sessionStorage.getItem("access") || "";
       const wsUrl = `${protocol}//${wsHost}${_chatCfg.wsPath}${token ? `?token=${token}` : ""}`;
       try {
@@ -551,18 +603,14 @@ export default function PrivateClassroomUI({
             /* ── Spotlight layout: 1 pinned large + rest in strip ── */
             <div className="pvt-screen-layout">
               <div className="pvt-screen-main">
-                {pinnedTracks[0].source === Track.Source.ScreenShare ? (
-                  <VideoTrack trackRef={pinnedTracks[0]} />
-                ) : (
-                  <Tile
-                    key={pinnedTracks[0].participant.identity + "-pin"}
-                    track={pinnedTracks[0]}
-                    localId={localParticipant.identity}
-                    pinned={true} onPin={togglePin}
-                    raisedHands={raisedHands} large={true}
-                    isScreenShare={false}
-                  />
-                )}
+                <Tile
+                  key={pinnedTracks[0].participant.identity + "-pin"}
+                  track={pinnedTracks[0]}
+                  localId={localParticipant.identity}
+                  pinned={true} onPin={togglePin}
+                  raisedHands={raisedHands} large={true}
+                  isScreenShare={pinnedTracks[0].source === Track.Source.ScreenShare}
+                />
               </div>
               <div className="pvt-screen-strip">
                 {unpinnedTracks.map((track) => (
