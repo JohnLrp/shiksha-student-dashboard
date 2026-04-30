@@ -2,15 +2,14 @@
  * FILE: STUDENT_DASHBOARD/src/pages/StudyGroupLive.jsx
  *
  * Reuses the existing PrivateClassroomUI inside a LiveKitRoom.
- * Adds a hard-duration countdown banner (bottom-right) unique to
- * study groups. On countdown end the user is booted back to the
- * Study Groups list.
+ * Adds a hard-duration countdown banner unique to study groups.
+ * On countdown end the user is booted back to the Study Groups list.
  *
- * NOTE: noChat=true is passed to PrivateClassroomUI because chat
- * REST + WS endpoints are private-session-only at the backend
- * (POST /sessions/<id>/chat/send/ resolves PrivateSession ids;
- * a study-group id would 404). Until study-group chat lands on
- * the backend, the chat tab and bottom-bar chat button are hidden.
+ * Chat: passes a chatConfig that points at the study-group chat
+ * endpoints (/sessions/study-groups/<id>/chat/ + corresponding WS
+ * path /ws/study-group/<id>/chat/). Messages persist in the DB
+ * only while the room is live — _end_study_group_internal bulk-
+ * deletes them on session end.
  */
 
 import { useEffect, useState } from "react";
@@ -172,7 +171,11 @@ export default function StudyGroupLive() {
           subject: sessionDetail?.subjectName,
           topic: sessionDetail?.topic,
         }}
-        noChat={true}
+        chatConfig={{
+          restGetPath:  `/sessions/study-groups/${id}/chat/`,
+          restPostPath: `/sessions/study-groups/${id}/chat/send/`,
+          wsPath:       `/ws/study-group/${id}/chat/`,
+        }}
       />
       <RoomAudioRenderer />
     </LiveKitRoom>
