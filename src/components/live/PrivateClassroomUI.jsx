@@ -4,19 +4,30 @@
  * Peer-only classroom UI — same look as the teacher's UI but with
  * NO power controls (no record, no mute-all, no mute-individual, no
  * remove, no end-for-all). Used by:
- *   * Private sessions (student side) — chat enabled
+ *   * Private sessions (student side) — chat enabled, default URLs
  *   * Study group sessions (any role: host / invited teacher / invitee)
- *     — chat disabled because the chat backend is private-session-only
+ *     — chat enabled, study-group chat URLs passed via chatConfig
  *
  * Props:
- *   role    — "student" | "teacher" | "host"
- *             (no UI behaviour branches off this — it's only used for
- *              the local chat sender pill colour)
- *   session — { id, subject, topic, ... }
- *   noChat  — when true, chat REST + WS init are skipped, and the
- *             chat sidebar tab + bottom-bar chat button are hidden.
- *             Set this for study groups since /sessions/<id>/chat/...
- *             only resolves PrivateSession ids.
+ *   role        — "student" | "teacher" | "host"
+ *                 (no UI behaviour branches off this — it's only used for
+ *                  the local chat sender pill colour)
+ *   session     — { id, subject, topic, ... }
+ *   noChat      — when true, chat REST + WS init are skipped, and the
+ *                 chat sidebar tab + bottom-bar chat button are hidden.
+ *                 Use for any session that genuinely has no chat backend.
+ *   chatConfig  — optional override of the default private-session chat
+ *                 endpoints. Shape:
+ *                   {
+ *                     restGetPath:  "/sessions/<id>/chat/",
+ *                     restPostPath: "/sessions/<id>/chat/send/",
+ *                     wsPath:       "/ws/private-session/<id>/chat/",
+ *                   }
+ *                 If undefined, the private-session paths above are used.
+ *                 Study groups pass:
+ *                   restGetPath:  "/sessions/study-groups/<id>/chat/"
+ *                   restPostPath: "/sessions/study-groups/<id>/chat/send/"
+ *                   wsPath:       "/ws/study-group/<id>/chat/"
  */
 
 import {
@@ -200,7 +211,13 @@ function ParticipantsList({ participants, localId, raisedHands }) {
    MAIN COMPONENT
 ═══════════════════════════════════════════════════════════ */
 
-export default function PrivateClassroomUI({ role, session, noChat = false }) {
+export default function PrivateClassroomUI({
+  role,
+  session,
+  noChat = false,
+  chatConfig,
+  onLeave,
+}) {
   const room = useRoomContext();
   const { user } = useAuth();
   const myUserId = user?.id ? String(user.id) : null;
@@ -208,6 +225,18 @@ export default function PrivateClassroomUI({ role, session, noChat = false }) {
   const participants = useParticipants();
   const timer = useTimer();
   const { toasts, show } = useToast();
+
+  // Resolve chat endpoints. Defaults to the private-session paths so
+  // existing callers (PrivateSessionLive) keep working unchanged.
+  const _chatCfg = chatConfig || (session?.id ? {
+    restGetPath:  `/sessions/${session.id}/chat/`,
+    restPostPath: `/sessions/${session.id}/chat/send/`,
+    wsPath:       `/ws/private-session/${session.id}/chat/`,
+  } : null);
+
+  // Leave-confirmation modal: shown when user clicks the bottom Leave
+  // button, requires explicit confirmation before disconnecting.
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   // When chat is disabled, default the sidebar to the participants tab so
   // we don't render an empty "Chat" panel that the user can't escape from.
@@ -241,8 +270,8 @@ export default function PrivateClassroomUI({ role, session, noChat = false }) {
   // ── Load persisted chat messages on mount ──
   useEffect(() => {
     if (noChat) return;
-    if (!session?.id) return;
-    api.get(`/sessions/${session.id}/chat/`).then((res) => {
+    if (!session?.id || !_chatCfg) return;
+    api.get(_chatCfg.restGetPath).then((res) => {
       const msgs = (res.data || []).map((m) => {
         const isMe = myUserId && String(m.sender_id) === myUserId;
         return {
@@ -261,7 +290,7 @@ export default function PrivateClassroomUI({ role, session, noChat = false }) {
   // ── WebSocket for real-time chat — with token auth + auto-reconnect ──
   useEffect(() => {
     if (noChat) return;
-    if (!session?.id) return;
+    if (!session?.id || !_chatCfg) return;
     let ws = null;
     let reconnectTimer = null;
     let unmounted = false;
@@ -271,7 +300,7 @@ export default function PrivateClassroomUI({ role, session, noChat = false }) {
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsHost = import.meta.env.VITE_WS_HOST || window.location.host;
       const token = localStorage.getItem("access") || sessionStorage.getItem("access") || "";
-      const wsUrl = `${protocol}//${wsHost}/ws/private-session/${session.id}/chat/${token ? `?token=${token}` : ""}`;
+      const wsUrl = `${protocol}//${wsHost}${_chatCfg.wsPath}${token ? `?token=${token}` : ""}`;
       try {
         ws = new WebSocket(wsUrl);
         ws.onmessage = (event) => {
@@ -414,9 +443,10 @@ export default function PrivateClassroomUI({ role, session, noChat = false }) {
 
   const sendChatMessage = async (text) => {
     soundManager.messageSend();
+    if (!_chatCfg) return;
     // Persist to backend — WebSocket will broadcast to other participants
     try {
-      const res = await api.post(`/sessions/${session.id}/chat/send/`, { message: text });
+      const res = await api.post(_chatCfg.restPostPath, { message: text });
       const msg = res.data;
       setChatMessages((prev) => {
         // Avoid duplicate if WebSocket already delivered it
@@ -436,14 +466,27 @@ export default function PrivateClassroomUI({ role, session, noChat = false }) {
     }
   };
 
-  const leaveRoom = async () => {
-    if (window.confirm("Leave session?")) {
-      show("You left", "info");
-      setTimeout(async () => {
-        await room.disconnect();
-      }, 600);
-    }
+  // Leave button now opens an in-room confirmation modal (handled in JSX
+  // below) instead of the OS-native window.confirm() — the modal is
+  // mobile-friendly, themable, and matches the room aesthetic.
+  const leaveRoom = () => {
+    soundManager.buttonClick();
+    setShowLeaveConfirm(true);
   };
+
+  const confirmLeave = async () => {
+    setShowLeaveConfirm(false);
+    show("You left", "info");
+    setTimeout(async () => {
+      await room.disconnect();
+      // Optional caller hook (e.g. for navigation or cleanup); unused
+      // by the existing PrivateSessionLive flow which redirects via
+      // RoomContext disconnect, but available for future callers.
+      if (typeof onLeave === "function") onLeave();
+    }, 400);
+  };
+
+  const cancelLeave = () => setShowLeaveConfirm(false);
 
   // ── Pin logic ──
 
@@ -625,20 +668,19 @@ export default function PrivateClassroomUI({ role, session, noChat = false }) {
 
         {/* ── Sidebar ── */}
         {sidebarOpen && (
-  <div className="pvt-sidebar">
-    {sidebarTab === "chat" && (
-      <div className="pvt-mobile-chat-close-wrap">
-        <button
-          className="pvt-mobile-chat-close-btn"
-          onClick={() => setSidebarOpen(false)}
-          type="button"
-          aria-label="Close chat"
-        >
-          ✕
-        </button>
-      </div>
-    )}
-
+          <div className="pvt-sidebar">
+            {sidebarTab === "chat" && (
+              <div className="pvt-mobile-chat-close-wrap">
+                <button
+                  className="pvt-mobile-chat-close-btn"
+                  onClick={() => setSidebarOpen(false)}
+                  type="button"
+                  aria-label="Close chat"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             <div className="pvt-sidebar-tabs">
               <button
                 className={`pvt-sidebar-tab ${sidebarTab === "participants" ? "active" : ""}`}
@@ -669,6 +711,49 @@ export default function PrivateClassroomUI({ role, session, noChat = false }) {
           </div>
         )}
       </div>
+
+      {/* ── Leave-confirmation modal ──
+          Centered overlay with Stay / Leave buttons. Mobile-friendly
+          (max-width caps + responsive in CSS). Pure peer action — does
+          NOT end the room for anyone else (only disconnects local). */}
+      {showLeaveConfirm && (
+        <div
+          className="pvt-leave-modal-overlay"
+          onClick={cancelLeave}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pvt-leave-title"
+        >
+          <div
+            className="pvt-leave-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="pvt-leave-title" className="pvt-leave-title">
+              Leave this room?
+            </h3>
+            <p className="pvt-leave-body">
+              You can rejoin while the session is still live.
+            </p>
+            <div className="pvt-leave-actions">
+              <button
+                type="button"
+                className="pvt-leave-btn-cancel"
+                onClick={cancelLeave}
+                autoFocus
+              >
+                Stay
+              </button>
+              <button
+                type="button"
+                className="pvt-leave-btn-confirm"
+                onClick={confirmLeave}
+              >
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Toasts ── */}
       <div className="pvt-toast-wrap">

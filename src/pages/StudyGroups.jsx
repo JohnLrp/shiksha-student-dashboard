@@ -41,8 +41,12 @@ function formatTime(t) {
 }
 
 function statusLabel(st) {
+  // For the "live" state, the leading red dot is rendered by CSS (::before
+  // on .sg__statusPill--live) so the pill stays the same shape across
+  // browsers/OS — emoji rendering was inconsistent and was making the
+  // Live pill look split on cards with long titles.
   const m = {
-    scheduled: "📅 Scheduled", live: "🔴 Live",
+    scheduled: "📅 Scheduled", live: "Live",
     completed: "✔ Completed", cancelled: "✗ Cancelled", expired: "⏰ Expired",
   };
   return m[st] || st;
