@@ -1,13 +1,33 @@
 /**
  * FILE: STUDENT_DASHBOARD/src/components/live/PrivateClassroomUI.jsx
  *
- * Private session room UI — matches Teacher UI visually.
- * Student-only controls: mic, cam, screen share, raise hand, chat, leave.
- * No teacher power controls (record, mute all, mute individual, remove, end for all).
+ * Peer-only classroom UI — same look as the teacher's UI but with
+ * NO power controls (no record, no mute-all, no mute-individual, no
+ * remove, no end-for-all). Used by:
+ *   * Private sessions (student side) — chat enabled, default URLs
+ *   * Study group sessions (any role: host / invited teacher / invitee)
+ *     — chat enabled, study-group chat URLs passed via chatConfig
  *
  * Props:
- *   role    — "student" | "teacher"
- *   session — { subject, topic, ... }
+ *   role        — "student" | "teacher" | "host"
+ *                 (no UI behaviour branches off this — it's only used for
+ *                  the local chat sender pill colour)
+ *   session     — { id, subject, topic, ... }
+ *   noChat      — when true, chat REST + WS init are skipped, and the
+ *                 chat sidebar tab + bottom-bar chat button are hidden.
+ *                 Use for any session that genuinely has no chat backend.
+ *   chatConfig  — optional override of the default private-session chat
+ *                 endpoints. Shape:
+ *                   {
+ *                     restGetPath:  "/sessions/<id>/chat/",
+ *                     restPostPath: "/sessions/<id>/chat/send/",
+ *                     wsPath:       "/ws/private-session/<id>/chat/",
+ *                   }
+ *                 If undefined, the private-session paths above are used.
+ *                 Study groups pass:
+ *                   restGetPath:  "/sessions/study-groups/<id>/chat/"
+ *                   restPostPath: "/sessions/study-groups/<id>/chat/send/"
+ *                   wsPath:       "/ws/study-group/<id>/chat/"
  */
 
 import {
@@ -18,7 +38,7 @@ import {
   VideoTrack,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 import "./privateClassroom.css";
 import ChatPanel from "./ChatPanel";
@@ -80,18 +100,53 @@ function Tile({ track, localId, pinned, onPin, raisedHands, large, isScreenShare
   const isCamOff = !p.isCameraEnabled;
   const hasHand = raisedHands[p.identity];
 
+  // Click-to-spotlight: clicking the tile toggles pin (spotlight). Clicking
+  // a spotlighted tile pins it off and returns to grid view.
+  const handleTileClick = () => onPin(p.identity);
+
+  // Fullscreen toggle for shared screens (and any tile, optionally).
+  const tileRef = useRef(null);
+  const enterFullscreen = (e) => {
+    e.stopPropagation();
+    const el = tileRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      document.exitFullscreen?.();
+    } else {
+      (el.requestFullscreen ||
+        el.webkitRequestFullscreen ||
+        el.msRequestFullscreen)?.call(el);
+    }
+  };
+
   // Screen share tiles always show the video track
   if (isScreenShare) {
     return (
-      <div className={`pvt-tile pvt-tile-screenshare ${pinned ? "pvt-tile-pinned" : ""}`}>
+      <div
+        ref={tileRef}
+        className={`pvt-tile pvt-tile-screenshare ${pinned ? "pvt-tile-pinned" : ""}`}
+        onClick={handleTileClick}
+        role="button"
+        tabIndex={0}
+        title={pinned ? "Click to exit spotlight" : "Click to spotlight"}
+      >
         <VideoTrack trackRef={track} />
         <div className="pvt-tile-label">
           🖥️ {isLocal ? `${name} (You)` : name}'s Screen
         </div>
         <button
+          className="pvt-fullscreen-btn"
+          onClick={enterFullscreen}
+          title="Fullscreen"
+          type="button"
+        >
+          ⛶
+        </button>
+        <button
           className={`pvt-pin-btn ${pinned ? "pvt-pin-active" : ""}`}
           onClick={(e) => { e.stopPropagation(); onPin(p.identity); }}
           title={pinned ? "Unpin" : "Pin"}
+          type="button"
         >
           {pinned ? "📌" : "📍"}
         </button>
@@ -102,7 +157,14 @@ function Tile({ track, localId, pinned, onPin, raisedHands, large, isScreenShare
   return (
     <SpeakingTile track={track}>
       {(isSpeaking) => (
-        <div className={`pvt-tile ${isSpeaking ? "pvt-tile-speaking" : ""} ${pinned ? "pvt-tile-pinned" : ""}`}>
+        <div
+          ref={tileRef}
+          className={`pvt-tile ${isSpeaking ? "pvt-tile-speaking" : ""} ${pinned ? "pvt-tile-pinned" : ""}`}
+          onClick={handleTileClick}
+          role="button"
+          tabIndex={0}
+          title={pinned ? "Click to exit spotlight" : "Click to spotlight"}
+        >
           {!isCamOff && (track.publication?.isSubscribed || isLocal) ? (
             <VideoTrack trackRef={track} />
           ) : (
@@ -122,6 +184,7 @@ function Tile({ track, localId, pinned, onPin, raisedHands, large, isScreenShare
             className={`pvt-pin-btn ${pinned ? "pvt-pin-active" : ""}`}
             onClick={(e) => { e.stopPropagation(); onPin(p.identity); }}
             title={pinned ? "Unpin" : "Pin"}
+            type="button"
           >
             {pinned ? "📌" : "📍"}
           </button>
@@ -191,7 +254,13 @@ function ParticipantsList({ participants, localId, raisedHands }) {
    MAIN COMPONENT
 ═══════════════════════════════════════════════════════════ */
 
-export default function PrivateClassroomUI({ role, session }) {
+export default function PrivateClassroomUI({
+  role,
+  session,
+  noChat = false,
+  chatConfig,
+  onLeave,
+}) {
   const room = useRoomContext();
   const { user } = useAuth();
   const myUserId = user?.id ? String(user.id) : null;
@@ -200,7 +269,21 @@ export default function PrivateClassroomUI({ role, session }) {
   const timer = useTimer();
   const { toasts, show } = useToast();
 
-  const [sidebarTab, setSidebarTab] = useState("chat");
+  // Resolve chat endpoints. Defaults to the private-session paths so
+  // existing callers (PrivateSessionLive) keep working unchanged.
+  const _chatCfg = chatConfig || (session?.id ? {
+    restGetPath:  `/sessions/${session.id}/chat/`,
+    restPostPath: `/sessions/${session.id}/chat/send/`,
+    wsPath:       `/ws/private-session/${session.id}/chat/`,
+  } : null);
+
+  // Leave-confirmation modal: shown when user clicks the bottom Leave
+  // button, requires explicit confirmation before disconnecting.
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+
+  // When chat is disabled, default the sidebar to the participants tab so
+  // we don't render an empty "Chat" panel that the user can't escape from.
+  const [sidebarTab, setSidebarTab] = useState(noChat ? "participants" : "chat");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
@@ -229,8 +312,9 @@ export default function PrivateClassroomUI({ role, session }) {
 
   // ── Load persisted chat messages on mount ──
   useEffect(() => {
-    if (!session?.id) return;
-    api.get(`/sessions/${session.id}/chat/`).then((res) => {
+    if (noChat) return;
+    if (!session?.id || !_chatCfg) return;
+    api.get(_chatCfg.restGetPath).then((res) => {
       const msgs = (res.data || []).map((m) => {
         const isMe = myUserId && String(m.sender_id) === myUserId;
         return {
@@ -244,21 +328,31 @@ export default function PrivateClassroomUI({ role, session }) {
       });
       setChatMessages(msgs);
     }).catch(() => {});
-  }, [session?.id, myUserId]);
+  }, [session?.id, myUserId, noChat]);
 
   // ── WebSocket for real-time chat — with token auth + auto-reconnect ──
   useEffect(() => {
-    if (!session?.id) return;
+    if (noChat) return;
+    if (!session?.id || !_chatCfg) return;
     let ws = null;
     let reconnectTimer = null;
     let unmounted = false;
 
     const connect = () => {
       if (unmounted) return;
-      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-      const wsHost = import.meta.env.VITE_WS_HOST || window.location.host;
+      // Always force wss in production — the API host runs https, while
+      // `window.location.protocol` reflects the dashboard host. Defaulting
+      // wsHost to the dashboard host (window.location.host) was the bug
+      // that made chat one-way: the WS would never reach the backend.
+      const isLocalDev =
+        window.location.hostname === "localhost" ||
+        window.location.hostname === "127.0.0.1";
+      const wsHost =
+        import.meta.env.VITE_WS_HOST ||
+        (isLocalDev ? window.location.host : "api.shikshacom.com");
+      const protocol = isLocalDev && window.location.protocol !== "https:" ? "ws:" : "wss:";
       const token = localStorage.getItem("access") || sessionStorage.getItem("access") || "";
-      const wsUrl = `${protocol}//${wsHost}/ws/private-session/${session.id}/chat/${token ? `?token=${token}` : ""}`;
+      const wsUrl = `${protocol}//${wsHost}${_chatCfg.wsPath}${token ? `?token=${token}` : ""}`;
       try {
         ws = new WebSocket(wsUrl);
         ws.onmessage = (event) => {
@@ -294,7 +388,7 @@ export default function PrivateClassroomUI({ role, session }) {
       clearTimeout(reconnectTimer);
       if (ws) ws.close();
     };
-  }, [session?.id, myUserId]);
+  }, [session?.id, myUserId, noChat]);
 
   // Get all tracks
   const tracks = useTracks([
@@ -401,9 +495,10 @@ export default function PrivateClassroomUI({ role, session }) {
 
   const sendChatMessage = async (text) => {
     soundManager.messageSend();
+    if (!_chatCfg) return;
     // Persist to backend — WebSocket will broadcast to other participants
     try {
-      const res = await api.post(`/sessions/${session.id}/chat/send/`, { message: text });
+      const res = await api.post(_chatCfg.restPostPath, { message: text });
       const msg = res.data;
       setChatMessages((prev) => {
         // Avoid duplicate if WebSocket already delivered it
@@ -423,14 +518,27 @@ export default function PrivateClassroomUI({ role, session }) {
     }
   };
 
-  const leaveRoom = async () => {
-    if (window.confirm("Leave session?")) {
-      show("You left", "info");
-      setTimeout(async () => {
-        await room.disconnect();
-      }, 600);
-    }
+  // Leave button now opens an in-room confirmation modal (handled in JSX
+  // below) instead of the OS-native window.confirm() — the modal is
+  // mobile-friendly, themable, and matches the room aesthetic.
+  const leaveRoom = () => {
+    soundManager.buttonClick();
+    setShowLeaveConfirm(true);
   };
+
+  const confirmLeave = async () => {
+    setShowLeaveConfirm(false);
+    show("You left", "info");
+    setTimeout(async () => {
+      await room.disconnect();
+      // Optional caller hook (e.g. for navigation or cleanup); unused
+      // by the existing PrivateSessionLive flow which redirects via
+      // RoomContext disconnect, but available for future callers.
+      if (typeof onLeave === "function") onLeave();
+    }, 400);
+  };
+
+  const cancelLeave = () => setShowLeaveConfirm(false);
 
   // ── Pin logic ──
 
@@ -495,18 +603,14 @@ export default function PrivateClassroomUI({ role, session }) {
             /* ── Spotlight layout: 1 pinned large + rest in strip ── */
             <div className="pvt-screen-layout">
               <div className="pvt-screen-main">
-                {pinnedTracks[0].source === Track.Source.ScreenShare ? (
-                  <VideoTrack trackRef={pinnedTracks[0]} />
-                ) : (
-                  <Tile
-                    key={pinnedTracks[0].participant.identity + "-pin"}
-                    track={pinnedTracks[0]}
-                    localId={localParticipant.identity}
-                    pinned={true} onPin={togglePin}
-                    raisedHands={raisedHands} large={true}
-                    isScreenShare={false}
-                  />
-                )}
+                <Tile
+                  key={pinnedTracks[0].participant.identity + "-pin"}
+                  track={pinnedTracks[0]}
+                  localId={localParticipant.identity}
+                  pinned={true} onPin={togglePin}
+                  raisedHands={raisedHands} large={true}
+                  isScreenShare={pinnedTracks[0].source === Track.Source.ScreenShare}
+                />
               </div>
               <div className="pvt-screen-strip">
                 {unpinnedTracks.map((track) => (
@@ -567,26 +671,28 @@ export default function PrivateClassroomUI({ role, session }) {
               >
                 👥
               </button>
-              <button
-                className={`pvt-ctrl-btn ${sidebarTab === "chat" && sidebarOpen ? "pvt-ctrl-active" : ""}`}
-                onClick={() => {
-                  if (window.innerWidth <= 768) {
-                    if (sidebarTab === "chat" && sidebarOpen) {
-                      setSidebarOpen(false);
-                    } else {
-                      setSidebarTab("chat");
-                      setSidebarOpen(true);
+              {!noChat && (
+                <button
+                  className={`pvt-ctrl-btn ${sidebarTab === "chat" && sidebarOpen ? "pvt-ctrl-active" : ""}`}
+                  onClick={() => {
+                    if (window.innerWidth <= 768) {
+                      if (sidebarTab === "chat" && sidebarOpen) {
+                        setSidebarOpen(false);
+                      } else {
+                        setSidebarTab("chat");
+                        setSidebarOpen(true);
+                      }
+                      return;
                     }
-                    return;
-                  }
 
-                  setSidebarTab("chat");
-                  setSidebarOpen((o) => sidebarTab === "chat" ? !o : true);
-                }}
-                title="Chat"
-              >
-                💬
-              </button>
+                    setSidebarTab("chat");
+                    setSidebarOpen((o) => sidebarTab === "chat" ? !o : true);
+                  }}
+                  title="Chat"
+                >
+                  💬
+                </button>
+              )}
             </div>
             <div className="pvt-ctrl-right">
               <button
@@ -610,20 +716,19 @@ export default function PrivateClassroomUI({ role, session }) {
 
         {/* ── Sidebar ── */}
         {sidebarOpen && (
-  <div className="pvt-sidebar">
-    {sidebarTab === "chat" && (
-      <div className="pvt-mobile-chat-close-wrap">
-        <button
-          className="pvt-mobile-chat-close-btn"
-          onClick={() => setSidebarOpen(false)}
-          type="button"
-          aria-label="Close chat"
-        >
-          ✕
-        </button>
-      </div>
-    )}
-
+          <div className="pvt-sidebar">
+            {sidebarTab === "chat" && (
+              <div className="pvt-mobile-chat-close-wrap">
+                <button
+                  className="pvt-mobile-chat-close-btn"
+                  onClick={() => setSidebarOpen(false)}
+                  type="button"
+                  aria-label="Close chat"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             <div className="pvt-sidebar-tabs">
               <button
                 className={`pvt-sidebar-tab ${sidebarTab === "participants" ? "active" : ""}`}
@@ -631,15 +736,17 @@ export default function PrivateClassroomUI({ role, session }) {
               >
                 Participants ({participants.length})
               </button>
-              <button
-                className={`pvt-sidebar-tab ${sidebarTab === "chat" ? "active" : ""}`}
-                onClick={() => setSidebarTab("chat")}
-              >
-                Chat
-              </button>
+              {!noChat && (
+                <button
+                  className={`pvt-sidebar-tab ${sidebarTab === "chat" ? "active" : ""}`}
+                  onClick={() => setSidebarTab("chat")}
+                >
+                  Chat
+                </button>
+              )}
             </div>
             <div className="pvt-sidebar-body">
-              {sidebarTab === "participants" ? (
+              {sidebarTab === "participants" || noChat ? (
                 <ParticipantsList
                   participants={participants}
                   localId={localParticipant.identity}
@@ -652,6 +759,49 @@ export default function PrivateClassroomUI({ role, session }) {
           </div>
         )}
       </div>
+
+      {/* ── Leave-confirmation modal ──
+          Centered overlay with Stay / Leave buttons. Mobile-friendly
+          (max-width caps + responsive in CSS). Pure peer action — does
+          NOT end the room for anyone else (only disconnects local). */}
+      {showLeaveConfirm && (
+        <div
+          className="pvt-leave-modal-overlay"
+          onClick={cancelLeave}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="pvt-leave-title"
+        >
+          <div
+            className="pvt-leave-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="pvt-leave-title" className="pvt-leave-title">
+              Leave this room?
+            </h3>
+            <p className="pvt-leave-body">
+              You can rejoin while the session is still live.
+            </p>
+            <div className="pvt-leave-actions">
+              <button
+                type="button"
+                className="pvt-leave-btn-cancel"
+                onClick={cancelLeave}
+                autoFocus
+              >
+                Stay
+              </button>
+              <button
+                type="button"
+                className="pvt-leave-btn-confirm"
+                onClick={confirmLeave}
+              >
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Toasts ── */}
       <div className="pvt-toast-wrap">

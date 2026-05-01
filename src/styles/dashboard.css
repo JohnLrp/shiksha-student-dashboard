@@ -33,7 +33,7 @@
 
 .dashboardLeft {
   display: grid;
-  grid-template-rows: 294px minmax(0, 1fr);
+  grid-template-rows: 281px minmax(0, 1fr);
   gap: 14px;
   min-height: 0;
 }
@@ -301,7 +301,7 @@
 
 .dashboardRight {
   display: grid;
-  grid-template-rows: 294px minmax(0, 1fr);
+  grid-template-rows: 281px minmax(0, 1fr);
   gap: 14px;
   min-height: 0;
 }
@@ -784,4 +784,41 @@
   font-size: 15px;
   font-weight: 800;
   line-height: 1.2;
+}
+
+.assignmentToggle {
+  display: inline-flex;
+  align-items: center;
+  background: #e7edf4;
+  border-radius: 999px;
+  padding: 2px;
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+}
+
+.assignmentToggle__btn {
+  border: 0;
+  outline: 0;
+  cursor: pointer;
+  padding: 5px 16px;
+  border-radius: 999px;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.assignmentToggle__btn--active {
+  background: #13899b;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.22);
+}
+
+.assignmentToggle__btn:hover {
+  color: #13899b;
+}
+
+.assignmentToggle__btn--active:hover {
+  color: #ffffff;
 }

@@ -1,6 +1,13 @@
 // ============================================================
-// SHARED — src/components/NotificationBell.jsx
-// Used by BOTH student and teacher apps.
+// STUDENT-DASHBOARD — src/components/NotificationBell.jsx
+//
+// NOTE: this file and the teacher dashboard's NotificationBell.jsx
+// share the same render markup but have INTENTIONALLY DIVERGENT
+// click handlers, because the student app routes live at root
+// (e.g. /study-groups) while the teacher app is mounted under
+// /teacher (e.g. /teacher/study-groups). If you change handler
+// behaviour here, mirror the equivalent change in
+// shiksha-teacher-dashboard/src/components/NotificationBell.jsx.
 // ============================================================
 
 import { useRef, useState, useEffect } from "react";
@@ -61,7 +68,7 @@ export default function NotificationBell() {
   };
 
   const handleNotifClick = (notif) => {
-    const { type, subject_id, id, is_private_session } = notif;
+    const { type, subject_id, id, is_private_session, is_study_group } = notif;
     if (id) markOneRead(id);
 
     // Private session notifications always go to /private-sessions
@@ -72,18 +79,34 @@ export default function NotificationBell() {
       return;
     }
 
+    // Study group notifications (sent with type === "SESSION" + the
+    // is_study_group flag from study_group_views._notify_user) must route to
+    // the Study Groups page, not /live-sessions.
+    if (is_study_group) {
+      navigate("/study-groups");
+      setOpen(false);
+      return;
+    }
+
+    // Per-type routing. Always navigate somewhere — falling through to a
+    // silent setOpen(false) was the source of the "click does nothing"
+    // bug equivalent to the teacher's blank-page bug. Mirror the teacher
+    // bell's "every click leads to a real page" guarantee.
     if (subject_id) {
-      if (type === "ASSIGNMENT") navigate(`/subjects/${subject_id}/assignments`);
-      else if (type === "QUIZ")  navigate(`/subjects/quiz/${subject_id}`);
-      else if (type === "SESSION") navigate(`/live-sessions`);
-      else                       navigate(`/subjects/${subject_id}`);
+      if (type === "ASSIGNMENT")      navigate(`/subjects/${subject_id}/assignments`);
+      else if (type === "QUIZ")       navigate(`/subjects/quiz/${subject_id}`);
+      else if (type === "SUBMISSION") navigate(`/subjects/${subject_id}/assignments`);
+      else if (type === "SESSION")    navigate(`/live-sessions`);
+      else                            navigate(`/subjects/${subject_id}`);
     } else {
+      // No subject_id — best-effort defaults so the click is never a no-op.
       const fallback = {
         ASSIGNMENT: "/assignments",
         QUIZ:       "/subjects/quiz",
+        SUBMISSION: "/assignments",
         SESSION:    "/live-sessions",
       };
-      if (fallback[type]) navigate(fallback[type]);
+      navigate(fallback[type] || "/");
     }
     setOpen(false);
   };

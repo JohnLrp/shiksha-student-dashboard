@@ -53,7 +53,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const [selectedDate, setSelectedDate] = useState(null);
-  const [showAssignments, setShowAssignments] = useState(true);
+  const [assignmentFilter, setAssignmentFilter] = useState("due");
   const [notificationFilter, setNotificationFilter] = useState("All");
   const [scheduleFilter, setScheduleFilter] = useState("All");
   const [activeMobileTab, setActiveMobileTab] = useState("sessions");
@@ -119,6 +119,7 @@ export default function Dashboard() {
   const notifications = useMemo(() => {
     const seen = new Set();
     const merged = [];
+
     for (const n of [...liveNotifications, ...apiNotifications]) {
       const key = n.id || JSON.stringify(n);
       if (!seen.has(key)) {
@@ -126,6 +127,7 @@ export default function Dashboard() {
         merged.push(n);
       }
     }
+
     return merged;
   }, [liveNotifications, apiNotifications]);
 
@@ -186,6 +188,7 @@ export default function Dashboard() {
 
   const calendarEvents = useMemo(() => {
     const map = {};
+
     const add = (dateStr, type) => {
       const key = toDateKey(dateStr);
       if (!key) return;
@@ -261,6 +264,26 @@ export default function Dashboard() {
       ? notifications
       : notifications.filter((n) => n.type === notificationFilter);
 
+  const filteredAssignments = useMemo(() => {
+    const now = new Date();
+
+    return assignments.filter((a) => {
+      if (!a.due) return assignmentFilter === "due";
+
+      const dueDate = new Date(a.due);
+
+      if (Number.isNaN(dueDate.getTime())) {
+        return assignmentFilter === "due";
+      }
+
+      if (assignmentFilter === "due") {
+        return dueDate >= now;
+      }
+
+      return dueDate < now;
+    });
+  }, [assignments, assignmentFilter]);
+
   const filteredSchedule = scheduleItems.filter((item) => {
     if (selectedDate) {
       const itemDate = new Date(item.date);
@@ -294,145 +317,141 @@ export default function Dashboard() {
     }
   };
 
- const renderCalendarGrid = () => {
-  const totalDateCells = 42;
-  const trailingBlanks = totalDateCells - (startOffset + daysInMonth);
+  const renderCalendarGrid = () => {
+    const totalDateCells = 42;
+    const trailingBlanks = totalDateCells - (startOffset + daysInMonth);
 
-  return (
-    <>
-      <div className="calendarHeader">
-        <button type="button" className="calNavBtn" onClick={goToPrevMonth}>
-          &#8249;
-        </button>
+    return (
+      <>
+        <div className="calendarHeader">
+          <button type="button" className="calNavBtn" onClick={goToPrevMonth}>
+            &#8249;
+          </button>
 
-        <div className="calendarHeader__mid">
-          <select
-            className="calendarSelect"
-            value={currMonth}
-            onChange={(e) => setCurrMonth(parseInt(e.target.value, 10))}
-          >
-            {months.map((m, i) => (
-              <option key={m} value={i}>
-                {m.substring(0, 3)}
-              </option>
-            ))}
-          </select>
+          <div className="calendarHeader__mid">
+            <select
+              className="calendarSelect"
+              value={currMonth}
+              onChange={(e) => setCurrMonth(parseInt(e.target.value, 10))}
+            >
+              {months.map((m, i) => (
+                <option key={m} value={i}>
+                  {m.substring(0, 3)}
+                </option>
+              ))}
+            </select>
 
-          <select
-            className="calendarSelect"
-            value={currYear}
-            onChange={(e) => setCurrYear(parseInt(e.target.value, 10))}
-          >
-            {years.map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
+            <select
+              className="calendarSelect"
+              value={currYear}
+              onChange={(e) => setCurrYear(parseInt(e.target.value, 10))}
+            >
+              {years.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button type="button" className="calNavBtn" onClick={goToNextMonth}>
+            &#8250;
+          </button>
         </div>
 
-        <button type="button" className="calNavBtn" onClick={goToNextMonth}>
-          &#8250;
-        </button>
-      </div>
+        <div className="calendarGrid">
+          {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
+            <div key={d} className="calDayName">
+              {d}
+            </div>
+          ))}
 
-      <div className="calendarGrid">
-        {["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
-          <div key={d} className="calDayName">
-            {d}
-          </div>
-        ))}
+          {Array.from({ length: startOffset }).map((_, i) => (
+            <div key={`empty-start-${i}`} className="calDate calDate--blank" />
+          ))}
 
-        {Array.from({ length: startOffset }).map((_, i) => (
-          <div key={`empty-start-${i}`} className="calDate calDate--blank" />
-        ))}
+          {Array.from({ length: daysInMonth }, (_, i) => {
+            const day = i + 1;
 
-        {Array.from({ length: daysInMonth }, (_, i) => {
-          const day = i + 1;
+            const isToday =
+              day === today.getDate() &&
+              currMonth === today.getMonth() &&
+              currYear === today.getFullYear();
 
-          const isToday =
-            day === today.getDate() &&
-            currMonth === today.getMonth() &&
-            currYear === today.getFullYear();
+            const isSelected =
+              selectedDate &&
+              selectedDate.day === day &&
+              selectedDate.month === currMonth &&
+              selectedDate.year === currYear;
 
-          const isSelected =
-            selectedDate &&
-            selectedDate.day === day &&
-            selectedDate.month === currMonth &&
-            selectedDate.year === currYear;
+            const dateKey = `${currYear}-${String(currMonth + 1).padStart(
+              2,
+              "0"
+            )}-${String(day).padStart(2, "0")}`;
 
-          const dateKey = `${currYear}-${String(currMonth + 1).padStart(2, "0")}-${String(
-            day
-          ).padStart(2, "0")}`;
+            const dayEvents = calendarEvents[dateKey] || [];
+            const visibleEvents = dayEvents.slice(0, 4);
 
-          const dayEvents = calendarEvents[dateKey] || [];
-          const visibleEvents = dayEvents.slice(0, 4);
+            return (
+              <button
+                key={day}
+                type="button"
+                className={`calDate ${isToday ? "calToday" : ""} ${
+                  isSelected ? "calSelected" : ""
+                } ${dayEvents.length ? "calDate--hasEvents" : ""}`}
+                onClick={() => handleDateClick(day)}
+              >
+                <span className="calDate__num">{day}</span>
 
-          return (
-            <button
-              key={day}
-              type="button"
-              className={`calDate ${isToday ? "calToday" : ""} ${
-                isSelected ? "calSelected" : ""
-              } ${dayEvents.length ? "calDate--hasEvents" : ""}`}
-              onClick={() => handleDateClick(day)}
-            >
-              <span className="calDate__num">{day}</span>
+                <span className="calDate__dots">
+                  {visibleEvents.map((type, index) => (
+                    <span
+                      key={`${type}-${index}`}
+                      className="calDate__dot"
+                      style={{ background: EVENT_COLORS[type] }}
+                    />
+                  ))}
+                </span>
+              </button>
+            );
+          })}
 
-              <span className="calDate__dots">
-                {visibleEvents.map((type, index) => (
-                  <span
-                    key={`${type}-${index}`}
-                    className="calDate__dot"
-                    style={{ background: EVENT_COLORS[type] }}
-                  />
-                ))}
-              </span>
-            </button>
-          );
-        })}
+          {Array.from({ length: trailingBlanks }).map((_, i) => (
+            <div key={`empty-end-${i}`} className="calDate calDate--blank" />
+          ))}
+        </div>
 
-        {Array.from({ length: trailingBlanks }).map((_, i) => (
-          <div key={`empty-end-${i}`} className="calDate calDate--blank" />
-        ))}
-      </div>
+        <div className="calLegend">
+          <span className="calLegend__item">
+            <span className="calLegend__dot" style={{ background: EVENT_COLORS.assignment }} />
+            Assignment
+          </span>
 
-      <div className="calLegend">
-        <span className="calLegend__item">
-          <span
-            className="calLegend__dot"
-            style={{ background: EVENT_COLORS.assignment }}
-          />
-          Assignment
-        </span>
+          <span className="calLegend__item">
+            <span className="calLegend__dot" style={{ background: EVENT_COLORS.quiz }} />
+            Quiz
+          </span>
 
-        <span className="calLegend__item">
-          <span
-            className="calLegend__dot"
-            style={{ background: EVENT_COLORS.quiz }}
-          />
-          Quiz
-        </span>
+          <span className="calLegend__item">
+            <span
+              className="calLegend__dot"
+              style={{ background: EVENT_COLORS["live-session"] }}
+            />
+            Live Session
+          </span>
 
-        <span className="calLegend__item">
-          <span
-            className="calLegend__dot"
-            style={{ background: EVENT_COLORS["live-session"] }}
-          />
-          Live Session
-        </span>
+          <span className="calLegend__item">
+            <span
+              className="calLegend__dot"
+              style={{ background: EVENT_COLORS["private-session"] }}
+            />
+            Private Session
+          </span>
+        </div>
+      </>
+    );
+  };
 
-        <span className="calLegend__item">
-          <span
-            className="calLegend__dot"
-            style={{ background: EVENT_COLORS["private-session"] }}
-          />
-          Private Session
-        </span>
-      </div>
-    </>
-  );
-};
   const renderScheduleItem = (item, idx) => {
     const typeClass =
       item.type === "live-session"
@@ -477,39 +496,37 @@ export default function Dashboard() {
           </div>
         );
 
-     case "calendar":
-  return (
-    <div className="mobileCalendarScheduleStack">
-      <div className="mobileCalendarCard">{renderCalendarGrid()}</div>
+      case "calendar":
+        return (
+          <div className="mobileCalendarScheduleStack">
+            <div className="mobileCalendarCard">{renderCalendarGrid()}</div>
 
-      <div className="mobileScheduleCard">
-        <div className="mobileScheduleHeader">
-          <h3>
-            Schedule
-            {selectedDate && (
-              <span className="selectedDateText">
-                —{" "}
-                {new Date(
-                  selectedDate.year,
-                  selectedDate.month,
-                  selectedDate.day
-                ).toLocaleDateString("en-GB", DATE_FORMAT)}
-              </span>
-            )}
-          </h3>
+            <div className="mobileScheduleCard">
+              <div className="mobileScheduleHeader">
+                <h3>
+                  Schedule
+                  {selectedDate && (
+                    <span className="selectedDateText">
+                      —{" "}
+                      {new Date(
+                        selectedDate.year,
+                        selectedDate.month,
+                        selectedDate.day
+                      ).toLocaleDateString("en-GB", DATE_FORMAT)}
+                    </span>
+                  )}
+                </h3>
 
-          <DropdownMenu value={scheduleFilter} onChange={setScheduleFilter} />
-        </div>
+                <DropdownMenu value={scheduleFilter} onChange={setScheduleFilter} />
+              </div>
 
-        <div className="mobileSectionContent">
-          {filteredSchedule.map((item, idx) => renderScheduleItem(item, idx))}
-          {filteredSchedule.length === 0 && (
-            <div className="emptyState">No schedule</div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+              <div className="mobileSectionContent">
+                {filteredSchedule.map((item, idx) => renderScheduleItem(item, idx))}
+                {filteredSchedule.length === 0 && <div className="emptyState">No schedule</div>}
+              </div>
+            </div>
+          </div>
+        );
 
       case "assign":
         return (
@@ -611,7 +628,9 @@ export default function Dashboard() {
               </div>
 
               {sessions.length > 0 ? (
-                <div className="liveCardsRow">{sessions.map((s, idx) => renderSessionCard(s, idx))}</div>
+                <div className="liveCardsRow">
+                  {sessions.map((s, idx) => renderSessionCard(s, idx))}
+                </div>
               ) : (
                 <div className="liveEmptyState">
                   <div className="liveEmptyState__icon">
@@ -636,37 +655,43 @@ export default function Dashboard() {
 
             <div className="dashboardLeftBottom">
               <section className="dashboardCard dashboardCard--assignments">
-                <div
-                  className="cardHeader cardHeader--clickable"
-                  onClick={() => setShowAssignments(!showAssignments)}
-                >
+                <div className="cardHeader">
                   <h3>Assignments</h3>
 
-                  <button type="button" className="arrowBtn">
-                    <span
-                      className={`arrowBtn__chevron ${showAssignments ? "arrowBtn__chevron--up" : ""}`}
+                  <div className="assignmentToggle">
+                    <button
+                      type="button"
+                      className={`assignmentToggle__btn ${
+                        assignmentFilter === "due" ? "assignmentToggle__btn--active" : ""
+                      }`}
+                      onClick={() => setAssignmentFilter("due")}
                     >
-                      <svg width="12" height="8" viewBox="0 0 12 8" fill="none">
-                        <path
-                          d="M1 1.5L6 6.5L11 1.5"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                    </span>
-                  </button>
+                      Due
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`assignmentToggle__btn ${
+                        assignmentFilter === "overdue" ? "assignmentToggle__btn--active" : ""
+                      }`}
+                      onClick={() => setAssignmentFilter("overdue")}
+                    >
+                      Over Due
+                    </button>
+                  </div>
                 </div>
 
-                {showAssignments && (
-                  <div className="cardBodyScroll">
-                    {assignments.map((a, idx) => (
-                      <AssignmentCard key={idx} {...a} />
-                    ))}
-                    {assignments.length === 0 && <div className="emptyState">No assignments</div>}
-                  </div>
-                )}
+                <div className="cardBodyScroll">
+                  {filteredAssignments.map((a, idx) => (
+                    <AssignmentCard key={idx} {...a} />
+                  ))}
+
+                  {filteredAssignments.length === 0 && (
+                    <div className="emptyState">
+                      {assignmentFilter === "due" ? "No due assignments" : "No overdue assignments"}
+                    </div>
+                  )}
+                </div>
               </section>
 
               <section className="dashboardCard dashboardCard--notifications">
@@ -688,9 +713,7 @@ export default function Dashboard() {
           </div>
 
           <div className="dashboardRight">
-            <section className="dashboardCard dashboardCard--calendar">
-              {renderCalendarGrid()}
-            </section>
+            <section className="dashboardCard dashboardCard--calendar">{renderCalendarGrid()}</section>
 
             <section className="dashboardCard dashboardCard--schedule">
               <div className="cardHeader">

@@ -2,9 +2,14 @@
  * FILE: STUDENT_DASHBOARD/src/pages/StudyGroupLive.jsx
  *
  * Reuses the existing PrivateClassroomUI inside a LiveKitRoom.
- * Adds a hard-duration countdown banner (bottom-right) unique to
- * study groups. On countdown end the user is booted back to the
- * Study Groups list.
+ * Adds a hard-duration countdown banner unique to study groups.
+ * On countdown end the user is booted back to the Study Groups list.
+ *
+ * Chat: passes a chatConfig that points at the study-group chat
+ * endpoints (/sessions/study-groups/<id>/chat/ + corresponding WS
+ * path /ws/study-group/<id>/chat/). Messages persist in the DB
+ * only while the room is live — _end_study_group_internal bulk-
+ * deletes them on session end.
  */
 
 import { useEffect, useState } from "react";
@@ -149,7 +154,6 @@ export default function StudyGroupLive() {
       audio={true}
       onDisconnected={() => navigate("/study-groups")}
     >
-      {/* Dedicated countdown banner — marks room visually as a study group */}
       <div className="sgLive__banner">
         <span className="sgLive__bannerBadge">STUDY GROUP</span>
         <span className="sgLive__bannerSubject">
@@ -166,6 +170,11 @@ export default function StudyGroupLive() {
           ...sessionDetail,
           subject: sessionDetail?.subjectName,
           topic: sessionDetail?.topic,
+        }}
+        chatConfig={{
+          restGetPath:  `/sessions/study-groups/${id}/chat/`,
+          restPostPath: `/sessions/study-groups/${id}/chat/send/`,
+          wsPath:       `/ws/study-group/${id}/chat/`,
         }}
       />
       <RoomAudioRenderer />
