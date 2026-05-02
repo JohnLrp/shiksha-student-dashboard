@@ -83,19 +83,26 @@ const subjectImages = {
 
     "sociology": "/images/sociology.jpeg",
   };
-  function getSubjectImage(subjectName) {
-    const normalized = subjectName?.toLowerCase().trim() || "";
+ function clean(text) {
+  return text
+    ?.toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]/g, "") || "";
+}
 
-    const sortedKeys = Object.keys(subjectImages).sort(
-      (a, b) => b.length - a.length
-    );
+function getSubjectImage(subjectName) {
+  const normalized = clean(subjectName);
 
-    const matchedKey = sortedKeys.find((key) =>
-      normalized.includes(key.toLowerCase())
-    );
+  const sortedKeys = Object.keys(subjectImages).sort(
+    (a, b) => b.length - a.length
+  );
 
-    return matchedKey ? subjectImages[matchedKey] : "/images/default.png";
-  }
+  const matchedKey = sortedKeys.find((key) =>
+    normalized.includes(clean(key))
+  );
+
+  return matchedKey ? subjectImages[matchedKey] : "/images/default.png";
+}
 
   useEffect(() => {
 
