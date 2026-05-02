@@ -82,13 +82,26 @@ export default function SubjectsRecordings() {
     "sociology": "/images/sociology.jpeg",
   };
 
-  function getSubjectImage(subjectName) {
-    const normalized = subjectName?.toLowerCase().trim() || "";
-    const sortedKeys = Object.keys(subjectImages).sort((a, b) => b.length - a.length);
-    const matchedKey = sortedKeys.find((key) => normalized.includes(key.toLowerCase()));
-    return matchedKey ? subjectImages[matchedKey] : "/images/default.png";
-  }
+  function clean(text) {
+  return text
+    ?.toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]/g, "") || "";
+}
 
+function getSubjectImage(subjectName) {
+  const normalized = clean(subjectName);
+
+  const sortedKeys = Object.keys(subjectImages).sort(
+    (a, b) => b.length - a.length
+  );
+
+  const matchedKey = sortedKeys.find((key) =>
+    normalized.includes(clean(key))
+  );
+
+  return matchedKey ? subjectImages[matchedKey] : "/images/default.png";
+}
   useEffect(() => {
     if (!activeCourse) return;
 

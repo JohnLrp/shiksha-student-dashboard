@@ -43,7 +43,7 @@ export default function SubjectsQuiz() {
   "hindi (kritika ii)": "/images/hindi.png",
   "hindi (vitan i)": "/images/hindi.png",
   "hindi (vitan ii)": "/images/hindi.png",
-  "hindi (grammer)": "/images/hindi.png",
+  "hindi (grammar)": "/images/hindi.png",
 
   "social science (civics)": "/images/Civics.jpg",
   "social science (history)": "/images/history.jpeg",
@@ -84,23 +84,25 @@ export default function SubjectsQuiz() {
   "sociology": "/images/sociology.jpeg",
 };
 
-  function getSubjectImage(subjectName) {
-  const normalized = subjectName
+  function clean(text) {
+  return text
     ?.toLowerCase()
-    .replace(/[–—]/g, "-")
-    .replace(/\s+/g, " ")
-    .trim() || "";
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9]/g, "") || "";
+}
 
-  const normalizedMap = Object.entries(subjectImages).map(([key, value]) => [
-    key.toLowerCase().replace(/[–—]/g, "-").replace(/\s+/g, " ").trim(),
-    value,
-  ]);
+function getSubjectImage(subjectName) {
+  const normalized = clean(subjectName);
 
-  const matched = normalizedMap
-    .sort((a, b) => b[0].length - a[0].length)
-    .find(([key]) => normalized.includes(key));
+  const sortedKeys = Object.keys(subjectImages).sort(
+    (a, b) => b.length - a.length
+  );
 
-  return matched ? matched[1] : "/images/default.png";
+  const matchedKey = sortedKeys.find((key) =>
+    normalized.includes(clean(key))
+  );
+
+  return matchedKey ? subjectImages[matchedKey] : "/images/default.png";
 }
 
   useEffect(() => {
