@@ -189,7 +189,7 @@
 .chat-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: #dfe3e8;
+  background: #F0F6FA;
 }
 
 .chat-tab {
@@ -212,7 +212,7 @@
 }
 
 .chat-tab.active {
-  background: #005f6f;
+  background: #415B7E;
   color: white;
 }
 
@@ -281,14 +281,9 @@
   box-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
 
-.other-bubble {
-  background: #52698b;
-  color: white;
-  border-top-left-radius: 4px;
-}
 
 .me-bubble {
-  background: #005f6f;
+  background: #015865;
   color: white;
   border-top-right-radius: 4px;
 }
