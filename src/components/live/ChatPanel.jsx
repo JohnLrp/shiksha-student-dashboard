@@ -61,60 +61,75 @@ export default function ChatPanel({
         </button>
       </div>
 
-      {/* ── CHAT VIEW ── */}
-      {activeTab === "chat" && (
-        <>
-          <div className="cp-messages" ref={containerRef}>
-            {messages.length === 0 && (
-              <p className="cp-empty">No messages yet.</p>
-            )}
 
-            {messages.map((msg, i) => {
-              const isMe = !!msg.isMe;
-              return (
-                <div
-                  key={msg.id || i}
-                  className={`cp-row ${isMe ? "cp-row--me" : "cp-row--other"}`}
-                >
-                  {/* Meta row: name + time */}
-                  <div className={`cp-meta ${isMe ? "cp-meta--me" : "cp-meta--other"}`}>
-                    {isMe ? (
-                      <>
-                        <span className="cp-time">{fmt(msg.time)}</span>
-                        <span className="cp-name">You</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="cp-name">{msg.sender}</span>
-                        <span className="cp-time">{fmt(msg.time)}</span>
-                      </>
-                    )}
-                  </div>
+{/* ── CHAT VIEW ── */}
+{activeTab === "chat" && (
+  <div className="cp-chat-body">
 
-                  {/* Bubble */}
-                  <div className={`cp-bubble ${isMe ? "cp-bubble--me" : "cp-bubble--other"}`}>
-                    <span className="cp-text">{msg.text}</span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* ── INPUT ── */}
-          <div className="cp-input-area">
-            <input
-              className="cp-input"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Your message here"
-              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            />
-            <button className="cp-send-btn" onClick={sendMessage}>
-              <IoSend size={18} />
-            </button>
-          </div>
-        </>
+    <div className="cp-messages" ref={containerRef}>
+      {messages.length === 0 && (
+        <p className="cp-empty">No messages yet.</p>
       )}
+
+      {messages.map((msg, i) => {
+        const isMe = !!msg.isMe;
+
+        return (
+          <div
+            key={msg.id || i}
+            className={`cp-row ${isMe ? "cp-row--me" : "cp-row--other"}`}
+          >
+            {/* Meta row */}
+            <div
+              className={`cp-meta ${
+                isMe ? "cp-meta--me" : "cp-meta--other"
+              }`}
+            >
+              {isMe ? (
+                <>
+                  <span className="cp-time">{fmt(msg.time)}</span>
+                  <span className="cp-name">You</span>
+                </>
+              ) : (
+                <>
+                  <span className="cp-name">{msg.sender}</span>
+                  <span className="cp-time">{fmt(msg.time)}</span>
+                </>
+              )}
+            </div>
+
+            {/* Bubble */}
+            <div
+              className={`cp-bubble ${
+                isMe ? "cp-bubble--me" : "cp-bubble--other"
+              }`}
+            >
+              <span className="cp-text">{msg.text}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    {/* ── INPUT ── */}
+    <div className="cp-input-area">
+      <input
+        className="cp-input"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Your message here"
+        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+      />
+
+      <button className="cp-send-btn" onClick={sendMessage}>
+        <IoSend size={18} />
+      </button>
+    </div>
+
+  </div>
+)}
+
+
 
       {/* ── PARTICIPANTS VIEW ── */}
       {activeTab === "participants" && (

@@ -168,17 +168,6 @@
 }
 
 
-/* ── Wrapper ── */
-.cp-wrap {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
-  border-radius: 22px;
-  background: #F0F6FA;
-}
-
 /* ============================================================
    TABS
    ============================================================ */
@@ -216,16 +205,6 @@
    MESSAGES AREA
    ============================================================ */
 
-.cp-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  background: #F0F6FA;
-  min-height: 0;
-}
 
 .cp-messages::-webkit-scrollbar { width: 4px; }
 .cp-messages::-webkit-scrollbar-thumb {
@@ -322,45 +301,6 @@
    INPUT AREA
    ============================================================ */
 
-.cp-input-area {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-
-  padding: 10px 12px;
-  margin: 10px 12px 12px;
-
-  background: #ffffff;
-
-  border-radius: 18px;
-
-  box-shadow:
-    0 2px 6px rgba(0,0,0,.04),
-    0 8px 20px rgba(0,0,0,.03);
-
-  flex-shrink: 0;
-}
-
-/* input */
-.cp-input {
-  flex: 1;
-  height: 44px;
-
-  border: 1px solid #e5e7eb;
-
-  outline: none;
-  border-radius: 999px;
-
-  padding: 0 16px;
-
-  background: #ffffff;
-
-  font-size: 14px;
-  color: #111827;
-
-  transition: all .2s ease;
-}
-
 .cp-input:focus {
   border-color: #005f6f;
   box-shadow: 0 0 0 3px rgba(0,95,111,.08);
@@ -370,26 +310,7 @@
   color: #9ca3af;
 }
 
-/* send button */
-.cp-send-btn {
-  width: 44px;
-  height: 44px;
 
-  border-radius: 50%;
-  border: none;
-
-  background: #005f6f;
-  color: white;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  cursor: pointer;
-  flex-shrink: 0;
-
-  transition: .2s ease;
-}
 
 .cp-send-btn:hover {
   transform: scale(1.05);
@@ -655,4 +576,154 @@
   .cp-send-btn   { width: 42px; height: 42px; }
   .control-bar   { gap: 4px; }
   .ctrl-btn      { font-size: 8px; }
+}
+
+
+/* ─────────────────────────────
+   WRAP
+───────────────────────────── */
+
+.cp-wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  border-radius: 22px;
+
+  background: #F0F6FA;
+
+  overflow: hidden;
+}
+
+/* ─────────────────────────────
+   CHAT BODY
+───────────────────────────── */
+
+.cp-chat-body {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+
+  margin: 10px;
+
+  background: #eef3f6;
+
+  border-radius: 0 0 20px 20px;
+
+  min-height: 0;
+}
+
+/* ─────────────────────────────
+   MESSAGES
+───────────────────────────── */
+
+.cp-messages {
+  flex: 1;
+
+  overflow-y: auto;
+
+  padding: 16px 14px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  background: transparent;
+
+  min-height: 0;
+}
+
+/* ─────────────────────────────
+   INPUT AREA
+───────────────────────────── */
+
+.cp-input-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  margin: 12px;
+
+  padding: 10px 12px;
+
+  background: #ffffff;
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 2px 8px rgba(0,0,0,.05),
+    0 10px 24px rgba(0,0,0,.06);
+
+  flex-shrink: 0;
+}
+
+/* ─────────────────────────────
+   INPUT
+───────────────────────────── */
+
+.cp-input {
+  flex: 1;
+
+  height: 44px;
+
+  border: 1px solid #e5e7eb;
+
+  outline: none;
+
+  border-radius: 999px;
+
+  padding: 0 16px;
+
+  background: #ffffff;
+
+  font-size: 14px;
+
+  color: #111827;
+
+  transition: all .2s ease;
+}
+
+.cp-input:focus {
+  border-color: #005f6f;
+
+  box-shadow: 0 0 0 3px rgba(0,95,111,.08);
+}
+
+.cp-input::placeholder {
+  color: #9ca3af;
+}
+
+/* ─────────────────────────────
+   SEND BUTTON
+───────────────────────────── */
+
+.cp-send-btn {
+  width: 44px;
+  height: 44px;
+
+  border-radius: 50%;
+
+  border: none;
+
+  background: #005f6f;
+
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  transition: .2s ease;
+}
+
+.cp-send-btn:hover {
+  transform: scale(1.05);
+
+  background: #004a58;
 }
