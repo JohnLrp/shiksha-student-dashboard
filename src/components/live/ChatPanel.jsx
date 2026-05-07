@@ -13,153 +13,128 @@ export default function ChatPanel({
 }) {
   const [input, setInput] = useState("");
   const [activeTab, setActiveTab] = useState("chat");
-
   const containerRef = useRef(null);
 
-  /* ───────────────── AUTO SCROLL ───────────────── */
+  /* ── Auto-scroll ── */
   useEffect(() => {
     if (!containerRef.current) return;
-
     const el = containerRef.current;
-
-    const isNearBottom =
-      el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-
-    if (isNearBottom) {
-      el.scrollTop = el.scrollHeight;
-    }
+    const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    if (isNearBottom) el.scrollTop = el.scrollHeight;
   }, [messages]);
 
-  /* ───────────────── SEND MESSAGE ───────────────── */
+  /* ── Send ── */
   const sendMessage = async () => {
     if (!input.trim()) return;
-
     const text = input.trim();
     setInput("");
-
     if (onSendMessage) {
-      try {
-        await onSendMessage(text);
-      } catch (e) {
-        console.error("sendMessage failed", e);
-      }
+      try { await onSendMessage(text); }
+      catch (e) { console.error("sendMessage failed", e); }
     }
   };
 
-  /* ───────────────── FORMAT TIME ───────────────── */
-  const formatTime = (ts) => {
-    if (!ts) return "";
-
-    return new Date(ts).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+  /* ── Time format ── */
+  const fmt = (ts) =>
+    ts
+      ? new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      : "";
 
   return (
-    <div className="chat-panel">
+    <div className="cp-wrap">
 
-      {/* ───────────── TABS ───────────── */}
-      <div className="chat-tabs">
+      {/* ── TABS ── */}
+      <div className="cp-tabs">
         <button
-          className={`chat-tab ${activeTab === "chat" ? "active" : ""}`}
+          className={`cp-tab ${activeTab === "chat" ? "cp-tab--active" : ""}`}
           onClick={() => setActiveTab("chat")}
         >
-          <BsChatDotsFill />
+          <BsChatDotsFill size={15} />
           Chat
         </button>
-
         <button
-          className={`chat-tab ${activeTab === "participants" ? "active" : ""}`}
+          className={`cp-tab ${activeTab === "participants" ? "cp-tab--active" : ""}`}
           onClick={() => setActiveTab("participants")}
         >
-          <HiUsers />
+          <HiUsers size={16} />
           Participants ({participants.length})
         </button>
       </div>
 
-      {/* ───────────── CHAT VIEW ───────────── */}
+      {/* ── CHAT VIEW ── */}
       {activeTab === "chat" && (
         <>
-          <div className="chat-messages" ref={containerRef}>
-
+          <div className="cp-messages" ref={containerRef}>
             {messages.length === 0 && (
-              <div className="chat-empty">No messages yet.</div>
+              <p className="cp-empty">No messages yet.</p>
             )}
 
-            {messages.map((msg, i) => (
-              <div
-                key={msg.id || i}
-                className={`chat-row ${msg.isMe ? "me" : "other"}`}
-              >
-                {/* ── Sender row (name + time) ── */}
-                {msg.isMe ? (
-                  <div className="chat-meta chat-meta--me">
-                    <span className="chat-time-label">{formatTime(msg.time)}</span>
-                    <span className="chat-sender-label">You</span>
+            {messages.map((msg, i) => {
+              const isMe = !!msg.isMe;
+              return (
+                <div
+                  key={msg.id || i}
+                  className={`cp-row ${isMe ? "cp-row--me" : "cp-row--other"}`}
+                >
+                  {/* Meta row: name + time */}
+                  <div className={`cp-meta ${isMe ? "cp-meta--me" : "cp-meta--other"}`}>
+                    {isMe ? (
+                      <>
+                        <span className="cp-time">{fmt(msg.time)}</span>
+                        <span className="cp-name">You</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="cp-name">{msg.sender}</span>
+                        <span className="cp-time">{fmt(msg.time)}</span>
+                      </>
+                    )}
                   </div>
-                ) : (
-                  <div className="chat-meta chat-meta--other">
-                    <span className="chat-sender-label">{msg.sender}</span>
-                    <span className="chat-time-label">{formatTime(msg.time)}</span>
-                  </div>
-                )}
 
-                {/* ── Bubble ── */}
-                <div className={`chat-bubble ${msg.isMe ? "me-bubble" : "other-bubble"}`}>
-                  <div className="chat-text">{msg.text}</div>
+                  {/* Bubble */}
+                  <div className={`cp-bubble ${isMe ? "cp-bubble--me" : "cp-bubble--other"}`}>
+                    <span className="cp-text">{msg.text}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          {/* ───────────── INPUT ───────────── */}
-          <div className="chat-input-area">
+          {/* ── INPUT ── */}
+          <div className="cp-input-area">
             <input
+              className="cp-input"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Your message here"
               onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             />
-
-            <button className="chat-send-btn" onClick={sendMessage}>
-              <IoSend />
+            <button className="cp-send-btn" onClick={sendMessage}>
+              <IoSend size={18} />
             </button>
           </div>
         </>
       )}
 
-      {/* ───────────── PARTICIPANTS VIEW ───────────── */}
+      {/* ── PARTICIPANTS VIEW ── */}
       {activeTab === "participants" && (
-        <div className="participants-list">
-          {participants.map((user, index) => (
-            <div className="participant-card" key={index}>
-
-              {/* Avatar */}
-              <div className="participant-avatar">
-                {user.avatarUrl ? (
-                  <img src={user.avatarUrl} alt={user.name} />
-                ) : (
-                  user.name?.charAt(0)
-                )}
+        <div className="cp-participants">
+          {participants.map((user, idx) => (
+            <div className="cp-p-card" key={idx}>
+              <div className="cp-p-avatar">
+                {user.avatarUrl
+                  ? <img src={user.avatarUrl} alt={user.name} />
+                  : user.name?.charAt(0)?.toUpperCase()
+                }
               </div>
-
-              {/* Info */}
-              <div className="participant-info">
-                <div className="participant-name">{user.name}</div>
-                <div className="participant-role">{user.role}</div>
+              <div className="cp-p-info">
+                <div className="cp-p-name">{user.name}</div>
+                <div className="cp-p-role">{user.role}</div>
               </div>
-
-              {/* Actions */}
-              <div className="participant-actions">
-                <button className="participant-action-btn">
-                  <HiMicrophone size={16} />
-                </button>
-                <button className="participant-action-btn">
-                  <HiDotsVertical size={16} />
-                </button>
+              <div className="cp-p-actions">
+                <button className="cp-p-btn"><HiMicrophone size={15} /></button>
+                <button className="cp-p-btn"><HiDotsVertical size={15} /></button>
               </div>
-
             </div>
           ))}
         </div>
