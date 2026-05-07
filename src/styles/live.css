@@ -162,12 +162,9 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-
-  background: #dfe3e8;
+  background: white;
   border-radius: 22px;
-
-  box-shadow:
-    0 10px 30px rgba(0,0,0,0.18);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
 }
 
 /* ============================================================
@@ -189,18 +186,19 @@
 .chat-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background: #F0F6FA;
+  flex-shrink: 0;
 }
 
 .chat-tab {
   height: 56px;
   border: none;
-  background: transparent;
 
-  font-size: 16px;
+  /* Inactive = teal bg, white text */
+  background: #005f6f;
+  color: white;
+
+  font-size: 15px;
   font-weight: 700;
-
-  color: #07556a;
 
   display: flex;
   align-items: center;
@@ -208,12 +206,13 @@
   gap: 8px;
 
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .chat-tab.active {
-  background: #415B7E;
-  color: white;
+  /* Active = white bg, dark text */
+  background: white;
+  color: #111827;
 }
 
 /* ============================================================
@@ -224,13 +223,14 @@
   flex: 1;
   overflow-y: auto;
 
-  padding: 18px;
+  padding: 18px 16px;
 
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 
-  background: #eef1f5;
+  /* White background like Figma */
+  background: #ffffff;
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -249,6 +249,7 @@
 .chat-row {
   display: flex;
   flex-direction: column;
+  gap: 5px;
 }
 
 .chat-row.me {
@@ -260,14 +261,33 @@
 }
 
 /* ============================================================
-   SENDER NAME
+   META ROW (sender name + timestamp — same line)
    ============================================================ */
 
-.chat-sender {
-  font-size: 14px;
+.chat-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.chat-meta--other {
+  flex-direction: row;          /* name  time */
+}
+
+.chat-meta--me {
+  flex-direction: row-reverse;  /* You  time  (right side) */
+}
+
+.chat-sender-label {
   font-weight: 700;
   color: #111827;
-  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.chat-time-label {
+  font-size: 12px;
+  color: #6b7280;
 }
 
 /* ============================================================
@@ -276,16 +296,23 @@
 
 .chat-bubble {
   max-width: 82%;
-  padding: 14px 16px;
+  padding: 12px 16px;
   border-radius: 14px;
   box-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
 
-
+/* Own messages */
 .me-bubble {
-  background: #015865;
+  background: #005f6f;
   color: white;
   border-top-right-radius: 4px;
+}
+
+/* Other people's messages — same teal, left side */
+.other-bubble {
+  background: #005f6f;
+  color: white;
+  border-top-left-radius: 4px;
 }
 
 /* ============================================================
@@ -299,17 +326,6 @@
 }
 
 /* ============================================================
-   TIME
-   ============================================================ */
-
-.chat-time {
-  margin-top: 6px;
-  font-size: 11px;
-  opacity: 0.7;
-  text-align: right;
-}
-
-/* ============================================================
    EMPTY CHAT
    ============================================================ */
 
@@ -317,10 +333,11 @@
   margin-top: 20px;
   text-align: center;
   color: #6b7280;
+  font-size: 14px;
 }
 
 /* ============================================================
-   INPUT
+   INPUT AREA
    ============================================================ */
 
 .chat-input-area {
@@ -330,7 +347,10 @@
 
   padding: 14px;
 
-  background: #dfe3e8;
+  /* Match Figma — slightly off-white footer */
+  background: #f4f6f8;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  flex-shrink: 0;
 }
 
 .chat-input-area input {
@@ -340,7 +360,7 @@
   border: none;
   outline: none;
 
-  border-radius: 16px;
+  border-radius: 999px;
 
   padding: 0 18px;
 
@@ -349,38 +369,40 @@
   font-size: 15px;
   color: #111827;
 
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
 }
 
 .chat-input-area input::placeholder {
-  color: #6b7280;
+  color: #9ca3af;
 }
 
 .chat-send-btn {
   width: 48px;
   height: 48px;
 
-  border-radius: 14px;
+  border-radius: 50%;
   border: none;
 
-  background: #005f6f;
-  color: white;
+  background: transparent;
+  color: #005f6f;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
   cursor: pointer;
+  font-size: 20px;
 
   transition: 0.2s ease;
 }
 
 .chat-send-btn:hover {
-  transform: scale(1.06);
+  transform: scale(1.1);
+  color: #004050;
 }
 
 /* ============================================================
-   PARTICIPANTS
+   PARTICIPANTS LIST
    ============================================================ */
 
 .participants-list {
@@ -391,17 +413,21 @@
 
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 
-  background: #eef1f5;
+  background: #ffffff;
 }
+
+/* ============================================================
+   PARTICIPANT CARD
+   ============================================================ */
 
 .participant-card {
   display: flex;
   align-items: center;
   gap: 12px;
 
-  padding: 12px;
+  padding: 10px 14px;
 
   background: #005f6f;
   color: white;
@@ -409,39 +435,75 @@
   border-radius: 14px;
 }
 
+/* Avatar — circular, shows image or initial */
 .participant-avatar {
   width: 46px;
   height: 46px;
-
   border-radius: 50%;
-
-  background: white;
-  color: #005f6f;
-
+  overflow: hidden;
+  background: rgba(255,255,255,0.25);
+  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-
   font-weight: 800;
-  font-size: 16px;
-
+  font-size: 17px;
   flex-shrink: 0;
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.participant-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .participant-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
 .participant-name {
   font-size: 15px;
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .participant-role {
   margin-top: 2px;
   font-size: 12px;
-  opacity: 0.8;
+  opacity: 0.75;
+}
+
+/* Mic + 3-dot action buttons on the right */
+.participant-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.participant-action-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.15);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.18s ease;
+}
+
+.participant-action-btn:hover {
+  background: rgba(255,255,255,0.28);
 }
 
 /* ============================================================
@@ -649,7 +711,7 @@
   }
 
   .chat-tab {
-    font-size: 14px;
+    font-size: 13px;
     height: 50px;
   }
 
@@ -659,7 +721,7 @@
 
   .chat-bubble {
     max-width: 90%;
-    padding: 12px;
+    padding: 10px 13px;
   }
 
   .chat-text {

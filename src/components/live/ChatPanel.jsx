@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { IoSend } from "react-icons/io5";
 import { HiUsers } from "react-icons/hi2";
 import { BsChatDotsFill } from "react-icons/bs";
+import { HiMicrophone } from "react-icons/hi2";
+import { HiDotsVertical } from "react-icons/hi";
 
 export default function ChatPanel({
   role,
@@ -33,7 +35,6 @@ export default function ChatPanel({
     if (!input.trim()) return;
 
     const text = input.trim();
-
     setInput("");
 
     if (onSendMessage) {
@@ -83,9 +84,7 @@ export default function ChatPanel({
           <div className="chat-messages" ref={containerRef}>
 
             {messages.length === 0 && (
-              <div className="chat-empty">
-                No messages yet.
-              </div>
+              <div className="chat-empty">No messages yet.</div>
             )}
 
             {messages.map((msg, i) => (
@@ -93,24 +92,22 @@ export default function ChatPanel({
                 key={msg.id || i}
                 className={`chat-row ${msg.isMe ? "me" : "other"}`}
               >
-                {!msg.isMe && (
-                  <div className="chat-sender">
-                    {msg.sender}
+                {/* ── Sender row (name + time) ── */}
+                {msg.isMe ? (
+                  <div className="chat-meta chat-meta--me">
+                    <span className="chat-time-label">{formatTime(msg.time)}</span>
+                    <span className="chat-sender-label">You</span>
+                  </div>
+                ) : (
+                  <div className="chat-meta chat-meta--other">
+                    <span className="chat-sender-label">{msg.sender}</span>
+                    <span className="chat-time-label">{formatTime(msg.time)}</span>
                   </div>
                 )}
 
-                <div
-                  className={`chat-bubble ${
-                    msg.isMe ? "me-bubble" : "other-bubble"
-                  }`}
-                >
-                  <div className="chat-text">
-                    {msg.text}
-                  </div>
-
-                  <div className="chat-time">
-                    {formatTime(msg.time)}
-                  </div>
+                {/* ── Bubble ── */}
+                <div className={`chat-bubble ${msg.isMe ? "me-bubble" : "other-bubble"}`}>
+                  <div className="chat-text">{msg.text}</div>
                 </div>
               </div>
             ))}
@@ -122,15 +119,10 @@ export default function ChatPanel({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Your message here"
-              onKeyDown={(e) =>
-                e.key === "Enter" && sendMessage()
-              }
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             />
 
-            <button
-              className="chat-send-btn"
-              onClick={sendMessage}
-            >
+            <button className="chat-send-btn" onClick={sendMessage}>
               <IoSend />
             </button>
           </div>
@@ -140,27 +132,36 @@ export default function ChatPanel({
       {/* ───────────── PARTICIPANTS VIEW ───────────── */}
       {activeTab === "participants" && (
         <div className="participants-list">
-
           {participants.map((user, index) => (
             <div className="participant-card" key={index}>
 
+              {/* Avatar */}
               <div className="participant-avatar">
-                {user.name?.charAt(0)}
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} />
+                ) : (
+                  user.name?.charAt(0)
+                )}
               </div>
 
+              {/* Info */}
               <div className="participant-info">
-                <div className="participant-name">
-                  {user.name}
-                </div>
+                <div className="participant-name">{user.name}</div>
+                <div className="participant-role">{user.role}</div>
+              </div>
 
-                <div className="participant-role">
-                  {user.role}
-                </div>
+              {/* Actions */}
+              <div className="participant-actions">
+                <button className="participant-action-btn">
+                  <HiMicrophone size={16} />
+                </button>
+                <button className="participant-action-btn">
+                  <HiDotsVertical size={16} />
+                </button>
               </div>
 
             </div>
           ))}
-
         </div>
       )}
     </div>
