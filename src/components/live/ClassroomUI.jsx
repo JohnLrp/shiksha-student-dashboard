@@ -1,6 +1,5 @@
 import { useTracks, VideoTrack, useRoomContext } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import ParticipantsPanel from "./ParticipantsPanel";
 import ChatPanel from "./ChatPanel";
 import TeacherControls from "./TeacherControls";
 import RaiseHandButton from "./RaiseHandButton";
@@ -11,33 +10,60 @@ import useLiveSessionChat from "../../hooks/useLiveSessionChat";
 import { MdFullscreen, MdFullscreenExit } from "react-icons/md";
 import { IoChatbubblesOutline } from "react-icons/io5";
 
-
 function PausedScreen({ onLeave }) {
   const [elapsed, setElapsed] = React.useState(0);
+
   React.useEffect(() => {
     const id = setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => clearInterval(id);
   }, []);
+
   const mins = Math.floor(elapsed / 60);
   const secs = elapsed % 60;
-  const timeStr = mins > 0 ? mins + "m " + secs + "s" : secs + "s";
+
+  const timeStr =
+    mins > 0 ? mins + "m " + secs + "s" : secs + "s";
+
   return (
-    <div style={{
-      height: "100vh", display: "flex", alignItems: "center",
-      justifyContent: "center", flexDirection: "column",
-      background: "#0d1117", color: "#e8eaf2", gap: 16,
-    }}>
+    <div
+      style={{
+        height: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexDirection: "column",
+        background: "#0d1117",
+        color: "#e8eaf2",
+        gap: 16,
+      }}
+    >
       <div style={{ fontSize: 52 }}>&#9208;</div>
-      <h2 style={{ margin: 0, fontWeight: 600 }}>Session paused by teacher</h2>
-      <p style={{ color: "#6b7591", margin: 0, fontSize: 14 }}>
+
+      <h2 style={{ margin: 0, fontWeight: 600 }}>
+        Session paused by teacher
+      </h2>
+
+      <p
+        style={{
+          color: "#6b7591",
+          margin: 0,
+          fontSize: 14,
+        }}
+      >
         Paused for {timeStr} — please wait
       </p>
+
       <button
         onClick={onLeave}
         style={{
-          marginTop: 8, padding: "8px 20px", borderRadius: 8,
-          background: "#1e293b", color: "#e2e8f0", border: "1px solid #334155",
-          cursor: "pointer", fontSize: 13,
+          marginTop: 8,
+          padding: "8px 20px",
+          borderRadius: 8,
+          background: "#1e293b",
+          color: "#e2e8f0",
+          border: "1px solid #334155",
+          cursor: "pointer",
+          fontSize: 13,
         }}
       >
         Leave Session
@@ -46,166 +72,392 @@ function PausedScreen({ onLeave }) {
   );
 }
 
-export default function ClassroomUI({ role, sessionId: sessionIdProp, onLeave }) {
+export default function ClassroomUI({
+  role,
+  sessionId: sessionIdProp,
+  onLeave,
+}) {
   const isPresenter = role === "PRESENTER";
-  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 900);
+
+  const [sidebarOpen, setSidebarOpen] = useState(
+    window.innerWidth > 900
+  );
+
   const [isFullscreen, setIsFullscreen] = useState(false);
+
   const [raisedHands, setRaisedHands] = useState({});
+
   const [raiseHandToasts, setRaiseHandToasts] = useState([]);
+
   const [sessionStatus, setSessionStatus] = useState(null);
+
   const containerRef = useRef(null);
+
   const room = useRoomContext();
-  const sessionId = sessionIdProp || window.location.pathname.split("/").filter(Boolean).pop();
-  const { messages: chatMessages, sendMessage, sessionStatus: hookStatus } = useLiveSessionChat(sessionId);
+
+  const sessionId =
+    sessionIdProp ||
+    window.location.pathname
+      .split("/")
+      .filter(Boolean)
+      .pop();
+
+  const {
+    messages: chatMessages,
+    sendMessage,
+    sessionStatus: hookStatus,
+  } = useLiveSessionChat(sessionId);
 
   useEffect(() => {
     setSessionStatus(hookStatus);
   }, [hookStatus]);
 
-  // Listen for local raise-hand (own client doesn't get dataReceived echo)
+  /* =========================================================
+     LOCAL RAISE HAND
+     ========================================================= */
+
   useEffect(() => {
     const handleLocal = (e) => {
       const { type, identity } = e.detail;
-      if (type === "raise-hand") setRaisedHands((prev) => ({ ...prev, [identity]: true }));
-      if (type === "lower-hand") setRaisedHands((prev) => { const u = { ...prev }; delete u[identity]; return u; });
+
+      if (type === "raise-hand") {
+        setRaisedHands((prev) => ({
+          ...prev,
+          [identity]: true,
+        }));
+      }
+
+      if (type === "lower-hand") {
+        setRaisedHands((prev) => {
+          const updated = { ...prev };
+          delete updated[identity];
+          return updated;
+        });
+      }
     };
-    window.addEventListener("raise-hand-local", handleLocal);
-    return () => window.removeEventListener("raise-hand-local", handleLocal);
+
+    window.addEventListener(
+      "raise-hand-local",
+      handleLocal
+    );
+
+    return () =>
+      window.removeEventListener(
+        "raise-hand-local",
+        handleLocal
+      );
   }, []);
+
+  /* =========================================================
+     REMOTE RAISE HAND
+     ========================================================= */
 
   useEffect(() => {
     const handleData = (payload, participant) => {
       try {
         const text = new TextDecoder().decode(payload);
+
         const msg = JSON.parse(text);
+
         if (msg.type === "raise-hand") {
           const identity = participant.identity;
-          setRaisedHands((prev) => ({ ...prev, [identity]: true }));
+
+          setRaisedHands((prev) => ({
+            ...prev,
+            [identity]: true,
+          }));
+
           if (isPresenter) {
-            const toastId = Date.now() + Math.random();
-            setRaiseHandToasts((prev) => [...prev, { id: toastId, identity }]);
-            setTimeout(
-              () => setRaiseHandToasts((prev) => prev.filter((t) => t.id !== toastId)),
-              5000
-            );
+            const toastId =
+              Date.now() + Math.random();
+
+            setRaiseHandToasts((prev) => [
+              ...prev,
+              { id: toastId, identity },
+            ]);
+
+            setTimeout(() => {
+              setRaiseHandToasts((prev) =>
+                prev.filter((t) => t.id !== toastId)
+              );
+            }, 5000);
           }
         }
+
         if (msg.type === "lower-hand") {
           const identity = participant.identity;
-          setRaisedHands((prev) => { const u = { ...prev }; delete u[identity]; return u; });
+
+          setRaisedHands((prev) => {
+            const updated = { ...prev };
+            delete updated[identity];
+            return updated;
+          });
         }
       } catch {}
     };
+
     room.on("dataReceived", handleData);
-    return () => room.off("dataReceived", handleData);
+
+    return () =>
+      room.off("dataReceived", handleData);
   }, [room, isPresenter]);
 
+  /* =========================================================
+     FULLSCREEN
+     ========================================================= */
+
   const toggleFullscreen = () => {
-    if (!isFullscreen) containerRef.current?.requestFullscreen?.();
-    else document.exitFullscreen?.();
+    if (!isFullscreen) {
+      containerRef.current?.requestFullscreen?.();
+    } else {
+      document.exitFullscreen?.();
+    }
   };
 
   useEffect(() => {
-    const onFSChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", onFSChange);
-    return () => document.removeEventListener("fullscreenchange", onFSChange);
+    const onFSChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener(
+      "fullscreenchange",
+      onFSChange
+    );
+
+    return () =>
+      document.removeEventListener(
+        "fullscreenchange",
+        onFSChange
+      );
   }, []);
 
+  /* =========================================================
+     TRACKS
+     ========================================================= */
+
   const tracks = useTracks([
-    { source: Track.Source.Camera, withPlaceholder: false },
-    { source: Track.Source.ScreenShare, withPlaceholder: false },
+    {
+      source: Track.Source.Camera,
+      withPlaceholder: false,
+    },
+    {
+      source: Track.Source.ScreenShare,
+      withPlaceholder: false,
+    },
   ]);
 
-  const screenTrack = tracks.find((t) => t.source === Track.Source.ScreenShare);
-  const cameraTrack = tracks.find((t) => t.source === Track.Source.Camera);
-  const mainTrack = screenTrack || cameraTrack;
-  const pipTrack = screenTrack ? cameraTrack : null;
-
-
-if (!isPresenter && sessionStatus === "PAUSED") {
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        minHeight: "100%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-        background: "#0d1117",
-        color: "#e8eaf2",
-        gap: 16,
-        textAlign: "center",
-        padding: "24px",
-        flex: 1,
-      }}
-    >
-      <div style={{ fontSize: 52, lineHeight: 1 }}>&#9208;</div>
-      <h2 style={{ margin: 0, fontWeight: 600 }}>Session paused by teacher</h2>
-      <p style={{ color: "#6b7591", margin: 0, fontSize: 14 }}>
-        Please wait, the session will resume shortly
-      </p>
-    </div>
+  const screenTrack = tracks.find(
+    (t) => t.source === Track.Source.ScreenShare
   );
-}
+
+  const cameraTrack = tracks.find(
+    (t) => t.source === Track.Source.Camera
+  );
+
+  const mainTrack = screenTrack || cameraTrack;
+
+  const pipTrack = screenTrack
+    ? cameraTrack
+    : null;
+
+  /* =========================================================
+     PAUSED SCREEN
+     ========================================================= */
+
+  if (
+    !isPresenter &&
+    sessionStatus === "PAUSED"
+  ) {
+    return (
+      <div
+        style={{
+          width: "100%",
+          height: "100%",
+          minHeight: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexDirection: "column",
+          background: "#0d1117",
+          color: "#e8eaf2",
+          gap: 16,
+          textAlign: "center",
+          padding: "24px",
+          flex: 1,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 52,
+            lineHeight: 1,
+          }}
+        >
+          &#9208;
+        </div>
+
+        <h2
+          style={{
+            margin: 0,
+            fontWeight: 600,
+          }}
+        >
+          Session paused by teacher
+        </h2>
+
+        <p
+          style={{
+            color: "#6b7591",
+            margin: 0,
+            fontSize: 14,
+          }}
+        >
+          Please wait, the session will
+          resume shortly
+        </p>
+      </div>
+    );
+  }
+
+  /* =========================================================
+     WAITING SCREEN
+     ========================================================= */
 
   if (!mainTrack) {
     return (
       <div className="waiting-screen">
         <div className="waiting-card">
           <div className="waiting-pulse" />
+
           <h2>
             {isPresenter
               ? "Enable your camera to start the session"
               : "Waiting for teacher to start..."}
           </h2>
-          {!isPresenter && <p>You will be connected as soon as the session begins</p>}
+
+          {!isPresenter && (
+            <p>
+              You will be connected as soon
+              as the session begins
+            </p>
+          )}
         </div>
       </div>
     );
   }
 
+  /* =========================================================
+     MAIN UI
+     ========================================================= */
+
   return (
-    <div className={"classroom-layout" + (isFullscreen ? " fs-mode" : "")} ref={containerRef}>
+    <div
+      className={
+        "classroom-layout" +
+        (isFullscreen ? " fs-mode" : "")
+      }
+      ref={containerRef}
+    >
+      {/* ================= TOASTS ================= */}
 
-      {isPresenter && raiseHandToasts.length > 0 && (
-        <div className="rh-toasts">
-          {raiseHandToasts.map((t) => (
-            <div key={t.id} className="rh-toast">
-              <strong>{t.identity}</strong> raised their hand
-            </div>
-          ))}
-        </div>
-      )}
+      {isPresenter &&
+        raiseHandToasts.length > 0 && (
+          <div className="rh-toasts">
+            {raiseHandToasts.map((t) => (
+              <div
+                key={t.id}
+                className="rh-toast"
+              >
+                <strong>{t.identity}</strong>{" "}
+                raised their hand
+              </div>
+            ))}
+          </div>
+        )}
 
-      <div className={"main-stage" + (!sidebarOpen ? " full-width" : "")}>
+      {/* ================= VIDEO STAGE ================= */}
+
+      <div
+        className={
+          "main-stage" +
+          (!sidebarOpen ? " full-width" : "")
+        }
+      >
         <VideoTrack trackRef={mainTrack} />
-        {pipTrack && <div className="pip-camera"><VideoTrack trackRef={pipTrack} /></div>}
-        {isPresenter && <TeacherControls sessionId={sessionId} onLeave={onLeave} />}
+
+        {pipTrack && (
+          <div className="pip-camera">
+            <VideoTrack trackRef={pipTrack} />
+          </div>
+        )}
+
+        {isPresenter && (
+          <TeacherControls
+            sessionId={sessionId}
+            onLeave={onLeave}
+          />
+        )}
+
+        {/* ================= OVERLAY ACTIONS ================= */}
+
         <div className="video-overlay-actions">
-          <button className="ov-btn" onClick={() => setSidebarOpen((v) => !v)}>
-  {sidebarOpen ? "✕" : <IoChatbubblesOutline size={17} />}
-</button>
-          <button className="ov-btn" onClick={toggleFullscreen}>
-            {isFullscreen ? <MdFullscreenExit size={19} /> : <MdFullscreen size={19} />}
+          <button
+            className="ov-btn"
+            onClick={() =>
+              setSidebarOpen((v) => !v)
+            }
+          >
+            {sidebarOpen ? (
+              "✕"
+            ) : (
+              <IoChatbubblesOutline size={17} />
+            )}
+          </button>
+
+          <button
+            className="ov-btn"
+            onClick={toggleFullscreen}
+          >
+            {isFullscreen ? (
+              <MdFullscreenExit size={19} />
+            ) : (
+              <MdFullscreen size={19} />
+            )}
           </button>
         </div>
       </div>
 
-      {sidebarOpen && (
-  <div className="right-sidebar">
-    <ParticipantsPanel raisedHands={raisedHands} />
-    <ChatPanel role={role} messages={chatMessages} onSendMessage={sendMessage} />
-    {!isPresenter && (
-      <div className="chat-raise-hand-wrap">
-        <RaiseHandButton />
-      </div>
-    )}
-  </div>
-)}
+      {/* ================= SIDEBAR ================= */}
 
-<ControlBar onLeave={onLeave} />
+      {sidebarOpen && (
+        <div className="right-sidebar">
+          <ChatPanel
+            role={role}
+            messages={chatMessages}
+            onSendMessage={sendMessage}
+            participants={
+              room.remoteParticipants
+                ? Array.from(
+                    room.remoteParticipants.values()
+                  ).map((p) => ({
+                    name:
+                      p.name || p.identity,
+                    role: "Student",
+                  }))
+                : []
+            }
+          />
+
+          {!isPresenter && (
+            <div className="chat-raise-hand-wrap">
+              <RaiseHandButton />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ================= CONTROLS ================= */}
+
+      <ControlBar onLeave={onLeave} />
     </div>
   );
 }
