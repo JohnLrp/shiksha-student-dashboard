@@ -167,15 +167,6 @@
   box-shadow: 0 10px 30px rgba(0,0,0,0.18);
 }
 
-/* ============================================================
-   ██████╗██╗  ██╗ █████╗ ████████╗    ██████╗  █████╗ ███╗   ██╗███████╗██╗
-  ██╔════╝██║  ██║██╔══██╗╚══██╔══╝    ██╔══██╗██╔══██╗████╗  ██║██╔════╝██║
-  ██║     ███████║███████║   ██║       ██████╔╝███████║██╔██╗ ██║█████╗  ██║
-  ██║     ██╔══██║██╔══██║   ██║       ██╔═══╝ ██╔══██║██║╚██╗██║██╔══╝  ██║
-  ╚██████╗██║  ██║██║  ██║   ██║       ██║     ██║  ██║██║ ╚████║███████╗███████╗
-   ╚═════╝╚═╝  ╚═╝╚═╝  ╚═╝   ╚═╝       ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚══════╝
-   All classes prefixed with "cp-" to avoid any legacy style conflicts
-   ============================================================ */
 
 /* ── Wrapper ── */
 .cp-wrap {
@@ -185,7 +176,7 @@
   min-height: 0;
   overflow: hidden;
   border-radius: 22px;
-  background: white;
+  background: #F0F6FA;
 }
 
 /* ============================================================
@@ -204,8 +195,6 @@
 .cp-tab {
   height: 56px;
   border: none;
-  background: #005f6f;
-  color: white;
   font-size: 15px;
   font-weight: 700;
   display: flex;
@@ -218,8 +207,9 @@
 
 /* Active tab = white bg, dark text */
 .cp-tab--active {
-  background: white !important;
-  color: #111827 !important;
+  background: #005f6f;
+      color: #F0F6FA;
+
 }
 
 /* ============================================================
@@ -233,8 +223,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  /* Light grey-blue background like Figma */
-  background: #eef4f6;
+  background: #F0F6FA;
   min-height: 0;
 }
 
@@ -306,7 +295,7 @@
 .cp-bubble {
   padding: 11px 15px;
   border-radius: 16px;
-  max-width: 80%;
+  width: 80%;
   word-break: break-word;
 }
 
@@ -337,52 +326,74 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
-  background: #f4f7f9;
-  border-top: 1px solid rgba(0,0,0,.06);
+
+  padding: 10px 12px;
+  margin: 10px 12px 12px;
+
+  background: #ffffff;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 2px 6px rgba(0,0,0,.04),
+    0 8px 20px rgba(0,0,0,.03);
+
   flex-shrink: 0;
 }
 
+/* input */
 .cp-input {
   flex: 1;
-  height: 46px;
-  border: 1.5px solid rgba(0,95,111,.15);
+  height: 44px;
+
+  border: 1px solid #e5e7eb;
+
   outline: none;
   border-radius: 999px;
-  padding: 0 18px;
-  background: white;
+
+  padding: 0 16px;
+
+  background: #ffffff;
+
   font-size: 14px;
   color: #111827;
-  transition: border-color 0.2s;
+
+  transition: all .2s ease;
 }
 
 .cp-input:focus {
   border-color: #005f6f;
+  box-shadow: 0 0 0 3px rgba(0,95,111,.08);
 }
 
 .cp-input::placeholder {
   color: #9ca3af;
 }
 
-/* Send button — teal filled circle */
+/* send button */
 .cp-send-btn {
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
+
   border-radius: 50%;
   border: none;
+
   background: #005f6f;
   color: white;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   cursor: pointer;
   flex-shrink: 0;
-  transition: background 0.2s, transform 0.15s;
+
+  transition: .2s ease;
 }
 
 .cp-send-btn:hover {
+  transform: scale(1.05);
   background: #004a58;
-  transform: scale(1.07);
 }
 
 /* ============================================================
