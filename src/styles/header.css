@@ -188,6 +188,42 @@
   color: #666;
 }
 
+.header__profileChev {
+  color: #666;
+  transition: transform 0.2s ease;
+}
+
+.header__profileChev--open {
+  transform: rotate(180deg);
+}
+
+.header__profileSubMenu {
+  display: flex;
+  flex-direction: column;
+  background: #fafafa;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
+
+.header__profileSubItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px 10px 36px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #444;
+}
+
+.header__profileSubItem:hover {
+  background: #f0f0f0;
+}
+
+.header__profileSubItem.active {
+  color: #015865;
+  font-weight: 600;
+}
+
 .header__profileLogout {
   color: #333;
 }

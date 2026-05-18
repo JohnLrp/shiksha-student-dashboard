@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { HiOutlineMenu, HiOutlineX } from "react-icons/hi";
+import { IoChevronDown } from "react-icons/io5";
+import { BsBook } from "react-icons/bs";
 import { useCourse } from "../contexts/CourseContext";
 import { useAuth } from "../contexts/AuthContext";
 import "../styles/header.css";
@@ -22,6 +24,7 @@ export default function Header({ toggleMenu, menuOpen }) {
 
   const [open, setOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [myCoursesOpen, setMyCoursesOpen] = useState(false);
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -169,6 +172,44 @@ export default function Header({ toggleMenu, menuOpen }) {
                   </svg>
                 </span>
               </div>
+
+              {courses && courses.length > 0 && (
+                <>
+                  <div
+                    className="header__profileItem"
+                    onClick={() => setMyCoursesOpen((v) => !v)}
+                  >
+                    <span>My Courses</span>
+                    <IoChevronDown
+                      className={`header__profileChev ${
+                        myCoursesOpen ? "header__profileChev--open" : ""
+                      }`}
+                    />
+                  </div>
+
+                  {myCoursesOpen && (
+                    <div className="header__profileSubMenu">
+                      {courses.map((c) => (
+                        <div
+                          key={c.id}
+                          className={`header__profileSubItem ${
+                            activeCourse?.id === c.id ? "active" : ""
+                          }`}
+                          onClick={() => {
+                            selectCourse(c.id);
+                            setProfileOpen(false);
+                            setMyCoursesOpen(false);
+                            navigate(`/my-courses/${c.id}`);
+                          }}
+                        >
+                          <BsBook />
+                          <span>{c.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
 
               <div
                 className="header__profileItem"
