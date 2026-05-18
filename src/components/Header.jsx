@@ -193,10 +193,9 @@ export default function Header({ toggleMenu, menuOpen }) {
                         <div
                           key={c.id}
                           className={`header__profileSubItem ${
-                            activeCourse?.id === c.id ? "active" : ""
+                            pathname === `/my-courses/${c.id}` ? "active" : ""
                           }`}
                           onClick={() => {
-                            selectCourse(c.id);
                             setProfileOpen(false);
                             setMyCoursesOpen(false);
                             navigate(`/my-courses/${c.id}`);
