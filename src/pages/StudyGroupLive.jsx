@@ -154,16 +154,6 @@ export default function StudyGroupLive() {
       audio={true}
       onDisconnected={() => navigate("/study-groups")}
     >
-      <div className="sgLive__banner">
-        <span className="sgLive__bannerBadge">STUDY GROUP</span>
-        <span className="sgLive__bannerSubject">
-          {sessionDetail?.subjectName || "Study Group"}
-        </span>
-        <span className="sgLive__bannerCountdown">
-          ⏳ {formatCountdown(remainingMs)} left
-        </span>
-      </div>
-
       <PrivateClassroomUI
         role={(livekitData.role || "student").toLowerCase()}
         session={{
@@ -176,6 +166,21 @@ export default function StudyGroupLive() {
           restPostPath: `/sessions/study-groups/${id}/chat/send/`,
           wsPath:       `/ws/study-group/${id}/chat/`,
         }}
+        /* Study-group props (added 2026-05-18):
+           - studyGroup            : renders the orange STUDY GROUP pill
+                                     in the topbar.
+           - studyGroupRemainingMs : powers the ⏳ MM:SS-left chip in the
+                                     topbar-right. Re-renders every second
+                                     via the parent's countdown tick state.
+           - autoSpotlightLocal    : pin the local tile by default so the
+                                     layout starts in spotlight mode
+                                     (large main + 180px strip), avoiding
+                                     the half-page "membrane" you'd
+                                     otherwise get from pvt-grid-2 when
+                                     the host has no video on. */
+        studyGroup={true}
+        studyGroupRemainingMs={remainingMs}
+        autoSpotlightLocal={true}
       />
       <RoomAudioRenderer />
     </LiveKitRoom>

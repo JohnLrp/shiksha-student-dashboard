@@ -40,6 +40,17 @@ import {
 import { Track } from "livekit-client";
 import { useState, useEffect, useCallback, useRef } from "react";
 
+/* Local helper — formats a remaining-time number (ms) as MM:SS.
+   Mirrors the helper in pages/StudyGroupLive.jsx; kept inline so the
+   classroom UI is self-contained when callers pass remainingMs. */
+function formatRemaining(ms) {
+  if (ms == null || ms < 0) return "--:--";
+  const total = Math.floor(ms / 1000);
+  const mm = String(Math.floor(total / 60)).padStart(2, "0");
+  const ss = String(total % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+}
+
 import "./privateClassroom.css";
 import ChatPanel from "./ChatPanel";
 import api from "../../api/apiClient";
@@ -260,6 +271,21 @@ export default function PrivateClassroomUI({
   noChat = false,
   chatConfig,
   onLeave,
+  // Study-group integration (optional — set by StudyGroupLive.jsx):
+  //   studyGroup            : when true, renders the "STUDY GROUP" pill
+  //                           in the topbar.
+  //   studyGroupRemainingMs : remaining hard-duration of the group in ms.
+  //                           When provided, a ⏳ MM:SS-left chip appears
+  //                           in the topbar-right next to the elapsed timer.
+  //   autoSpotlightLocal    : on first render after the local participant
+  //                           is known, pin the local tile so the layout
+  //                           defaults to spotlight (main + 180px strip)
+  //                           instead of an equal-share grid. Fixes the
+  //                           "membrane" issue where a videoless host
+  //                           tile took half the page in pvt-grid-2.
+  studyGroup = false,
+  studyGroupRemainingMs = null,
+  autoSpotlightLocal = false,
 }) {
   const room = useRoomContext();
   const { user } = useAuth();
@@ -291,9 +317,28 @@ export default function PrivateClassroomUI({
   const [handRaised, setHandRaised] = useState(false);
   const [raisedHands, setRaisedHands] = useState({});
   const [pinnedIds, setPinnedIds] = useState(new Set());
+  // Tracks whether we've already applied the one-shot auto-spotlight so we
+  // don't fight a user's later unpin. Stays false when autoSpotlightLocal
+  // is false (default).
+  const autoSpotlightAppliedRef = useRef(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [soundMuted, setSoundMuted] = useState(soundManager.isMuted());
   const prevParticipantCountRef = useState({ current: null })[0];
+
+  // ── One-shot auto-spotlight for study-group rooms ──
+  // When the parent opts in (autoSpotlightLocal=true), pin the local
+  // participant the first time we have an identity. Without this, study
+  // groups in pvt-grid-2 render the videoless host tile at half-page width
+  // — covering the view ("the membrane"). With it, the layout switches to
+  // pvt-screen-layout (large main + 180px strip), matching the teacher UI.
+  useEffect(() => {
+    if (!autoSpotlightLocal) return;
+    if (autoSpotlightAppliedRef.current) return;
+    const id = localParticipant?.identity;
+    if (!id) return;
+    setPinnedIds(new Set([id]));
+    autoSpotlightAppliedRef.current = true;
+  }, [autoSpotlightLocal, localParticipant?.identity]);
 
   // ── Participant join/leave sound detection ──
   useEffect(() => {
@@ -577,13 +622,31 @@ export default function PrivateClassroomUI({
 
   return (
     <div className={`pvt-room ${sidebarOpen && sidebarTab === "chat" ? "pvt-mobile-chat-open" : ""}`}>
-      {/* ── Top Bar ── */}
+      {/* ── Top Bar ──
+          For study-group rooms (studyGroup=true) we render the STUDY GROUP
+          pill on the left and the ⏳ remaining-time chip on the right.
+          Previously these lived in a separate position:fixed banner
+          (.sgLive__banner) which was rendered inside the LiveKit tree and
+          sometimes got captured by an ancestor's transform → it floated
+          mid-page and looked like a "membrane" over the host's tile.
+          Inlining them here keeps them in normal flow and pinned to the
+          actual top of the room. */}
       <div className="pvt-topbar">
         <div className="pvt-topbar-left">
-          <div className="pvt-session-name">{session?.subject || "Private Session"}</div>
-          <div className="pvt-session-sub">{session?.topic || session?.subject || "Private Session"}</div>
+          {studyGroup && (
+            <span className="pvt-sg-badge" title="Study Group session">
+              STUDY GROUP
+            </span>
+          )}
+          <div className="pvt-session-name">{session?.subject || (studyGroup ? "Study Group" : "Private Session")}</div>
+          <div className="pvt-session-sub">{session?.topic || session?.subject || (studyGroup ? "Study Group" : "Private Session")}</div>
         </div>
         <div className="pvt-topbar-right">
+          {studyGroup && studyGroupRemainingMs != null && (
+            <span className="pvt-sg-countdown" title="Time remaining for this study group">
+              ⏳ {formatRemaining(studyGroupRemainingMs)} left
+            </span>
+          )}
           <span className="pvt-timer">⏱ {timer}</span>
           <span className="pvt-count">👥 {participants.length}</span>
         </div>
