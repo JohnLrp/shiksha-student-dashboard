@@ -57,12 +57,66 @@ function shortId(id) {
   return String(id).length > 10 ? `${String(id).slice(0, 8)}…` : id;
 }
 
+/**
+ * Returns true if this study group should no longer appear in Upcoming.
+ *
+ * Three time-based exit triggers — any one suffices:
+ *   1. status is terminal (completed/cancelled/expired). Backend should
+ *      already have routed these to History, but we guard anyway.
+ *   2. status is 'live' AND now >= room_started_at + duration. The
+ *      Celery hard-cutoff and 6h cleanup cron handle this server-side,
+ *      but neither fires the instant the duration elapses — this client
+ *      check makes the card vanish exactly on time.
+ *   3. status is still 'scheduled' but the entire scheduled window
+ *      (start + duration) has elapsed without anyone opening the room.
+ *      Same idea as the backend's past_orphan_q, but tighter — we use
+ *      start+duration rather than just start, so a 5-minute "grace
+ *      period" overlap (where the start time has passed but duration
+ *      hasn't fully elapsed yet) keeps the card visible.
+ */
+function isEndedNow(g) {
+  if (!g) return false;
+  if (g.status === "completed" || g.status === "cancelled" || g.status === "expired") {
+    return true;
+  }
+  const durMs = (g.durationMinutes || 0) * 60_000;
+  if (g.status === "live" && g.roomStartedAt && durMs > 0) {
+    const end = new Date(g.roomStartedAt).getTime() + durMs;
+    if (!Number.isNaN(end) && Date.now() >= end) return true;
+  }
+  if (g.status === "scheduled" && !g.roomStartedAt && g.date && g.time && durMs > 0) {
+    const start = new Date(`${g.date}T${g.time}`).getTime();
+    if (!Number.isNaN(start) && Date.now() >= start + durMs) return true;
+  }
+  return false;
+}
+
 /* ═══════════════════════════════════════════════════════════
    STUDY GROUP CARD
 ═══════════════════════════════════════════════════════════ */
-function StudyGroupCard({ group, onOpen }) {
+function StudyGroupCard({ group, onOpen, selectMode = false, selected = false, onToggleSelect }) {
+  // In selection mode the card itself becomes a toggle, not an opener.
+  // The checkbox is rendered in the top-right corner so it doesn't fight
+  // the status pill for space.
+  const handleClick = (e) => {
+    if (selectMode) {
+      e.preventDefault();
+      onToggleSelect?.(group.id);
+    } else {
+      onOpen(group);
+    }
+  };
+  const cardClass = `sg__card sg__card--${group.status}${selectMode ? " sg__card--selectMode" : ""}${selected ? " sg__card--selected" : ""}`;
   return (
-    <div className={`sg__card sg__card--${group.status}`} onClick={() => onOpen(group)}>
+    <div className={cardClass} onClick={handleClick}>
+      {selectMode && (
+        <span
+          className={`sg__cardSelectBox${selected ? " sg__cardSelectBox--on" : ""}`}
+          aria-hidden="true"
+        >
+          {selected ? "✓" : ""}
+        </span>
+      )}
       <div className="sg__cardTop">
         <div className="sg__cardSubject">{group.subjectName}</div>
         <span className={`sg__statusPill sg__statusPill--${group.status}`}>
@@ -539,6 +593,28 @@ function StudyGroupDetail({ group, onBack, onChanged }) {
   const isPast = scheduledAt ? scheduledAt.getTime() <= Date.now() : false;
   const roomOpened = Boolean(data.roomStartedAt);
 
+  // Time-based "session has ended" check. The backend flips status to
+  // 'completed' via the Celery hard-cutoff task and the join-attempt
+  // fallback (study_group_views.join_study_group line ~916), but those
+  // fire at trigger points — if the user has the detail page open at the
+  // exact moment the duration elapses, the status flip arrives via
+  // refresh/broadcast, not by itself. Computing this client-side here
+  // means STATUS and the JOIN ROOM button update instantly without
+  // waiting for a re-fetch, AND it prevents the "click JOIN ROOM, get
+  // 400 from /join/" failure mode that prompted this fix.
+  const isEndedByTime = useMemo(() => {
+    if (data.status === "live" && data.roomStartedAt && data.durationMinutes) {
+      const end =
+        new Date(data.roomStartedAt).getTime() + data.durationMinutes * 60_000;
+      if (!Number.isNaN(end) && Date.now() >= end) return true;
+    }
+    return false;
+  }, [data.status, data.roomStartedAt, data.durationMinutes]);
+
+  // What the UI should treat the status as. Backend may still say "live",
+  // but if duration has elapsed we render it as completed.
+  const effectiveStatus = isEndedByTime ? "completed" : data.status;
+
   // Host is implicitly accepted, but is the only one who can start the
   // room. Once the host has opened the room (room_started_at is set and
   // status has flipped to live), every accepted invitee can join.
@@ -555,13 +631,13 @@ function StudyGroupDetail({ group, onBack, onChanged }) {
   );
   const canHostStart =
     isHost &&
-    data.status === "scheduled" &&
+    effectiveStatus === "scheduled" &&
     !roomOpened &&
     !isPast &&
     acceptedNonHost.length >= 1;
   const canJoinLive =
     (isHost || myInviteStatus === "accepted") &&
-    data.status === "live" &&
+    effectiveStatus === "live" &&
     roomOpened;
   const canJoin = canHostStart || canJoinLive;
   const joinLabel = canHostStart ? "START ROOM" : "JOIN ROOM";
@@ -679,8 +755,8 @@ function StudyGroupDetail({ group, onBack, onChanged }) {
         <button className="sg__backBtn" onClick={onBack}>‹ Back to Study Groups</button>
       </div>
 
-      <div className={`sg__statusBar sg__statusBar--${data.status}`}>
-        <span>STATUS: {statusLabel(data.status)}</span>
+      <div className={`sg__statusBar sg__statusBar--${effectiveStatus}`}>
+        <span>STATUS: {statusLabel(effectiveStatus)}</span>
         {canJoin && (
           <button
             className="sg__joinBtn"
@@ -690,7 +766,7 @@ function StudyGroupDetail({ group, onBack, onChanged }) {
             {joinLabel}
           </button>
         )}
-        {isHost && data.status === "scheduled" && !roomOpened && (
+        {isHost && effectiveStatus === "scheduled" && !roomOpened && (
           <button
             className="sg__cancelBtn"
             onClick={confirmCancelGroup}
@@ -713,6 +789,21 @@ function StudyGroupDetail({ group, onBack, onChanged }) {
               Reason: {data.cancelReason}
             </span>
           )}
+        </div>
+      )}
+
+      {/* "Duration elapsed while the user has the page open" — surfaced
+          immediately so we don't have to wait for the next list refresh
+          or for the host to manually close the room. Skipped when the
+          group is already in a terminal state, since those have their
+          own banners above. */}
+      {isEndedByTime && data.status !== "cancelled" && (
+        <div className="sg__cancelBanner sg__cancelBanner--muted">
+          <strong>This study group has ended.</strong>
+          <span className="sg__cancelBannerReason">
+            The scheduled duration has elapsed. It will move to History
+            on the next refresh.
+          </span>
         </div>
       )}
 
@@ -1056,6 +1147,32 @@ export default function StudyGroups() {
   const [selected, setSelected] = useState(null);
   const [pendingInvites, setPendingInvites] = useState(0);
 
+  // History selection state — Clear All and Select / Delete N for cleanup.
+  // Reset whenever the tab changes so we don't carry stale selections in.
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [historyBusy, setHistoryBusy] = useState(false);
+  const [historyDlg, setHistoryDlg] = useState(null);
+
+  // Ticker that bumps every 15s while the Upcoming tab is showing. Used
+  // only to trigger the isEndedNow re-evaluation in the useMemo below —
+  // not for re-fetching, since the time-based filter is a pure client
+  // computation. The list itself still refreshes on tab change / explicit
+  // user action.
+  // eslint-disable-next-line no-unused-vars
+  const [_tick, setTick] = useState(0);
+  useEffect(() => {
+    if (tab !== "upcoming") return undefined;
+    const id = setInterval(() => setTick((t) => t + 1), 15_000);
+    return () => clearInterval(id);
+  }, [tab]);
+
+  // Reset selection state whenever the tab switches.
+  useEffect(() => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  }, [tab]);
+
   const loadGroups = useCallback(async (targetTab = tab) => {
     setLoading(true);
     try {
@@ -1081,6 +1198,16 @@ export default function StudyGroups() {
   useEffect(() => { loadGroups(tab); }, [tab, loadGroups]);
   useEffect(() => { refreshPendingCount(); }, [refreshPendingCount]);
 
+  // Visible cards = backend response minus time-expired ones on Upcoming.
+  // _tick is referenced via setTick → state change → re-render, which
+  // re-runs isEndedNow with a fresh Date.now(). On History/Invitations
+  // tabs we pass through unchanged.
+  const visibleGroups = useMemo(() => {
+    if (tab !== "upcoming") return groups;
+    return groups.filter((g) => !isEndedNow(g));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groups, tab, _tick]);
+
   const handleCreated = (sg) => {
     setTab("upcoming");
     loadGroups("upcoming");
@@ -1090,6 +1217,80 @@ export default function StudyGroups() {
   const handleChanged = () => {
     loadGroups(tab);
     refreshPendingCount();
+  };
+
+  const toggleSelectId = (id) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
+
+  const deleteSelected = async () => {
+    if (selectedIds.size === 0) return;
+    setHistoryBusy(true);
+    try {
+      await studyGroupService.clearHistory({
+        sessionIds: Array.from(selectedIds),
+      });
+      exitSelectMode();
+      loadGroups("history");
+    } catch {
+      // Errors here are rare (auth/transient) — swallow and let the user
+      // try again. A toast system would be ideal but the page doesn't have
+      // one wired in for this surface yet.
+    } finally {
+      setHistoryBusy(false);
+      setHistoryDlg(null);
+    }
+  };
+
+  const deleteAllHistory = async () => {
+    setHistoryBusy(true);
+    try {
+      await studyGroupService.clearHistory({ all: true });
+      exitSelectMode();
+      loadGroups("history");
+    } catch {
+      // see note above
+    } finally {
+      setHistoryBusy(false);
+      setHistoryDlg(null);
+    }
+  };
+
+  const confirmDeleteSelected = () => {
+    setHistoryDlg({
+      title: `Delete ${selectedIds.size} from history?`,
+      message:
+        "These study groups will disappear from your History. " +
+        "Other participants and the host will still see them.",
+      confirmLabel: `Delete ${selectedIds.size}`,
+      cancelLabel: "Keep",
+      danger: true,
+      onConfirm: deleteSelected,
+    });
+  };
+
+  const confirmDeleteAll = () => {
+    setHistoryDlg({
+      title: "Clear all history?",
+      message:
+        "Every past study group in your History will be removed from your " +
+        "view. Other participants and the host will still see them. " +
+        "This can't be undone.",
+      confirmLabel: "Clear all",
+      cancelLabel: "Keep",
+      danger: true,
+      onConfirm: deleteAllHistory,
+    });
   };
 
   if (selected) {
@@ -1104,6 +1305,8 @@ export default function StudyGroups() {
       </div>
     );
   }
+
+  const isHistory = tab === "history";
 
   return (
     <div className="sg__page">
@@ -1134,9 +1337,56 @@ export default function StudyGroups() {
         </button>
       </div>
 
+      {/* History-tab cleanup controls. Only render when there's actually
+          something to clear, otherwise they'd be misleading. */}
+      {isHistory && !loading && groups.length > 0 && (
+        <div className="sg__historyTools">
+          {!selectMode ? (
+            <>
+              <button
+                className="sg__btnGhost"
+                onClick={() => setSelectMode(true)}
+                disabled={historyBusy}
+              >
+                Select
+              </button>
+              <button
+                className="sg__btnDangerGhost"
+                onClick={confirmDeleteAll}
+                disabled={historyBusy}
+              >
+                Clear All History
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="sg__historyToolsLabel">
+                {selectedIds.size === 0
+                  ? "Select cards to delete"
+                  : `${selectedIds.size} selected`}
+              </span>
+              <button
+                className="sg__btnDanger"
+                onClick={confirmDeleteSelected}
+                disabled={historyBusy || selectedIds.size === 0}
+              >
+                Delete Selected
+              </button>
+              <button
+                className="sg__btnGhost"
+                onClick={exitSelectMode}
+                disabled={historyBusy}
+              >
+                Cancel
+              </button>
+            </>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <div className="sg__loading">Loading study groups…</div>
-      ) : groups.length === 0 ? (
+      ) : visibleGroups.length === 0 ? (
         <div className="sg__empty">
           {tab === "upcoming" && "No upcoming study groups. Create one to get started!"}
           {tab === "invites" && "You have no pending invitations."}
@@ -1144,8 +1394,15 @@ export default function StudyGroups() {
         </div>
       ) : (
         <div className="sg__grid">
-          {groups.map((g) => (
-            <StudyGroupCard key={g.id} group={g} onOpen={setSelected} />
+          {visibleGroups.map((g) => (
+            <StudyGroupCard
+              key={g.id}
+              group={g}
+              onOpen={setSelected}
+              selectMode={isHistory && selectMode}
+              selected={selectedIds.has(g.id)}
+              onToggleSelect={toggleSelectId}
+            />
           ))}
         </div>
       )}
@@ -1156,6 +1413,11 @@ export default function StudyGroups() {
           onCreated={handleCreated}
         />
       )}
+
+      <ConfirmDialog
+        dialog={historyDlg ? { ...historyDlg, busy: historyBusy } : null}
+        onClose={() => (historyBusy ? null : setHistoryDlg(null))}
+      />
     </div>
   );
 }

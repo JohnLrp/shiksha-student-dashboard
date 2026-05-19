@@ -34,7 +34,7 @@ export default function RaiseHandButton() {
       console.error("raise-hand failed", e);
     }
   };
-
+/*
   return (
     <button
       className={"raise-hand-btn" + (raised ? " raised" : "")}
@@ -44,4 +44,5 @@ export default function RaiseHandButton() {
       {raised ? "👇 Lower Hand" : "✋ Raise Hand"}
     </button>
   );
+    */
 }

@@ -39,11 +39,46 @@ body,
   gap: 12px;
 }
 
-.pvt-topbar-left { display: flex; flex-direction: column; }
+.pvt-topbar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .pvt-session-name { font-size: 14px; font-weight: 700; color: #e8eaf2; }
 .pvt-session-sub { font-size: 11px; color: #6b7591; margin-top: 1px; }
 
+/* Study-group pill in the topbar-left. Replaces the old floating
+   .sgLive__banner — same orange brand colour, just inlined into the
+   topbar so it can't drift on top of the video tiles. */
+.pvt-sg-badge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  background: #f97316;
+  color: #fff;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  line-height: 1.4;
+  margin-bottom: 1px;
+}
+
 .pvt-topbar-right { display: flex; align-items: center; gap: 10px; }
+/* Study-group remaining-time chip — sits next to .pvt-timer when active. */
+.pvt-sg-countdown {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fed7aa;
+  font-variant-numeric: tabular-nums;
+  background: rgba(249, 115, 22, 0.18);
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(249, 115, 22, 0.45);
+}
 .pvt-timer {
   font-size: 13px; font-weight: 600; color: #a0aec0;
   font-variant-numeric: tabular-nums;
@@ -914,8 +949,8 @@ body,
 .chat-row.other { justify-content: flex-start; }
 
 .chat-bubble {
-  max-width: 78%;
-  background: rgba(255,255,255,0.07);
+  width: 100%;
+  background: #415B7E;
   border-radius: 12px 12px 12px 2px;
   padding: 8px 12px;
   display: flex;
@@ -924,7 +959,7 @@ body,
 }
 
 .me-bubble {
-  background: rgba(79,126,247,0.25);
+  background: #015865;
   border-radius: 12px 12px 2px 12px;
 }
 
@@ -965,17 +1000,17 @@ body,
   padding: 10px 12px;
   border-top: 1px solid rgba(255,255,255,0.06);
   flex-shrink: 0;
-  background: #161b27;
+  background: #F0F6FA;
 }
 
 .chat-input-area input {
   flex: 1;
-  background: rgba(255,255,255,0.06);
+  background: #F0F6FA;
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 20px;
   padding: 8px 14px;
   font-size: 13px;
-  color: #e8eaf2;
+  color: black;
   outline: none;
   font-family: inherit;
   transition: border-color 0.15s;
