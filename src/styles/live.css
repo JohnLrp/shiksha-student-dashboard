@@ -154,7 +154,7 @@
 }
 
 /* ============================================================
-   SIDEBAR
+   SIDEBAR — transparent so the two cp- cards each show their own shadow
    ============================================================ */
 
 .right-sidebar {
@@ -162,11 +162,10 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: white;
-  border-radius: 22px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
 }
-
 
 /* ============================================================
    CONTROL BAR
@@ -304,16 +303,8 @@
     position: absolute;
     top: 58px; left: 0; right: 0; bottom: 76px;
     z-index: 150;
-    border-radius: 18px;
+    border-radius: 0;
   }
-
-  .cp-tab        { font-size: 13px; height: 50px; }
-  .cp-messages   { padding: 12px; }
-  .cp-bubble     { max-width: 88%; padding: 10px 13px; }
-  .cp-text       { font-size: 14px; }
-  .cp-p-card     { padding: 10px; }
-  .cp-p-avatar   { width: 40px; height: 40px; font-size: 14px; }
-  .cp-p-name     { font-size: 14px; }
 
   .control-bar {
     width: calc(100vw - 16px);
@@ -328,10 +319,7 @@
 
 @media (max-width: 480px) {
   .main-stage    { border-radius: 14px; }
-  .right-sidebar { border-radius: 14px; }
-  .cp-input-area { padding: 10px; }
-  .cp-input      { height: 42px; font-size: 13px; }
-  .cp-send-btn   { width: 42px; height: 42px; }
+  .right-sidebar { border-radius: 0; }
   .control-bar   { gap: 4px; }
   .ctrl-btn      { font-size: 8px; }
 }
