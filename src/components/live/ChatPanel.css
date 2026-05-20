@@ -20,9 +20,6 @@
   --cp-radius-bubble: 14px;
 }
 
-/* ─────────────────────────────
-   OUTER — holds both cards with a gap between them
-───────────────────────────── */
 .cp-outer {
   height: 100%;
   min-height: 0;
@@ -32,9 +29,6 @@
   background: transparent;
 }
 
-/* ─────────────────────────────
-   TOP CARD: tabs + messages
-───────────────────────────── */
 .cp-wrap {
   flex: 1;
   min-height: 0;
@@ -47,9 +41,6 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
 }
 
-/* ─────────────────────────────
-   TABS
-───────────────────────────── */
 .cp-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -90,14 +81,10 @@
   background: var(--cp-teal);
 }
 
-/* remove the old underline */
 .cp-tab--active::after {
   content: none;
 }
 
-/* ─────────────────────────────
-   CHAT BODY
-───────────────────────────── */
 .cp-chat-body {
   flex: 1;
   min-height: 0;
@@ -106,9 +93,7 @@
   background: var(--cp-surface);
 }
 
-/* ─────────────────────────────
-   MESSAGES
-───────────────────────────── */
+
 .cp-messages {
   flex: 1;
   min-height: 0;
@@ -133,9 +118,6 @@
   margin-top: 20px;
 }
 
-/* ─────────────────────────────
-   MESSAGE ROW
-───────────────────────────── */
 .cp-row {
   display: flex;
   flex-direction: column;
@@ -164,9 +146,6 @@
   color: var(--cp-text-muted);
 }
 
-/* ─────────────────────────────
-   BUBBLES
-───────────────────────────── */
 .cp-bubble {
   padding: 5px 10px;
   border-radius: var(--cp-radius-bubble);
@@ -199,10 +178,6 @@
   color: #ffffff;
 }
 
-/* ─────────────────────────────
-   BOTTOM CARD: INPUT AREA
-   Sibling of .cp-wrap — the .cp-outer gap creates the separation
-───────────────────────────── */
 .cp-input-area {
   flex-shrink: 0;
   display: flex;
@@ -254,9 +229,6 @@
   transform: translateX(2px) scale(0.96);
 }
 
-/* ─────────────────────────────
-   PARTICIPANTS
-───────────────────────────── */
 .cp-participants {
   flex: 1;
   min-height: 0;
@@ -346,9 +318,6 @@
   background: rgba(255, 255, 255, 0.32);
 }
 
-/* ─────────────────────────────
-   MOBILE
-───────────────────────────── */
 @media (max-width: 768px) {
   .cp-outer    { gap: 12px; }
   .cp-tab      { font-size: 13px; height: 50px; }

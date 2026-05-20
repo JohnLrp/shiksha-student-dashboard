@@ -4,7 +4,7 @@ import {
 } from "@livekit/components-react";
 import { useState, useEffect, useRef } from "react";
 
-export default function ControlBar({ onLeave, role }) {
+export default function ControlBar({ onLeave, role, activePanel, onTogglePanel }) {
   const isStudent = role !== "PRESENTER";
 
   const room = useRoomContext();
@@ -219,7 +219,11 @@ export default function ControlBar({ onLeave, role }) {
 
       {/* RIGHT — Info / People / Chat */}
       <div className="cb-right">
-        <button className="cb-side-btn" title="Info">
+        <button
+          className={`cb-side-btn ${activePanel === "info" ? "cb-side-btn--active" : ""}`}
+          onClick={() => onTogglePanel("info")}
+          title="Session info"
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="16" x2="12" y2="12"/>
@@ -228,7 +232,11 @@ export default function ControlBar({ onLeave, role }) {
           <span>Info</span>
         </button>
 
-        <button className="cb-side-btn" title="People">
+        <button
+          className={`cb-side-btn ${activePanel === "people" ? "cb-side-btn--active" : ""}`}
+          onClick={() => onTogglePanel("people")}
+          title="Participants"
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
             <circle cx="9" cy="7" r="4"/>
@@ -238,7 +246,11 @@ export default function ControlBar({ onLeave, role }) {
           <span>People</span>
         </button>
 
-        <button className="cb-side-btn" title="Chat">
+        <button
+          className={`cb-side-btn ${activePanel === "chat" ? "cb-side-btn--active" : ""}`}
+          onClick={() => onTogglePanel("chat")}
+          title="Chat"
+        >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
           </svg>

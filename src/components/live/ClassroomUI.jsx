@@ -21,6 +21,8 @@ export default function ClassroomUI({
   const [sessionStatus, setSessionStatus] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
+  const [activePanel, setActivePanel] = useState(null);
+
   const containerRef = useRef(null);
   const room = useRoomContext();
 
@@ -38,46 +40,36 @@ export default function ClassroomUI({
     setSessionStatus(hookStatus);
   }, [hookStatus]);
 
-  /* ───── FULLSCREEN — true browser fullscreen (hides Chrome UI) ───── */
+  /* ───── PANEL TOGGLE ───── */
+  const togglePanel = (panel) => {
+    setActivePanel((current) => (current === panel ? null : panel));
+  };
+
+  /* ───── FULLSCREEN ───── */
   const toggleFullscreen = async () => {
     try {
       if (!document.fullscreenElement) {
-        // Enter fullscreen
         const el = containerRef.current;
-        if (el?.requestFullscreen) {
-          await el.requestFullscreen();
-        } else if (el?.webkitRequestFullscreen) {
-          await el.webkitRequestFullscreen();
-        } else if (el?.msRequestFullscreen) {
-          await el.msRequestFullscreen();
-        }
+        if (el?.requestFullscreen) await el.requestFullscreen();
+        else if (el?.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+        else if (el?.msRequestFullscreen) await el.msRequestFullscreen();
       } else {
-        // Exit fullscreen
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-          await document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-          await document.msExitFullscreen();
-        }
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) await document.msExitFullscreen();
       }
     } catch (e) {
       console.error("Fullscreen failed:", e);
     }
   };
 
-  /* Sync state with actual browser fullscreen (handles Escape, F11, browser exit) */
   useEffect(() => {
-    const onFSChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
-    };
+    const onFSChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", onFSChange);
     document.addEventListener("webkitfullscreenchange", onFSChange);
-    document.addEventListener("msfullscreenchange", onFSChange);
     return () => {
       document.removeEventListener("fullscreenchange", onFSChange);
       document.removeEventListener("webkitfullscreenchange", onFSChange);
-      document.removeEventListener("msfullscreenchange", onFSChange);
     };
   }, []);
 
@@ -178,10 +170,21 @@ export default function ClassroomUI({
     );
   }
 
+  const participantsList = room.remoteParticipants
+    ? Array.from(room.remoteParticipants.values()).map((p) => ({
+        name: p.name || p.identity,
+        role: "Student",
+      }))
+    : [];
+
   /* ───── MAIN UI ───── */
   return (
     <div
-      className={"classroom-layout" + (isFullscreen ? " fs-mode" : "")}
+      className={
+        "classroom-layout" +
+        (isFullscreen ? " fs-mode" : "") +
+        (!activePanel ? " panel-closed" : "")
+      }
       ref={containerRef}
     >
 
@@ -213,7 +216,6 @@ export default function ClassroomUI({
             <TeacherControls sessionId={sessionId} onLeave={onLeave} />
           )}
 
-          {/* FULLSCREEN BUTTON */}
           <button
             className="video-fs-btn"
             onClick={toggleFullscreen}
@@ -225,31 +227,100 @@ export default function ClassroomUI({
         </div>
 
         {/* CONTROL BAR */}
-        <ControlBar onLeave={onLeave} role={role} />
-      </div>
-
-      {/* RIGHT COLUMN: chat panel */}
-      <div className="right-sidebar">
-        <ChatPanel
+        <ControlBar
+          onLeave={onLeave}
           role={role}
-          messages={chatMessages}
-          onSendMessage={sendMessage}
-          participants={
-            room.remoteParticipants
-              ? Array.from(room.remoteParticipants.values()).map((p) => ({
-                  name: p.name || p.identity,
-                  role: "Student",
-                }))
-              : []
-          }
+          activePanel={activePanel}
+          onTogglePanel={togglePanel}
         />
-
-        {!isPresenter && (
-          <div className="chat-raise-hand-wrap">
-            <RaiseHandButton />
-          </div>
-        )}
       </div>
+
+      {activePanel && (
+        <div className="right-sidebar">
+
+          {activePanel === "chat" && (
+            <>
+              <ChatPanel
+                role={role}
+                messages={chatMessages}
+                onSendMessage={sendMessage}
+                participants={participantsList}
+              />
+              {!isPresenter && (
+                <div className="chat-raise-hand-wrap">
+                  <RaiseHandButton />
+                </div>
+              )}
+            </>
+          )}
+
+          {activePanel === "people" && (
+            <div className="side-panel">
+              <div className="side-panel__header">
+                <h3>People ({participantsList.length})</h3>
+                <button
+                  className="side-panel__close"
+                  onClick={() => setActivePanel(null)}
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="side-panel__body">
+                {participantsList.length === 0 ? (
+                  <p className="side-panel__empty">No participants yet.</p>
+                ) : (
+                  participantsList.map((p, i) => (
+                    <div className="side-panel__row" key={i}>
+                      <div className="side-panel__avatar">
+                        {p.name?.charAt(0)?.toUpperCase() || "?"}
+                      </div>
+                      <div className="side-panel__info">
+                        <div className="side-panel__name">{p.name}</div>
+                        <div className="side-panel__role">{p.role}</div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {activePanel === "info" && (
+            <div className="side-panel">
+              <div className="side-panel__header">
+                <h3>Session Info</h3>
+                <button
+                  className="side-panel__close"
+                  onClick={() => setActivePanel(null)}
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="side-panel__body">
+                <div className="side-panel__field">
+                  <div className="side-panel__field-label">Session ID</div>
+                  <div className="side-panel__field-value">{sessionId}</div>
+                </div>
+                <div className="side-panel__field">
+                  <div className="side-panel__field-label">Your role</div>
+                  <div className="side-panel__field-value">
+                    {isPresenter ? "Teacher" : "Student"}
+                  </div>
+                </div>
+                <div className="side-panel__field">
+                  <div className="side-panel__field-label">Participants</div>
+                  <div className="side-panel__field-value">
+                    {participantsList.length + 1}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </div>
+      )}
 
     </div>
   );
