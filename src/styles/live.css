@@ -3,60 +3,18 @@
    ============================================================ */
 
 :root {
-  --ls-bg: #0d1117;
+  --ls-bg: #c9dde1;
   --ls-surface: #161b22;
-  --ls-surface2: #1c2230;
-  --ls-border: rgba(255,255,255,.08);
-  --ls-brand: #005f6f;
-  --ls-brand-dim: rgba(0,95,111,.15);
   --ls-text: #e6edf3;
   --ls-muted: rgba(230,237,243,.5);
   --ls-red: #f85149;
   --ls-red-dim: rgba(248,81,73,.15);
-  --ls-green: #3fb950;
-  --ls-yellow: #d29922;
-  --ls-radius: 18px;
-  --ls-radius-sm: 12px;
   --ls-shadow: 0 8px 32px rgba(0,0,0,.4);
-  --ls-shadow-sm: 0 4px 16px rgba(0,0,0,.25);
+  --ls-shadow-sm: 0 4px 16px rgba(0,0,0,.06);
 }
 
 /* ============================================================
-   PARENT LAYOUT
-   ============================================================ */
-
-.studentLayout__right:has(.lk-room-container) {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.studentLayout__right:has(.lk-room-container) .studentLayout__page {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-  overflow: hidden !important;
-  display: flex !important;
-  padding: 12px !important;
-}
-
-.lk-room-container {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-}
-
-.lk-room-container > div {
-  width: 100%;
-  height: 100%;
-}
-
-/* ============================================================
-   MAIN GRID
+   MAIN GRID — video+controls left, chat right
    ============================================================ */
 
 .classroom-layout {
@@ -66,23 +24,30 @@
   grid-template-columns: 1fr 360px;
   gap: 14px;
   align-items: stretch;
+  width: 100%;
+  height: 100%;
+}
+
+.classroom-main {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 /* ============================================================
-   VIDEO STAGE
+   VIDEO STAGE (no overlay buttons anymore)
    ============================================================ */
 
 .main-stage {
+  flex: 1;
   min-height: 0;
   position: relative;
   border-radius: 20px;
   overflow: hidden;
-  background: var(--ls-surface);
+  background: #0a0a0a;
   box-shadow: var(--ls-shadow);
-}
-
-.main-stage.full-width {
-  grid-column: 1 / -1;
 }
 
 .main-stage video {
@@ -103,7 +68,7 @@
 
 .pip-camera {
   position: absolute;
-  bottom: 90px;
+  bottom: 18px;
   right: 18px;
   width: 190px;
   height: 120px;
@@ -121,40 +86,7 @@
 }
 
 /* ============================================================
-   OVERLAY BUTTONS
-   ============================================================ */
-
-.video-overlay-actions {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  z-index: 100;
-  display: flex;
-  gap: 8px;
-}
-
-.ov-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  border: 1px solid rgba(255,255,255,.18);
-  background: rgba(0,0,0,.55);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(12px);
-  cursor: pointer;
-  transition: 0.2s ease;
-}
-
-.ov-btn:hover {
-  transform: scale(1.08);
-  background: rgba(0,0,0,.7);
-}
-
-/* ============================================================
-   SIDEBAR — transparent so the two cp- cards each show their own shadow
+   SIDEBAR — transparent so child cp- cards show shadows
    ============================================================ */
 
 .right-sidebar {
@@ -168,45 +100,102 @@
 }
 
 /* ============================================================
-   CONTROL BAR
+   CONTROL BAR — sits below video in normal flow
    ============================================================ */
 
 .control-bar {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 200;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  border-radius: 999px;
-  background: rgba(22,27,34,.88);
-  border: 1px solid rgba(255,255,255,.08);
-  backdrop-filter: blur(20px);
-  box-shadow: var(--ls-shadow);
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: var(--ls-shadow-sm);
+  min-height: 72px;
 }
 
-.ctrl-btn {
+/* TIMER */
+.cb-timer {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+  font-variant-numeric: tabular-nums;
+  min-width: 80px;
+}
+
+/* CENTER GROUP */
+.cb-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex: 1;
+}
+
+.cb-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  min-width: 68px;
-  padding: 10px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.08);
-  background: #1f2937;
-  color: white;
+  border: none;
+  background: transparent;
   cursor: pointer;
-  transition: 0.2s ease;
+  padding: 0;
+  transition: transform 0.15s ease;
 }
 
-.ctrl-btn:hover { transform: translateY(-2px); }
-.ctrl-btn--off { background: rgba(248,81,73,.12); color: #f85149; }
-.ctrl-btn--active { background: rgba(0,95,111,.2); color: #0ea5a5; }
-.ctrl-btn--leave { background: rgba(248,81,73,.15); color: #f85149; }
+.cb-btn:hover { transform: translateY(-2px); }
+
+.cb-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #1f2937;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.cb-icon--off    { background: var(--ls-red-dim); color: var(--ls-red); }
+.cb-icon--active { background: rgba(0,95,111,.18); color: #005f6f; }
+.cb-icon--leave  { background: var(--ls-red-dim); color: var(--ls-red); }
+
+.cb-label {
+  font-size: 11px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* RIGHT GROUP */
+.cb-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cb-side-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 6px;
+  transition: color 0.15s ease;
+}
+
+.cb-side-btn span {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.cb-side-btn:hover { color: #005f6f; }
 
 /* ============================================================
    RAISE HAND
@@ -215,7 +204,7 @@
 .chat-raise-hand-wrap {
   position: absolute;
   right: 14px;
-  bottom: 84px;
+  bottom: 100px;
   z-index: 300;
 }
 
@@ -234,6 +223,34 @@
 }
 
 /* ============================================================
+   PAUSED SCREEN
+   ============================================================ */
+
+.ls-paused {
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: #0d1117;
+  color: #e8eaf2;
+  gap: 16px;
+  text-align: center;
+  padding: 24px;
+  border-radius: 20px;
+}
+
+.ls-paused__icon {
+  font-size: 52px;
+  line-height: 1;
+}
+
+.ls-paused h2 { margin: 0; font-weight: 600; }
+.ls-paused p { color: #6b7591; margin: 0; font-size: 14px; }
+
+/* ============================================================
    WAITING SCREEN
    ============================================================ */
 
@@ -245,6 +262,7 @@
   align-items: center;
   justify-content: center;
   background: #0d1117;
+  border-radius: 20px;
 }
 
 .waiting-card {
@@ -256,7 +274,7 @@
 }
 
 .waiting-card h2 { margin-top: 18px; color: white; }
-.waiting-card p  { color: rgba(255,255,255,.6); }
+.waiting-card p { color: rgba(255,255,255,.6); }
 
 .waiting-pulse {
   width: 52px;
@@ -270,21 +288,31 @@
 
 @keyframes pulse {
   0%,100% { transform: scale(1); opacity: 1; }
-  50%      { transform: scale(1.12); opacity: .6; }
+  50%     { transform: scale(1.12); opacity: .6; }
 }
 
 /* ============================================================
-   FULLSCREEN
+   TOASTS
    ============================================================ */
 
-.classroom-layout.fs-mode {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 9999;
-  background: #0f172a;
-  gap: 0;
+.rh-toasts {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rh-toast {
+  background: rgba(0,0,0,.8);
+  color: white;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  backdrop-filter: blur(12px);
 }
 
 /* ============================================================
@@ -297,29 +325,24 @@
     gap: 8px;
   }
 
-  .main-stage { min-height: calc(100vh - 110px); }
-
-  .right-sidebar {
-    position: absolute;
-    top: 58px; left: 0; right: 0; bottom: 76px;
-    z-index: 150;
-    border-radius: 0;
-  }
+  .classroom-main { gap: 8px; }
 
   .control-bar {
-    width: calc(100vw - 16px);
-    bottom: 6px;
-    padding: 8px;
+    padding: 8px 10px;
+    min-height: 60px;
   }
 
-  .ctrl-btn { flex: 1; min-width: 0; font-size: 10px; padding: 8px 4px; }
+  .cb-center { gap: 10px; }
+  .cb-right { gap: 8px; }
+  .cb-icon { width: 34px; height: 34px; }
+  .cb-label, .cb-side-btn span { font-size: 10px; }
 
-  .pip-camera { width: 100px; height: 66px; right: 10px; bottom: 90px; }
+  .pip-camera { width: 100px; height: 66px; right: 10px; bottom: 10px; }
 }
 
 @media (max-width: 480px) {
-  .main-stage    { border-radius: 14px; }
-  .right-sidebar { border-radius: 0; }
-  .control-bar   { gap: 4px; }
-  .ctrl-btn      { font-size: 8px; }
+  .main-stage { border-radius: 14px; }
+  .control-bar { border-radius: 14px; padding: 6px 8px; }
+  .cb-icon { width: 30px; height: 30px; }
+  .cb-timer { font-size: 12px; min-width: 60px; }
 }

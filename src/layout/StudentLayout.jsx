@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import useSwipeBack from "../utils/useSwipeBack";
@@ -7,9 +7,13 @@ import "../styles/studentLayout.css";
 
 export default function StudentLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const location = useLocation();
+
+  // Hide sidebar + header in live session view
+  const isLiveSession = location.pathname.startsWith("/live/");
 
   const swipeHandlers = useSwipeBack({
-    disabled: menuOpen,
+    disabled: menuOpen || isLiveSession,
     minSwipeDistance: 80,
     edgeOnly: true,
     edgeSize: 28,
@@ -18,6 +22,18 @@ export default function StudentLayout() {
     preventScrollOnSwipe: false,
   });
 
+  // ───── LIVE SESSION FULLSCREEN MODE ─────
+  if (isLiveSession) {
+    return (
+      <div className="studentLayout studentLayout--live">
+        <div className="studentLayout__page studentLayout__page--live">
+          <Outlet />
+        </div>
+      </div>
+    );
+  }
+
+  // ───── NORMAL LAYOUT ─────
   return (
     <div className="studentLayout" {...swipeHandlers}>
       {menuOpen && (
