@@ -17,23 +17,26 @@
    MAIN GRID — video+controls left, chat right
    ============================================================ */
 
+/* Force the classroom layout to fill its parent */
 .classroom-layout {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 1fr 360px;
-  gap: 14px;
-  align-items: stretch;
   width: 100%;
   height: 100%;
+  flex: 1;
+  min-height: 0;
 }
 
 .classroom-main {
+  flex: 1;
   min-height: 0;
   min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.main-stage {
+  flex: 1;
+  min-height: 0;
 }
 
 /* ============================================================
