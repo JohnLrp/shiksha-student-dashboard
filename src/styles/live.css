@@ -17,35 +17,37 @@
    MAIN GRID — video+controls left, chat right
    ============================================================ */
 
-/* Force the classroom layout to fill its parent */
 .classroom-layout {
-  width: 100%;
-  height: 100%;
-  flex: 1;
-  min-height: 0;
-}
-
-.classroom-main {
   flex: 1;
   min-height: 0;
   min-width: 0;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  grid-template-rows: 1fr;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.classroom-main {
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   gap: 12px;
-}
-
-.main-stage {
-  flex: 1;
-  min-height: 0;
+  overflow: hidden;
 }
 
 /* ============================================================
-   VIDEO STAGE (no overlay buttons anymore)
+   VIDEO STAGE
    ============================================================ */
 
 .main-stage {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   position: relative;
   border-radius: 20px;
   overflow: hidden;
@@ -89,11 +91,13 @@
 }
 
 /* ============================================================
-   SIDEBAR — transparent so child cp- cards show shadows
+   RIGHT SIDEBAR (CHAT PANEL CONTAINER)
    ============================================================ */
 
 .right-sidebar {
   min-height: 0;
+  min-width: 0;
+  height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -119,7 +123,6 @@
   min-height: 72px;
 }
 
-/* TIMER */
 .cb-timer {
   font-size: 15px;
   font-weight: 600;
@@ -128,7 +131,6 @@
   min-width: 80px;
 }
 
-/* CENTER GROUP */
 .cb-center {
   display: flex;
   align-items: center;
@@ -173,7 +175,6 @@
   font-weight: 500;
 }
 
-/* RIGHT GROUP */
 .cb-right {
   display: flex;
   align-items: center;
@@ -325,6 +326,7 @@
 @media (max-width: 768px) {
   .classroom-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
     gap: 8px;
   }
 

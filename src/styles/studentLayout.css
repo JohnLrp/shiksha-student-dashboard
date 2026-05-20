@@ -99,6 +99,7 @@
 }
 
 
+
 /* ───── LIVE SESSION FULLSCREEN ───── */
 .studentLayout--live {
   width: 100vw;
@@ -121,10 +122,13 @@
   overflow: hidden;
 }
 
-/* Make sure the LiveKit room container fills the page */
-.studentLayout__page--live > * {
+/* LiveKitRoom is the direct child — make it fill the page */
+.studentLayout__page--live > .lk-room-container,
+.studentLayout__page--live > div {
   flex: 1;
   min-height: 0;
-  display: flex;
+  min-width: 0;
   width: 100%;
+  height: 100%;
+  display: flex;
 }
