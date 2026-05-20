@@ -60,11 +60,12 @@
 }
 
 .cp-tab {
-  height: 56px;
+  height: 40px;
   border: none;
   background: var(--cp-surface);
   color: var(--cp-teal);
   font-size: 18px;
+  font-family: Poppins;
   font-weight: 700;
   display: flex;
   align-items: center;

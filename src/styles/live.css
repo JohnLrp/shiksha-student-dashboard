@@ -171,8 +171,8 @@
 
 .cb-label {
   font-size: 11px;
-  color: #6b7280;
-  font-weight: 500;
+  color: #27292e;
+  font-weight: 600;
 }
 
 .cb-right {
@@ -385,9 +385,6 @@
   color: #27292E;
 }
 
-.cb-side-btn:hover {
-  color: #005f6f;
-}
 
 /* ============================================================
    FULLSCREEN BUTTON ON VIDEO
