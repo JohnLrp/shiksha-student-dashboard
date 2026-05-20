@@ -4,6 +4,7 @@ import { BsChatDotsFill } from "react-icons/bs";
 import { HiQuestionMarkCircle } from "react-icons/hi2";
 import { HiMicrophone } from "react-icons/hi2";
 import { HiDotsVertical } from "react-icons/hi";
+import "./ChatPanel.css";
 
 export default function ChatPanel({
   role,
