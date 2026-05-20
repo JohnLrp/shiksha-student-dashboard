@@ -351,3 +351,104 @@
   .cb-icon { width: 30px; height: 30px; }
   .cb-timer { font-size: 12px; min-width: 60px; }
 }
+
+/* ============================================================
+   CONTROL BAR — teal accent lines on top & bottom
+   ============================================================ */
+
+.control-bar {
+  position: relative;
+  border-top: 2px solid #005f6f;
+  border-bottom: 2px solid #005f6f;
+}
+
+/* Mute / Video / Screen / Other — dark grey circles */
+.cb-icon {
+  width: 40px;
+  height: 40px;
+  background: #2d3340;
+  color: #ffffff;
+}
+
+.cb-icon--off {
+  background: #2d3340;
+  color: #ffffff;
+}
+
+.cb-icon--active {
+  background: rgba(0, 95, 111, 0.18);
+  color: #005f6f;
+}
+
+/* Leave — solid red circle */
+.cb-icon--leave {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+/* Info / People / Chat — pure icon, no circle */
+.cb-side-btn {
+  color: #4b5563;
+}
+
+.cb-side-btn:hover {
+  color: #005f6f;
+}
+
+/* ============================================================
+   FULLSCREEN BUTTON ON VIDEO
+   ============================================================ */
+
+.video-fs-btn {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.55);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 50;
+  backdrop-filter: blur(12px);
+  transition: 0.2s ease;
+}
+
+.video-fs-btn:hover {
+  background: rgba(0, 0, 0, 0.75);
+  transform: scale(1.06);
+}
+
+/* ============================================================
+   FULLSCREEN MODE — hide chat + control bar, video fills screen
+   ============================================================ */
+
+.classroom-layout.fs-mode {
+  grid-template-columns: 1fr;
+  gap: 0;
+}
+
+.classroom-layout.fs-mode .classroom-main {
+  gap: 0;
+}
+
+.classroom-layout.fs-mode .right-sidebar {
+  display: none;
+}
+
+.classroom-layout.fs-mode .control-bar {
+  display: none;
+}
+
+.classroom-layout.fs-mode .main-stage {
+  border-radius: 0;
+}
+
+.classroom-layout.fs-mode .video-fs-btn {
+  bottom: 20px;
+  right: 20px;
+}

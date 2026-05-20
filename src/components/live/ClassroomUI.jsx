@@ -7,6 +7,7 @@ import ControlBar from "./ControlBar";
 import React, { useState, useRef, useEffect } from "react";
 import "../../styles/live.css";
 import useLiveSessionChat from "../../hooks/useLiveSessionChat";
+import { MdFullscreen, MdFullscreenExit } from "react-icons/md";
 
 export default function ClassroomUI({
   role,
@@ -18,16 +19,14 @@ export default function ClassroomUI({
   const [raisedHands, setRaisedHands] = useState({});
   const [raiseHandToasts, setRaiseHandToasts] = useState([]);
   const [sessionStatus, setSessionStatus] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const containerRef = useRef(null);
   const room = useRoomContext();
 
   const sessionId =
     sessionIdProp ||
-    window.location.pathname
-      .split("/")
-      .filter(Boolean)
-      .pop();
+    window.location.pathname.split("/").filter(Boolean).pop();
 
   const {
     messages: chatMessages,
@@ -38,6 +37,20 @@ export default function ClassroomUI({
   useEffect(() => {
     setSessionStatus(hookStatus);
   }, [hookStatus]);
+
+  /* ───── FULLSCREEN TOGGLE ───── */
+  const toggleFullscreen = () => {
+    setIsFullscreen((v) => !v);
+  };
+
+  /* exit fullscreen on Escape key */
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "Escape" && isFullscreen) setIsFullscreen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isFullscreen]);
 
   /* ───── LOCAL RAISE HAND ───── */
   useEffect(() => {
@@ -71,10 +84,7 @@ export default function ClassroomUI({
 
           if (isPresenter) {
             const toastId = Date.now() + Math.random();
-            setRaiseHandToasts((prev) => [
-              ...prev,
-              { id: toastId, identity },
-            ]);
+            setRaiseHandToasts((prev) => [...prev, { id: toastId, identity }]);
             setTimeout(() => {
               setRaiseHandToasts((prev) =>
                 prev.filter((t) => t.id !== toastId)
@@ -104,12 +114,8 @@ export default function ClassroomUI({
     { source: Track.Source.ScreenShare, withPlaceholder: false },
   ]);
 
-  const screenTrack = tracks.find(
-    (t) => t.source === Track.Source.ScreenShare
-  );
-  const cameraTrack = tracks.find(
-    (t) => t.source === Track.Source.Camera
-  );
+  const screenTrack = tracks.find((t) => t.source === Track.Source.ScreenShare);
+  const cameraTrack = tracks.find((t) => t.source === Track.Source.Camera);
   const mainTrack = screenTrack || cameraTrack;
   const pipTrack = screenTrack ? cameraTrack : null;
 
@@ -145,7 +151,10 @@ export default function ClassroomUI({
 
   /* ───── MAIN UI ───── */
   return (
-    <div className="classroom-layout" ref={containerRef}>
+    <div
+      className={"classroom-layout" + (isFullscreen ? " fs-mode" : "")}
+      ref={containerRef}
+    >
 
       {/* TOASTS */}
       {isPresenter && raiseHandToasts.length > 0 && (
@@ -158,7 +167,7 @@ export default function ClassroomUI({
         </div>
       )}
 
-      {/* LEFT COLUMN: video + control bar stacked */}
+      {/* LEFT COLUMN: video + control bar */}
       <div className="classroom-main">
 
         {/* VIDEO */}
@@ -172,14 +181,21 @@ export default function ClassroomUI({
           )}
 
           {isPresenter && (
-            <TeacherControls
-              sessionId={sessionId}
-              onLeave={onLeave}
-            />
+            <TeacherControls sessionId={sessionId} onLeave={onLeave} />
           )}
+
+          {/* FULLSCREEN BUTTON */}
+          <button
+            className="video-fs-btn"
+            onClick={toggleFullscreen}
+            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          >
+            {isFullscreen ? <MdFullscreenExit size={22} /> : <MdFullscreen size={22} />}
+          </button>
         </div>
 
-        {/* CONTROL BAR (now in normal flow, under video) */}
+        {/* CONTROL BAR */}
         <ControlBar onLeave={onLeave} />
       </div>
 
