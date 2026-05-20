@@ -178,18 +178,18 @@
 
 .cp-bubble--other {
   background: var(--cp-teal);
-  color: #ffffff;
+  color: #015865;
   width: 70%;
 }
 
 .cp-bubble--me {
-  background: var(--cp-teal);
+  background:  #415B7E;
   color: #ffffff;
   width: 70%;
 }
 
 .cp-bubble--teacher {
-  background: var(--cp-teacher-bg);
+  background: #415B7E;
   color: #ffffff;
 }
 
