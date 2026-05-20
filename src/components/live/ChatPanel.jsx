@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { IoSend } from "react-icons/io5";
-import { HiUsers } from "react-icons/hi2";
 import { BsChatDotsFill } from "react-icons/bs";
+import { HiQuestionMarkCircle } from "react-icons/hi2";
 import { HiMicrophone } from "react-icons/hi2";
 import { HiDotsVertical } from "react-icons/hi";
 
@@ -9,7 +9,9 @@ export default function ChatPanel({
   role,
   messages = [],
   participants = [],
+  qaMessages = [],
   onSendMessage,
+  onSendQA,
 }) {
   const [input, setInput] = useState("");
   const [activeTab, setActiveTab] = useState("chat");
@@ -21,16 +23,17 @@ export default function ChatPanel({
     const el = containerRef.current;
     const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
     if (isNearBottom) el.scrollTop = el.scrollHeight;
-  }, [messages]);
+  }, [messages, qaMessages, activeTab]);
 
   /* ── Send ── */
   const sendMessage = async () => {
     if (!input.trim()) return;
     const text = input.trim();
     setInput("");
-    if (onSendMessage) {
-      try { await onSendMessage(text); }
-      catch (e) { console.error("sendMessage failed", e); }
+    const handler = activeTab === "qa" ? onSendQA : onSendMessage;
+    if (handler) {
+      try { await handler(text); }
+      catch (e) { console.error("send failed", e); }
     }
   };
 
@@ -39,6 +42,8 @@ export default function ChatPanel({
     ts
       ? new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "";
+
+  const currentMessages = activeTab === "qa" ? qaMessages : messages;
 
   return (
     <div className="cp-wrap">
@@ -53,85 +58,78 @@ export default function ChatPanel({
           Chat
         </button>
         <button
-          className={`cp-tab ${activeTab === "participants" ? "cp-tab--active" : ""}`}
-          onClick={() => setActiveTab("participants")}
+          className={`cp-tab ${activeTab === "qa" ? "cp-tab--active" : ""}`}
+          onClick={() => setActiveTab("qa")}
         >
-          <HiUsers size={16} />
-          Participants ({participants.length})
+          <HiQuestionMarkCircle size={16} />
+          Q &amp; A
         </button>
       </div>
 
+      {/* ── CHAT / Q&A VIEW (shared layout) ── */}
+      {(activeTab === "chat" || activeTab === "qa") && (
+        <div className="cp-chat-body">
 
-{/* ── CHAT VIEW ── */}
-{activeTab === "chat" && (
-  <div className="cp-chat-body">
+          <div className="cp-messages" ref={containerRef}>
+            {currentMessages.length === 0 && (
+              <p className="cp-empty">
+                {activeTab === "qa" ? "No questions yet." : "No messages yet."}
+              </p>
+            )}
 
-    <div className="cp-messages" ref={containerRef}>
-      {messages.length === 0 && (
-        <p className="cp-empty">No messages yet.</p>
+            {currentMessages.map((msg, i) => {
+              const isMe = !!msg.isMe;
+
+              return (
+                <div
+                  key={msg.id || i}
+                  className={`cp-row ${isMe ? "cp-row--me" : "cp-row--other"}`}
+                >
+                  {/* Meta row */}
+                  <div className={`cp-meta ${isMe ? "cp-meta--me" : "cp-meta--other"}`}>
+                    {isMe ? (
+                      <>
+                        <span className="cp-time">{fmt(msg.time)}</span>
+                        <span className="cp-name">You</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="cp-name">{msg.sender}</span>
+                        <span className="cp-time">{fmt(msg.time)}</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Bubble */}
+                  <div className={`cp-bubble ${isMe ? "cp-bubble--me" : "cp-bubble--other"}`}>
+                    <span className="cp-text">{msg.text}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── INPUT ── */}
+          <div className="cp-input-area">
+            <input
+              className="cp-input"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={
+                activeTab === "qa" ? "Ask a question..." : "Your message here"
+              }
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+            />
+
+            <button className="cp-send-btn" onClick={sendMessage} aria-label="Send">
+              <IoSend size={20} />
+            </button>
+          </div>
+
+        </div>
       )}
 
-      {messages.map((msg, i) => {
-        const isMe = !!msg.isMe;
-
-        return (
-          <div
-            key={msg.id || i}
-            className={`cp-row ${isMe ? "cp-row--me" : "cp-row--other"}`}
-          >
-            {/* Meta row */}
-            <div
-              className={`cp-meta ${
-                isMe ? "cp-meta--me" : "cp-meta--other"
-              }`}
-            >
-              {isMe ? (
-                <>
-                  <span className="cp-time">{fmt(msg.time)}</span>
-                  <span className="cp-name">You</span>
-                </>
-              ) : (
-                <>
-                  <span className="cp-name">{msg.sender}</span>
-                  <span className="cp-time">{fmt(msg.time)}</span>
-                </>
-              )}
-            </div>
-
-            {/* Bubble */}
-            <div
-              className={`cp-bubble ${
-                isMe ? "cp-bubble--me" : "cp-bubble--other"
-              }`}
-            >
-              <span className="cp-text">{msg.text}</span>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-
-    {/* ── INPUT ── */}
-    <div className="cp-input-area">
-      <input
-        className="cp-input"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Your message here"
-        onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-      />
-
-      <button className="cp-send-btn" onClick={sendMessage}>
-        <IoSend size={18} />
-      </button>
-    </div>
-
-  </div>
-)}
-
-
-
-      {/* ── PARTICIPANTS VIEW ── */}
+      {/* ── PARTICIPANTS VIEW (kept for other usage; not shown in tabs) ── */}
       {activeTab === "participants" && (
         <div className="cp-participants">
           {participants.map((user, idx) => (

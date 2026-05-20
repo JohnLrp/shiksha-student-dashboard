@@ -176,14 +176,17 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   flex-shrink: 0;
+  background: #005f6f; /* base color for the inactive tab */
   border-radius: 22px 22px 0 0;
   overflow: hidden;
 }
 
 /* Inactive tab = teal bg, white text */
 .cp-tab {
-  height: 56px;
+  height: 52px;
   border: none;
+  background: #005f6f;
+  color: #ffffff;
   font-size: 15px;
   font-weight: 700;
   display: flex;
@@ -192,13 +195,25 @@
   gap: 7px;
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
+  position: relative;
 }
 
 /* Active tab = white bg, dark text */
 .cp-tab--active {
-  background: #005f6f;
-      color: #F0F6FA;
+  background: #ffffff;
+  color: #111827;
+}
 
+/* small teal underline accent on active tab */
+.cp-tab--active::after {
+  content: "";
+  position: absolute;
+  left: 18%;
+  right: 18%;
+  bottom: 0;
+  height: 3px;
+  background: #005f6f;
+  border-radius: 3px 3px 0 0;
 }
 
 /* ============================================================
@@ -227,33 +242,20 @@
 .cp-row {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   max-width: 100%;
 }
 
-/* Other person — left side */
-.cp-row--other {
-  align-items: flex-start;
-}
+.cp-row--other { align-items: flex-start; }
+.cp-row--me    { align-items: flex-end;   }
 
-/* My message — right side */
-.cp-row--me {
-  align-items: flex-end;
-}
 
 /* ── Meta line (name + time) ── */
 .cp-meta {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.cp-meta--other {
-  flex-direction: row;        /* Name  Time */
-}
-
-.cp-meta--me {
-  flex-direction: row;        /* Time  You (pushed right by parent) */
+  padding: 0 4px;
 }
 
 .cp-name {
@@ -272,50 +274,90 @@
    ============================================================ */
 
 .cp-bubble {
-  padding: 11px 15px;
-  border-radius: 16px;
-  width: 80%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  max-width: 75%;
+  width: fit-content;
   word-break: break-word;
 }
 
-/* Other person bubble — teal, left-pointed */
-.cp-bubble--other {
-  background: #005f6f !important;
-  color: #ffffff !important;
-  border-top-left-radius: 4px;
+
+.cp-bubble {
+  padding: 10px 14px;
+  border-radius: 14px;
+  max-width: 75%;
+  width: fit-content;
+  word-break: break-word;
 }
 
-/* My bubble — slightly darker teal, right-pointed */
+/* Other person — solid teal */
+.cp-bubble--other {
+  background: #005f6f;
+  color: #ffffff;
+}
+
+/* You — muted/lighter teal  */
 .cp-bubble--me {
-  background: #004f5d !important;
-  color: #ffffff !important;
-  border-top-right-radius: 4px;
+  background: #7a9ba3;
+  color: #ffffff;
 }
 
 .cp-text {
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 14px;
+  line-height: 1.45;
 }
-
 /* ============================================================
    INPUT AREA
    ============================================================ */
 
-.cp-input:focus {
-  border-color: #005f6f;
-  box-shadow: 0 0 0 3px rgba(0,95,111,.08);
+
+.cp-input-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 12px 14px;
+  padding: 6px 8px 6px 16px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.04);
+  flex-shrink: 0;
+}
+
+.cp-input {
+  flex: 1;
+  height: 40px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: #111827;
 }
 
 .cp-input::placeholder {
   color: #9ca3af;
 }
 
-
+/* Plain teal paper-plane icon, no circle background */
+.cp-send-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: #005f6f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform .15s ease;
+}
 
 .cp-send-btn:hover {
-  transform: scale(1.05);
-  background: #004a58;
+  transform: translateX(2px);
+  background: transparent;
 }
+
 
 /* ============================================================
    PARTICIPANTS
@@ -328,7 +370,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background: #eef4f6;
+  background: #ffffff;
   min-height: 0;
 }
 
@@ -343,14 +385,14 @@
 }
 
 .cp-p-avatar {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   overflow: hidden;
   background: rgba(255,255,255,.25);
   color: white;
   font-weight: 800;
-  font-size: 17px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -373,7 +415,7 @@
 }
 
 .cp-p-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -381,8 +423,8 @@
 }
 
 .cp-p-role {
-  font-size: 12px;
-  opacity: 0.75;
+  font-size: 11px;
+  opacity: 0.8;
   margin-top: 2px;
 }
 
@@ -393,8 +435,8 @@
 }
 
 .cp-p-btn {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: none;
   background: rgba(255,255,255,.18);
@@ -590,10 +632,9 @@
   min-height: 0;
 
   border-radius: 22px;
-
-  background: #F0F6FA;
-
+  background: #ffffff;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
 }
 
 /* ─────────────────────────────
@@ -602,16 +643,9 @@
 
 .cp-chat-body {
   flex: 1;
-
   display: flex;
   flex-direction: column;
-
-  margin: 10px;
-
-  background: #eef3f6;
-
-  border-radius: 0 0 20px 20px;
-
+  background: #ffffff;
   min-height: 0;
 }
 
@@ -621,18 +655,26 @@
 
 .cp-messages {
   flex: 1;
-
   overflow-y: auto;
-
   padding: 16px 14px;
-
   display: flex;
   flex-direction: column;
-  gap: 14px;
-
+  gap: 12px;
   background: transparent;
-
   min-height: 0;
+}
+
+.cp-messages::-webkit-scrollbar { width: 4px; }
+.cp-messages::-webkit-scrollbar-thumb {
+  background: rgba(0,95,111,.25);
+  border-radius: 10px;
+}
+
+.cp-empty {
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+  margin-top: 20px;
 }
 
 /* ─────────────────────────────
