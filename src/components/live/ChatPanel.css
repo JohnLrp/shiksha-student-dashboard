@@ -148,18 +148,18 @@
 .cp-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 4px;
+  gap: 6px;
+  padding: 0 10px;
 }
 
 .cp-name {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 500;
   color: var(--cp-text-dark);
 }
 
 .cp-time {
-  font-size: 12px;
+  font-size: 10px;
   color: var(--cp-text-muted);
 }
 
@@ -167,22 +167,24 @@
    BUBBLES
 ───────────────────────────── */
 .cp-bubble {
-  padding: 10px 14px;
+  padding: 5px 10px;
   border-radius: var(--cp-radius-bubble);
   max-width: 75%;
   width: fit-content;
   word-break: break-word;
-  line-height: 1.45;
+  line-height: 1;
 }
 
 .cp-bubble--other {
   background: var(--cp-teal);
   color: #ffffff;
+  width: 70%;
 }
 
 .cp-bubble--me {
   background: var(--cp-teal);
   color: #ffffff;
+  width: 70%;
 }
 
 .cp-bubble--teacher {
@@ -192,7 +194,7 @@
 
 .cp-text {
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 1;
 }
 
 /* ─────────────────────────────
