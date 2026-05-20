@@ -13,15 +13,13 @@ export default function ControlBar({ onLeave, role }) {
   const [micOn, setMicOn] = useState(false);
   const [videoOn, setVideoOn] = useState(false);
   const [screenOn, setScreenOn] = useState(false);
-
-  /* student permissions granted by teacher */
   const [canUnmute, setCanUnmute] = useState(false);
   const [canVideo, setCanVideo] = useState(false);
 
   const [elapsed, setElapsed] = useState(0);
   const startRef = useRef(Date.now());
 
-  /* ── enforce student starts muted + no camera ── */
+  /* ── student joins with mic + camera off ── */
   useEffect(() => {
     if (!isStudent || !localParticipant) return;
     localParticipant.setMicrophoneEnabled(false);
@@ -84,13 +82,12 @@ export default function ControlBar({ onLeave, role }) {
           setMicOn(false);
           setCanUnmute(false);
         }
-        if (msg.type === "force-unmute") {
+        if (msg.type === "force-unmute" || msg.type === "allow-mic") {
           setCanUnmute(true);
-          localParticipant.setMicrophoneEnabled(true);
-          setMicOn(true);
-        }
-        if (msg.type === "allow-mic") {
-          setCanUnmute(true);
+          if (msg.type === "force-unmute") {
+            localParticipant.setMicrophoneEnabled(true);
+            setMicOn(true);
+          }
         }
         if (msg.type === "revoke-mic") {
           setCanUnmute(false);
@@ -102,13 +99,12 @@ export default function ControlBar({ onLeave, role }) {
           setVideoOn(false);
           setCanVideo(false);
         }
-        if (msg.type === "force-camera-on") {
+        if (msg.type === "force-camera-on" || msg.type === "allow-camera") {
           setCanVideo(true);
-          localParticipant.setCameraEnabled(true);
-          setVideoOn(true);
-        }
-        if (msg.type === "allow-camera") {
-          setCanVideo(true);
+          if (msg.type === "force-camera-on") {
+            localParticipant.setCameraEnabled(true);
+            setVideoOn(true);
+          }
         }
         if (msg.type === "revoke-camera") {
           setCanVideo(false);
@@ -126,10 +122,6 @@ export default function ControlBar({ onLeave, role }) {
     if (onLeave) onLeave();
   };
 
-  /* lock state for the icon */
-  const micLocked = isStudent && !canUnmute && !micOn;
-  const videoLocked = isStudent && !canVideo && !videoOn;
-
   return (
     <div className="control-bar">
 
@@ -143,16 +135,9 @@ export default function ControlBar({ onLeave, role }) {
         <button
           className="cb-btn"
           onClick={toggleMic}
-          disabled={micLocked}
-          title={
-            micLocked
-              ? "Teacher hasn't allowed mic yet"
-              : micOn
-              ? "Mute"
-              : "Unmute"
-          }
+          title={micOn ? "Mute" : "Unmute"}
         >
-          <div className={`cb-icon ${micLocked ? "cb-icon--locked" : ""}`}>
+          <div className="cb-icon">
             {micOn ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
@@ -177,16 +162,9 @@ export default function ControlBar({ onLeave, role }) {
         <button
           className="cb-btn"
           onClick={toggleVideo}
-          disabled={videoLocked}
-          title={
-            videoLocked
-              ? "Teacher hasn't allowed camera yet"
-              : videoOn
-              ? "Turn off camera"
-              : "Turn on camera"
-          }
+          title={videoOn ? "Turn off camera" : "Turn on camera"}
         >
-          <div className={`cb-icon ${videoLocked ? "cb-icon--locked" : ""}`}>
+          <div className="cb-icon">
             {videoOn ? (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polygon points="23 7 16 12 23 17 23 7"/>
