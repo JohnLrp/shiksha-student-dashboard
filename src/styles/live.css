@@ -52,6 +52,7 @@
   border-radius: 20px 20px 0 0;
   overflow: hidden;
   background: #0a0a0a;
+  box-shadow: var(--ls-shadow);
 }
 
 .main-stage video {
@@ -111,11 +112,18 @@
 
 .control-bar {
   position: relative;
-  border-top: none;
-  border-bottom: 2px solid #005f6f;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 20px;
+  background: #ffffff;
   border-radius: 0 0 16px 16px;
+  border-bottom: 2px solid #005f6f;
+  box-shadow: var(--ls-shadow-sm);
+  min-height: 72px;
 }
-
 .cb-timer {
   font-size: 15px;
   font-weight: 600;
