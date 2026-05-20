@@ -38,19 +38,48 @@ export default function ClassroomUI({
     setSessionStatus(hookStatus);
   }, [hookStatus]);
 
-  /* ───── FULLSCREEN TOGGLE ───── */
-  const toggleFullscreen = () => {
-    setIsFullscreen((v) => !v);
+  /* ───── FULLSCREEN — true browser fullscreen (hides Chrome UI) ───── */
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        // Enter fullscreen
+        const el = containerRef.current;
+        if (el?.requestFullscreen) {
+          await el.requestFullscreen();
+        } else if (el?.webkitRequestFullscreen) {
+          await el.webkitRequestFullscreen();
+        } else if (el?.msRequestFullscreen) {
+          await el.msRequestFullscreen();
+        }
+      } else {
+        // Exit fullscreen
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
+      }
+    } catch (e) {
+      console.error("Fullscreen failed:", e);
+    }
   };
 
-  /* exit fullscreen on Escape key */
+  /* Sync state with actual browser fullscreen (handles Escape, F11, browser exit) */
   useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === "Escape" && isFullscreen) setIsFullscreen(false);
+    const onFSChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [isFullscreen]);
+    document.addEventListener("fullscreenchange", onFSChange);
+    document.addEventListener("webkitfullscreenchange", onFSChange);
+    document.addEventListener("msfullscreenchange", onFSChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFSChange);
+      document.removeEventListener("webkitfullscreenchange", onFSChange);
+      document.removeEventListener("msfullscreenchange", onFSChange);
+    };
+  }, []);
 
   /* ───── LOCAL RAISE HAND ───── */
   useEffect(() => {
@@ -196,7 +225,7 @@ export default function ClassroomUI({
         </div>
 
         {/* CONTROL BAR */}
-        <ControlBar onLeave={onLeave} />
+        <ControlBar onLeave={onLeave} role={role} />
       </div>
 
       {/* RIGHT COLUMN: chat panel */}
