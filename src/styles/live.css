@@ -415,16 +415,27 @@
 }
 
 /* ============================================================
-   FULLSCREEN MODE — hide chat + control bar, video fills screen
+   FULLSCREEN MODE — video truly fills the screen
    ============================================================ */
 
 .classroom-layout.fs-mode {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
   grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
   gap: 0;
+  background: #000;
 }
 
 .classroom-layout.fs-mode .classroom-main {
   gap: 0;
+  height: 100%;
 }
 
 .classroom-layout.fs-mode .right-sidebar {
@@ -437,10 +448,13 @@
 
 .classroom-layout.fs-mode .main-stage {
   border-radius: 0;
+  height: 100vh;
+  width: 100vw;
 }
 
 .classroom-layout.fs-mode .video-fs-btn {
-  bottom: 20px;
-  right: 20px;
+  bottom: 24px;
+  right: 24px;
+  width: 44px;
+  height: 44px;
 }
-
