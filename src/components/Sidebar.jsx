@@ -81,7 +81,7 @@ export default function Sidebar({ setMenuOpen }) {
             {/* Assignments */}
             <NavLink
               className="sidebar__subLink"
-              to="/assignments"
+              to="/subjects/assignments"
               onClick={() => setMenuOpen(false)}
             >
               <FaClipboardList /> <span>Assignments</span>
@@ -108,7 +108,7 @@ export default function Sidebar({ setMenuOpen }) {
             {/* Study Material */}
             <NavLink
               className="sidebar__subLink"
-              to="/study-material"
+              to="/subjects/study-material"
               onClick={() => setMenuOpen(false)}
             >
               <FaBookOpen /> <span>Study Material</span>
