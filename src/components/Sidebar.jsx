@@ -1,4 +1,3 @@
-console.log("=== MY NEW SIDEBAR ===");
 import { NavLink, useLocation } from "react-router-dom";
 import "../styles/sidebar.css";
 import logo from "../assets/Vector.svg";
@@ -13,13 +12,11 @@ import { RiLiveLine, RiLockLine, RiGroupLine } from "react-icons/ri";
 import { FaChalkboardTeacher } from "react-icons/fa";
 import { AiOutlineFileDone, AiOutlineClose } from "react-icons/ai";
 
-console.log("SIDEBAR LOADED - NEW VERSION");
 export default function Sidebar({ setMenuOpen }) {
   const location = useLocation();
 
   const isSubjectsActive =
     location.pathname.startsWith("/subjects") ||
-    location.pathname.startsWith("/assignments") ||
     location.pathname.startsWith("/study-material");
 
   return (
@@ -78,10 +75,11 @@ export default function Sidebar({ setMenuOpen }) {
         {isSubjectsActive && (
           <div className="sidebar__subMenu">
 
-            {/* Assignments */}
+            {/* Assignments — now under subjects */}
             <NavLink
               className="sidebar__subLink"
-              to="/subjects/assignments"
+              to="/subjects"
+              state={{ mode: "assignments" }}
               onClick={() => setMenuOpen(false)}
             >
               <FaClipboardList /> <span>Assignments</span>
@@ -108,7 +106,7 @@ export default function Sidebar({ setMenuOpen }) {
             {/* Study Material */}
             <NavLink
               className="sidebar__subLink"
-              to="/subjects/study-material"
+              to="/study-material"
               onClick={() => setMenuOpen(false)}
             >
               <FaBookOpen /> <span>Study Material</span>
