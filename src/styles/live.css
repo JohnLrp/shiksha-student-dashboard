@@ -1,5 +1,5 @@
 /* ============================================================
-   LIVE SESSION — Modern Classroom UI
+   LIVE SESSION — Unified CSS (Teacher + Student)
    ============================================================ */
 
 :root {
@@ -12,7 +12,6 @@
   --ls-shadow: 0 8px 32px rgba(0,0,0,.4);
   --ls-shadow-sm: 0 4px 16px rgba(0,0,0,.06);
 }
-
 
 .classroom-layout {
   flex: 1;
@@ -78,8 +77,6 @@
   object-fit: cover;
 }
 
-
-
 .right-sidebar {
   min-height: 0;
   min-width: 0;
@@ -92,7 +89,6 @@
   box-shadow: none;
 }
 
-
 .control-bar {
   position: relative;
   flex-shrink: 0;
@@ -103,8 +99,9 @@
   padding: 12px 20px;
   border-radius: 0 0 16px 16px;
   border: 2px solid var(--ShikshaCom-App-Secondary---700, #415B7E);
-  min-height: 72px;
+  height: 9%;
 }
+
 .cb-timer {
   font-size: 15px;
   font-weight: 600;
@@ -139,10 +136,10 @@
 .cb-btn:hover { transform: translateY(-2px); }
 
 .cb-icon {
-  width: 38px;
-  height: 38px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  background: #1f2937;
+  background: #2d3340;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -150,9 +147,9 @@
   transition: background 0.2s ease;
 }
 
-.cb-icon--off    { background: var(--ls-red-dim); color: var(--ls-red); }
+.cb-icon--off    { background: #2d3340; color: #ffffff; }
 .cb-icon--active { background: rgba(0,95,111,.18); color: #005f6f; }
-.cb-icon--leave  { background: var(--ls-red-dim); color: var(--ls-red); }
+.cb-icon--leave  { background: #ef4444; color: #ffffff; }
 
 .cb-label {
   font-size: 11px;
@@ -173,7 +170,7 @@
   gap: 3px;
   border: none;
   background: transparent;
-  color: #6b7280;
+  color: #27292E;
   cursor: pointer;
   padding: 4px 6px;
   transition: color 0.15s ease;
@@ -185,6 +182,14 @@
 }
 
 .cb-side-btn:hover { color: #005f6f; }
+
+.cb-side-btn--active {
+  color: #005f6f;
+}
+
+.cb-side-btn--active span {
+  font-weight: 700;
+}
 
 .chat-raise-hand-wrap {
   position: absolute;
@@ -207,7 +212,6 @@
   box-shadow: 0 8px 24px rgba(245,158,11,.3);
 }
 
-
 .ls-paused {
   flex: 1;
   width: 100%;
@@ -224,14 +228,9 @@
   border-radius: 20px;
 }
 
-.ls-paused__icon {
-  font-size: 52px;
-  line-height: 1;
-}
-
+.ls-paused__icon { font-size: 52px; line-height: 1; }
 .ls-paused h2 { margin: 0; font-weight: 600; }
 .ls-paused p { color: #6b7591; margin: 0; font-size: 14px; }
-
 
 .waiting-screen {
   width: 100%;
@@ -288,64 +287,24 @@
   border-radius: 999px;
   font-size: 13px;
   backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-
-@media (max-width: 768px) {
-  .classroom-layout {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
-    gap: 8px;
-  }
-
-  .classroom-main { gap: 8px; }
-
-  .control-bar {
-    padding: 8px 10px;
-    min-height: 60px;
-  }
-
-  .cb-center { gap: 10px; }
-  .cb-right { gap: 8px; }
-  .cb-icon { width: 34px; height: 34px; }
-  .cb-label, .cb-side-btn span { font-size: 10px; }
-
-  .pip-camera { width: 100px; height: 66px; right: 10px; bottom: 10px; }
-}
-
-@media (max-width: 480px) {
-  .main-stage { border-radius: 14px; }
-  .control-bar { border-radius: 14px; padding: 6px 8px; }
-  .cb-icon { width: 30px; height: 30px; }
-  .cb-timer { font-size: 12px; min-width: 60px; }
-}
-
-.cb-icon {
-  width: 40px;
-  height: 40px;
-  background: #2d3340;
+.rh-toast-btn {
+  background: rgba(255, 255, 255, 0.18);
   color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.cb-icon--off {
-  background: #2d3340;
-  color: #ffffff;
-}
-
-.cb-icon--active {
-  background: rgba(0, 95, 111, 0.18);
-  color: #005f6f;
-}
-
-/* Leave — solid red circle */
-.cb-icon--leave {
-  background: #ef4444;
-  color: #ffffff;
-}
-
-.cb-side-btn {
-  color: #27292E;
-}
+.rh-toast-btn:hover { background: rgba(255, 255, 255, 0.3); }
 
 .video-fs-btn {
   position: absolute;
@@ -371,13 +330,9 @@
   transform: scale(1.06);
 }
 
-
 .classroom-layout.fs-mode {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   width: 100vw;
   height: 100vh;
   z-index: 9999;
@@ -391,32 +346,11 @@
   right: 18px;
 }
 
-
-.classroom-layout.chat-closed {
-  grid-template-columns: 1fr;
-}
-
-
-.cb-side-btn--active {
-  color: #005f6f;
-}
-
-.cb-side-btn--active span {
-  font-weight: 700;
-}
-
 .classroom-layout.panel-closed {
   grid-template-columns: 1fr;
 }
 
-.cb-side-btn--active {
-  color: #005f6f;
-}
-
-.cb-side-btn--active span {
-  font-weight: 700;
-}
-
+/* ── SIDE PANEL ── */
 .side-panel {
   height: 100%;
   display: flex;
@@ -458,10 +392,7 @@
   transition: background 0.18s ease;
 }
 
-.side-panel__close:hover {
-  background: #e5e7eb;
-  color: #111827;
-}
+.side-panel__close:hover { background: #e5e7eb; color: #111827; }
 
 .side-panel__body {
   flex: 1;
@@ -480,7 +411,6 @@
   margin-top: 20px;
 }
 
-/* People row */
 .side-panel__row {
   display: flex;
   align-items: center;
@@ -488,6 +418,11 @@
   padding: 10px 12px;
   background: #f9fafb;
   border-radius: 12px;
+}
+
+.side-panel__row--raised {
+  background: #fff8e1;
+  border: 1px solid #fbbf24;
 }
 
 .side-panel__avatar {
@@ -503,10 +438,7 @@
   flex-shrink: 0;
 }
 
-.side-panel__info {
-  flex: 1;
-  min-width: 0;
-}
+.side-panel__info { flex: 1; min-width: 0; }
 
 .side-panel__name {
   font-size: 14px;
@@ -519,7 +451,8 @@
   color: #6b7280;
 }
 
-/* Info field */
+.raised-hand-icon { font-size: 14px; margin-left: 4px; }
+
 .side-panel__field {
   padding: 12px 14px;
   background: #f9fafb;
@@ -538,11 +471,8 @@
   font-weight: 600;
   word-break: break-all;
 }
-/* ============================================================
-   PPL PANEL — Participants panel (matches teacher UI)
-   Append this to the bottom of src/styles/live.css
-   ============================================================ */
 
+/* ── PPL PANEL ── */
 .ppl-panel {
   height: 100%;
   display: flex;
@@ -601,18 +531,17 @@
 }
 
 .ppl-card:hover { transform: translateY(-1px); }
-
 .ppl-card--teacher { background: #415B7E; }
 
 .ppl-avatar {
-  width: 36px;
-  height: 36px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.25);
   color: #ffffff;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -635,7 +564,7 @@
 }
 
 .ppl-name {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -644,7 +573,7 @@
 }
 
 .ppl-role {
-  font-size: 11px;
+  font-size: 12px;
   opacity: 0.85;
   margin-top: 2px;
   color: #ffffff;
@@ -668,14 +597,95 @@
   justify-content: center;
   flex-shrink: 0;
   border: none;
+  transition: background 0.15s ease, transform 0.12s ease;
 }
 
 .ppl-mic--on  { background: rgba(255, 255, 255, 0.22); }
 .ppl-mic--off { background: rgba(248, 81, 73, 0.55); }
 
+.ppl-mic--btn { cursor: pointer; }
+.ppl-mic--btn:hover { background: rgba(255, 255, 255, 0.35); transform: scale(1.08); }
+.ppl-mic--btn.ppl-mic--off:hover { background: rgba(248, 81, 73, 0.85); }
+.ppl-mic--btn:active { transform: scale(0.95); }
+
+.ppl-menu-wrap { position: relative; }
+
+.ppl-menu-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ppl-menu-btn:hover { background: rgba(255, 255, 255, 0.18); }
+
+.ppl-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+  padding: 6px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  animation: pplMenuIn 0.15s ease;
+}
+
+@keyframes pplMenuIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ppl-menu-item {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #111827;
+  cursor: pointer;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background 0.12s ease;
+}
+
+.ppl-menu-item:hover { background: #f3f4f6; }
+.ppl-menu-item--danger { color: #ef4444; }
+.ppl-menu-item--danger:hover { background: #fee2e2; }
+
+/* ── RESPONSIVE ── */
 @media (max-width: 768px) {
+  .classroom-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr auto;
+    gap: 8px;
+  }
+  .classroom-main { gap: 8px; }
+  .control-bar { padding: 8px 10px; min-height: 60px; }
+  .cb-center { gap: 10px; }
+  .cb-right { gap: 8px; }
+  .cb-icon { width: 34px; height: 34px; }
+  .cb-label, .cb-side-btn span { font-size: 10px; }
+  .pip-camera { width: 100px; height: 66px; right: 10px; bottom: 10px; }
   .ppl-header { font-size: 16px; padding: 12px 14px; }
-  .ppl-card   { padding: 8px 12px; }
-  .ppl-avatar { width: 32px; height: 32px; font-size: 14px; }
-  .ppl-name   { font-size: 12px; }
+  .ppl-card { padding: 8px 12px; }
+  .ppl-avatar { width: 40px; height: 40px; font-size: 16px; }
+  .ppl-name { font-size: 14px; }
+}
+
+@media (max-width: 480px) {
+  .main-stage { border-radius: 14px; }
+  .control-bar { border-radius: 14px; padding: 6px 8px; }
+  .cb-icon { width: 30px; height: 30px; }
+  .cb-timer { font-size: 12px; min-width: 60px; }
 }
