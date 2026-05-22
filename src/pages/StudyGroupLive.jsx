@@ -2,9 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
 import studyGroupService, { extractApiError } from "../api/studyGroupService";
-import PrivateClassroomUI from "../components/live/PrivateClassroomUI";
-import "../styles/privateSessions.css";
-import "../styles/studyGroups.css";
+import StudyGroupClassroomUI from "../components/live/StudyGroupClassroomUI";
 
 const fullscreenWrap = {
   width: "100vw",
@@ -149,10 +147,11 @@ export default function StudyGroupLive() {
         style={liveKitWrap}
         onDisconnected={() => navigate("/study-groups")}
       >
-        <PrivateClassroomUI
-          role={(livekitData.role || "student").toLowerCase()}
+        <StudyGroupClassroomUI
+          role="STUDENT"
           session={{
             ...sessionDetail,
+            id,
             subject: sessionDetail?.subjectName,
             topic: sessionDetail?.topic,
           }}
@@ -163,7 +162,7 @@ export default function StudyGroupLive() {
           }}
           studyGroup={true}
           studyGroupRemainingMs={remainingMs}
-          autoSpotlightLocal={true}
+          onLeave={() => navigate("/study-groups")}
         />
         <RoomAudioRenderer />
       </LiveKitRoom>
