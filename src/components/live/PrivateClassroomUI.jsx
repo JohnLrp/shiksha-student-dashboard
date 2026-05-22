@@ -8,7 +8,7 @@ import "../../styles/live.css";
 import useLiveSessionChat from "../../hooks/useLiveSessionChat";
 import { MdFullscreen, MdFullscreenExit } from "react-icons/md";
 
-export default function StudentPrivateClassroomUI({
+export default function PrivateClassroomUI({
   role = "STUDENT",
   sessionId: sessionIdProp,
   onLeave,
@@ -118,7 +118,7 @@ export default function StudentPrivateClassroomUI({
     );
   }
 
-  /* ───── PARTICIPANTS LIST ───── */
+  /* ───── PARTICIPANTS ───── */
   const remoteParticipants = room.remoteParticipants
     ? Array.from(room.remoteParticipants.values()).map((p) => ({
         identity: p.identity,
@@ -197,7 +197,7 @@ export default function StudentPrivateClassroomUI({
             </>
           )}
 
-          {/* PEOPLE — same ppl-panel as teacher */}
+          {/* PEOPLE */}
           {activePanel === "people" && (
             <div className="ppl-panel">
               <div className="ppl-header">
