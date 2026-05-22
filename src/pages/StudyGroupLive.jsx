@@ -1,17 +1,3 @@
-/**
- * FILE: STUDENT_DASHBOARD/src/pages/StudyGroupLive.jsx
- *
- * Reuses the existing PrivateClassroomUI inside a LiveKitRoom.
- * Adds a hard-duration countdown banner unique to study groups.
- * On countdown end the user is booted back to the Study Groups list.
- *
- * Chat: passes a chatConfig that points at the study-group chat
- * endpoints (/sessions/study-groups/<id>/chat/ + corresponding WS
- * path /ws/study-group/<id>/chat/). Messages persist in the DB
- * only while the room is live — _end_study_group_internal bulk-
- * deletes them on session end.
- */
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
@@ -20,13 +6,35 @@ import PrivateClassroomUI from "../components/live/PrivateClassroomUI";
 import "../styles/privateSessions.css";
 import "../styles/studyGroups.css";
 
-function formatCountdown(ms) {
-  if (ms == null || ms < 0) return "--:--";
-  const total = Math.floor(ms / 1000);
-  const mm = String(Math.floor(total / 60)).padStart(2, "0");
-  const ss = String(total % 60).padStart(2, "0");
-  return `${mm}:${ss}`;
-}
+const fullscreenWrap = {
+  width: "100vw",
+  height: "100vh",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+  background: "#c9dde1",
+  boxSizing: "border-box",
+  padding: "14px",
+};
+
+const liveKitWrap = {
+  flex: 1,
+  minHeight: 0,
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+};
+
+const centerMsg = {
+  width: "100vw",
+  height: "100vh",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexDirection: "column",
+  gap: 16,
+  background: "#c9dde1",
+};
 
 export default function StudyGroupLive() {
   const { id } = useParams();
@@ -40,7 +48,6 @@ export default function StudyGroupLive() {
 
   useEffect(() => {
     let cancelled = false;
-
     const load = async () => {
       try {
         const detail = await studyGroupService.getDetail(id);
@@ -58,26 +65,21 @@ export default function StudyGroupLive() {
         if (!cancelled) setLoading(false);
       }
     };
-
     load();
     return () => { cancelled = true; };
   }, [id]);
 
   // Local countdown tick
   useEffect(() => {
-    if (remainingMs == null) return;
-    if (remainingMs <= 0) return;
+    if (remainingMs == null || remainingMs <= 0) return;
     const startedAt = Date.now();
     const startValue = remainingMs;
     const interval = setInterval(() => {
       const next = Math.max(0, startValue - (Date.now() - startedAt));
       setRemainingMs(next);
-      if (next <= 0) {
-        clearInterval(interval);
-      }
+      if (next <= 0) clearInterval(interval);
     }, 1000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [livekitData]);
 
   // Auto-exit at duration end
@@ -90,35 +92,27 @@ export default function StudyGroupLive() {
 
   if (loading) {
     return (
-      <div className="tps__live-loading">
-        <div className="tps__live-spinner" />
-        <p>Joining study group…</p>
+      <div style={centerMsg}>
+        <p style={{ fontSize: 16, color: "#102a2a", margin: 0 }}>Joining study group…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="tps__live-error">
-        <h2>Unable to join study group</h2>
-        <p>{error}</p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+      <div style={centerMsg}>
+        <h2 style={{ margin: 0, color: "#102a2a" }}>Unable to join study group</h2>
+        <p style={{ color: "#475569", margin: 0 }}>{error}</p>
+        <div style={{ display: "flex", gap: 12 }}>
           <button
             onClick={() => navigate("/study-groups")}
-            style={{
-              padding: "10px 24px", borderRadius: 8, border: "none",
-              background: "#015865", color: "#fff", fontWeight: 600, cursor: "pointer",
-            }}
+            style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: "#015865", color: "#fff", fontWeight: 600, cursor: "pointer" }}
           >
             Back to Study Groups
           </button>
           <button
-            onClick={() => { setError(null); setLoading(true); window.location.reload(); }}
-            style={{
-              padding: "10px 24px", borderRadius: 8,
-              border: "2px solid #94a3b8", background: "transparent",
-              color: "#475569", fontWeight: 600, cursor: "pointer",
-            }}
+            onClick={() => window.location.reload()}
+            style={{ padding: "10px 24px", borderRadius: 8, border: "2px solid #94a3b8", background: "transparent", color: "#475569", fontWeight: 600, cursor: "pointer" }}
           >
             Retry
           </button>
@@ -129,15 +123,14 @@ export default function StudyGroupLive() {
 
   if (!livekitData) {
     return (
-      <div className="tps__live-error">
-        <h2>Study group not open yet</h2>
-        <p>The room hasn't started. Please wait for someone to accept and try again.</p>
+      <div style={centerMsg}>
+        <h2 style={{ margin: 0, color: "#102a2a" }}>Study group not open yet</h2>
+        <p style={{ color: "#475569", margin: 0 }}>
+          The room hasn't started. Please wait for someone to accept and try again.
+        </p>
         <button
           onClick={() => navigate("/study-groups")}
-          style={{
-            padding: "10px 24px", borderRadius: 8, border: "none",
-            background: "#015865", color: "#fff", fontWeight: 600, cursor: "pointer",
-          }}
+          style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: "#015865", color: "#fff", fontWeight: 600, cursor: "pointer" }}
         >
           Back to Study Groups
         </button>
@@ -146,43 +139,34 @@ export default function StudyGroupLive() {
   }
 
   return (
-    <LiveKitRoom
-      serverUrl={livekitData.livekit_url}
-      token={livekitData.token}
-      connect={true}
-      video={true}
-      audio={true}
-      onDisconnected={() => navigate("/study-groups")}
-    >
-      <PrivateClassroomUI
-        role={(livekitData.role || "student").toLowerCase()}
-        session={{
-          ...sessionDetail,
-          subject: sessionDetail?.subjectName,
-          topic: sessionDetail?.topic,
-        }}
-        chatConfig={{
-          restGetPath:  `/sessions/study-groups/${id}/chat/`,
-          restPostPath: `/sessions/study-groups/${id}/chat/send/`,
-          wsPath:       `/ws/study-group/${id}/chat/`,
-        }}
-        /* Study-group props (added 2026-05-18):
-           - studyGroup            : renders the orange STUDY GROUP pill
-                                     in the topbar.
-           - studyGroupRemainingMs : powers the ⏳ MM:SS-left chip in the
-                                     topbar-right. Re-renders every second
-                                     via the parent's countdown tick state.
-           - autoSpotlightLocal    : pin the local tile by default so the
-                                     layout starts in spotlight mode
-                                     (large main + 180px strip), avoiding
-                                     the half-page "membrane" you'd
-                                     otherwise get from pvt-grid-2 when
-                                     the host has no video on. */
-        studyGroup={true}
-        studyGroupRemainingMs={remainingMs}
-        autoSpotlightLocal={true}
-      />
-      <RoomAudioRenderer />
-    </LiveKitRoom>
+    <div style={fullscreenWrap}>
+      <LiveKitRoom
+        serverUrl={livekitData.livekit_url}
+        token={livekitData.token}
+        connect={true}
+        video={true}
+        audio={true}
+        style={liveKitWrap}
+        onDisconnected={() => navigate("/study-groups")}
+      >
+        <PrivateClassroomUI
+          role={(livekitData.role || "student").toLowerCase()}
+          session={{
+            ...sessionDetail,
+            subject: sessionDetail?.subjectName,
+            topic: sessionDetail?.topic,
+          }}
+          chatConfig={{
+            restGetPath:  `/sessions/study-groups/${id}/chat/`,
+            restPostPath: `/sessions/study-groups/${id}/chat/send/`,
+            wsPath:       `/ws/study-group/${id}/chat/`,
+          }}
+          studyGroup={true}
+          studyGroupRemainingMs={remainingMs}
+          autoSpotlightLocal={true}
+        />
+        <RoomAudioRenderer />
+      </LiveKitRoom>
+    </div>
   );
 }
