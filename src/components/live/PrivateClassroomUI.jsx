@@ -1,7 +1,6 @@
 import { useTracks, VideoTrack, useRoomContext } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import ChatPanel from "./ChatPanel";
-import ParticipantsPanel from "./ParticipantsPanel";
 import RaiseHandButton from "./RaiseHandButton";
 import ControlBar from "./ControlBar";
 import React, { useState, useRef, useEffect } from "react";
@@ -14,8 +13,6 @@ export default function StudentPrivateClassroomUI({
   sessionId: sessionIdProp,
   onLeave,
 }) {
-  const isPresenter = false;
-
   const [raisedHands, setRaisedHands] = useState({});
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [activePanel, setActivePanel] = useState(null);
@@ -31,7 +28,6 @@ export default function StudentPrivateClassroomUI({
 
   const { messages: chatMessages, sendMessage } = useLiveSessionChat(sessionId);
 
-  /* ───── PANEL TOGGLE ───── */
   const togglePanel = (panel) => {
     setActivePanel((current) => (current === panel ? null : panel));
   };
@@ -49,9 +45,7 @@ export default function StudentPrivateClassroomUI({
         else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
         else if (document.msExitFullscreen) await document.msExitFullscreen();
       }
-    } catch (e) {
-      console.error("Fullscreen failed:", e);
-    }
+    } catch (e) { console.error("Fullscreen failed:", e); }
   };
 
   useEffect(() => {
@@ -80,37 +74,20 @@ export default function StudentPrivateClassroomUI({
   useEffect(() => {
     const handleLocal = (e) => {
       const { type, identity } = e.detail;
-      if (type === "raise-hand") {
-        setRaisedHands((prev) => ({ ...prev, [identity]: true }));
-      }
-      if (type === "lower-hand") {
-        setRaisedHands((prev) => {
-          const updated = { ...prev };
-          delete updated[identity];
-          return updated;
-        });
-      }
+      if (type === "raise-hand") setRaisedHands((prev) => ({ ...prev, [identity]: true }));
+      if (type === "lower-hand") setRaisedHands((prev) => { const u = { ...prev }; delete u[identity]; return u; });
     };
     window.addEventListener("raise-hand-local", handleLocal);
     return () => window.removeEventListener("raise-hand-local", handleLocal);
   }, []);
 
-  /* ───── REMOTE RAISE HAND ───── */
+  /* ───── REMOTE DATA ───── */
   useEffect(() => {
     const handleData = (payload, participant) => {
       try {
-        const text = new TextDecoder().decode(payload);
-        const msg = JSON.parse(text);
-        if (msg.type === "raise-hand") {
-          setRaisedHands((prev) => ({ ...prev, [participant.identity]: true }));
-        }
-        if (msg.type === "lower-hand") {
-          setRaisedHands((prev) => {
-            const updated = { ...prev };
-            delete updated[participant.identity];
-            return updated;
-          });
-        }
+        const msg = JSON.parse(new TextDecoder().decode(payload));
+        if (msg.type === "raise-hand") setRaisedHands((prev) => ({ ...prev, [participant.identity]: true }));
+        if (msg.type === "lower-hand") setRaisedHands((prev) => { const u = { ...prev }; delete u[participant.identity]; return u; });
       } catch {}
     };
     room.on("dataReceived", handleData);
@@ -141,8 +118,32 @@ export default function StudentPrivateClassroomUI({
     );
   }
 
+  /* ───── PARTICIPANTS LIST ───── */
+  const remoteParticipants = room.remoteParticipants
+    ? Array.from(room.remoteParticipants.values()).map((p) => ({
+        identity: p.identity,
+        name: p.name || p.identity,
+        role: "Teacher",
+        micOn: p.isMicrophoneEnabled,
+        isTeacher: true,
+        isMe: false,
+      }))
+    : [];
+
   const localId = room.localParticipant?.identity;
-  const sessionIdFinal = sessionId;
+  const localName = room.localParticipant?.name || localId || "You";
+
+  const peopleList = [
+    ...remoteParticipants,
+    {
+      identity: localId,
+      name: localName,
+      role: "Student",
+      micOn: room.localParticipant?.isMicrophoneEnabled,
+      isTeacher: false,
+      isMe: true,
+    },
+  ];
 
   /* ───── MAIN UI ───── */
   return (
@@ -154,30 +155,23 @@ export default function StudentPrivateClassroomUI({
       }
       ref={containerRef}
     >
-      {/* LEFT COLUMN: video + control bar */}
       <div className="classroom-main">
-
-        {/* VIDEO */}
         <div className="main-stage">
           <VideoTrack trackRef={mainTrack} />
-
           {pipTrack && (
             <div className="pip-camera">
               <VideoTrack trackRef={pipTrack} />
             </div>
           )}
-
           <button
             className="video-fs-btn"
             onClick={toggleFullscreen}
             aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-            title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
           >
             {isFullscreen ? <MdFullscreenExit size={22} /> : <MdFullscreen size={22} />}
           </button>
         </div>
 
-        {/* CONTROL BAR */}
         <ControlBar
           onLeave={onLeave}
           role={role}
@@ -186,11 +180,10 @@ export default function StudentPrivateClassroomUI({
         />
       </div>
 
-      {/* RIGHT SIDEBAR */}
       {activePanel && (
         <div className="right-sidebar">
 
-          {/* CHAT PANEL */}
+          {/* CHAT */}
           {activePanel === "chat" && (
             <>
               <ChatPanel
@@ -204,12 +197,52 @@ export default function StudentPrivateClassroomUI({
             </>
           )}
 
-          {/* PEOPLE PANEL */}
+          {/* PEOPLE — same ppl-panel as teacher */}
           {activePanel === "people" && (
-            <ParticipantsPanel raisedHands={raisedHands} />
+            <div className="ppl-panel">
+              <div className="ppl-header">
+                Participants ({peopleList.length})
+              </div>
+              <div className="ppl-list">
+                {peopleList.map((p, i) => (
+                  <div
+                    key={p.identity || i}
+                    className={"ppl-card" + (p.isTeacher ? " ppl-card--teacher" : "")}
+                  >
+                    <div className="ppl-avatar">
+                      {p.name?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
+                    <div className="ppl-info">
+                      <div className="ppl-name">{p.isMe ? "You" : p.name}</div>
+                      <div className="ppl-role">{p.role}</div>
+                    </div>
+                    <div className="ppl-actions">
+                      <div className={`ppl-mic ${p.micOn ? "ppl-mic--on" : "ppl-mic--off"}`}>
+                        {p.micOn ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" y1="19" x2="12" y2="23"/>
+                            <line x1="8" y1="23" x2="16" y2="23"/>
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="1" y1="1" x2="23" y2="23"/>
+                            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+                            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/>
+                            <line x1="12" y1="19" x2="12" y2="23"/>
+                            <line x1="8" y1="23" x2="16" y2="23"/>
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
-          {/* SESSION INFO PANEL */}
+          {/* INFO */}
           {activePanel === "info" && (
             <div className="side-panel">
               <div className="side-panel__header">
@@ -218,18 +251,20 @@ export default function StudentPrivateClassroomUI({
                   className="side-panel__close"
                   onClick={() => setActivePanel(null)}
                   aria-label="Close"
-                >
-                  ✕
-                </button>
+                >✕</button>
               </div>
               <div className="side-panel__body">
                 <div className="side-panel__field">
                   <div className="side-panel__field-label">Session ID</div>
-                  <div className="side-panel__field-value">{sessionIdFinal}</div>
+                  <div className="side-panel__field-value">{sessionId}</div>
                 </div>
                 <div className="side-panel__field">
                   <div className="side-panel__field-label">Your role</div>
                   <div className="side-panel__field-value">Student</div>
+                </div>
+                <div className="side-panel__field">
+                  <div className="side-panel__field-label">Participants</div>
+                  <div className="side-panel__field-value">{peopleList.length}</div>
                 </div>
               </div>
             </div>
