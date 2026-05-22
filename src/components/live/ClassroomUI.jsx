@@ -1,7 +1,6 @@
 import { useTracks, VideoTrack, useRoomContext } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import ChatPanel from "./ChatPanel";
-import TeacherControls from "./TeacherControls";
 import RaiseHandButton from "./RaiseHandButton";
 import ControlBar from "./ControlBar";
 import React, { useState, useRef, useEffect } from "react";
@@ -17,11 +16,11 @@ export default function ClassroomUI({
   const isPresenter = role === "PRESENTER";
 
   const [raisedHands, setRaisedHands] = useState({});
-  const [raiseHandToasts, setRaiseHandToasts] = useState([]);
   const [sessionStatus, setSessionStatus] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-
   const [activePanel, setActivePanel] = useState(null);
+  const [, setTick] = useState(0);
+  const bump = () => setTick((t) => t + 1);
 
   const containerRef = useRef(null);
   const room = useRoomContext();
@@ -73,20 +72,24 @@ export default function ClassroomUI({
     };
   }, []);
 
+  /* ───── RE-RENDER ON TRACK CHANGES ───── */
+  useEffect(() => {
+    if (!room) return;
+    const events = [
+      "trackMuted", "trackUnmuted", "trackPublished", "trackUnpublished",
+      "trackSubscribed", "trackUnsubscribed", "participantConnected",
+      "participantDisconnected", "localTrackPublished", "localTrackUnpublished",
+    ];
+    events.forEach((evt) => room.on(evt, bump));
+    return () => { events.forEach((evt) => room.off(evt, bump)); };
+  }, [room]);
+
   /* ───── LOCAL RAISE HAND ───── */
   useEffect(() => {
     const handleLocal = (e) => {
       const { type, identity } = e.detail;
-      if (type === "raise-hand") {
-        setRaisedHands((prev) => ({ ...prev, [identity]: true }));
-      }
-      if (type === "lower-hand") {
-        setRaisedHands((prev) => {
-          const updated = { ...prev };
-          delete updated[identity];
-          return updated;
-        });
-      }
+      if (type === "raise-hand") setRaisedHands((prev) => ({ ...prev, [identity]: true }));
+      if (type === "lower-hand") setRaisedHands((prev) => { const u = { ...prev }; delete u[identity]; return u; });
     };
     window.addEventListener("raise-hand-local", handleLocal);
     return () => window.removeEventListener("raise-hand-local", handleLocal);
@@ -98,36 +101,21 @@ export default function ClassroomUI({
       try {
         const text = new TextDecoder().decode(payload);
         const msg = JSON.parse(text);
-
         if (msg.type === "raise-hand") {
-          const identity = participant.identity;
-          setRaisedHands((prev) => ({ ...prev, [identity]: true }));
-
-          if (isPresenter) {
-            const toastId = Date.now() + Math.random();
-            setRaiseHandToasts((prev) => [...prev, { id: toastId, identity }]);
-            setTimeout(() => {
-              setRaiseHandToasts((prev) =>
-                prev.filter((t) => t.id !== toastId)
-              );
-            }, 5000);
-          }
+          setRaisedHands((prev) => ({ ...prev, [participant.identity]: true }));
         }
-
         if (msg.type === "lower-hand") {
-          const identity = participant.identity;
           setRaisedHands((prev) => {
             const updated = { ...prev };
-            delete updated[identity];
+            delete updated[participant.identity];
             return updated;
           });
         }
       } catch {}
     };
-
     room.on("dataReceived", handleData);
     return () => room.off("dataReceived", handleData);
-  }, [room, isPresenter]);
+  }, [room]);
 
   /* ───── TRACKS ───── */
   const tracks = useTracks([
@@ -170,12 +158,36 @@ export default function ClassroomUI({
     );
   }
 
-  const participantsList = room.remoteParticipants
+  /* ───── PARTICIPANTS LIST ───── */
+  const remoteParticipants = room.remoteParticipants
     ? Array.from(room.remoteParticipants.values()).map((p) => ({
+        identity: p.identity,
         name: p.name || p.identity,
-        role: "Student",
+        role: "Teacher",
+        micOn: p.isMicrophoneEnabled,
+        camOn: p.isCameraEnabled,
+        handRaised: !!raisedHands[p.identity],
+        isTeacher: true,
+        isMe: false,
       }))
     : [];
+
+  const localId = room.localParticipant?.identity;
+  const localName = room.localParticipant?.name || localId || "You";
+
+  const peopleList = [
+    ...remoteParticipants,
+    {
+      identity: localId,
+      name: "You",
+      role: "Student",
+      micOn: room.localParticipant?.isMicrophoneEnabled,
+      camOn: room.localParticipant?.isCameraEnabled,
+      handRaised: false,
+      isTeacher: false,
+      isMe: true,
+    },
+  ];
 
   /* ───── MAIN UI ───── */
   return (
@@ -187,35 +199,15 @@ export default function ClassroomUI({
       }
       ref={containerRef}
     >
-
-      {/* TOASTS */}
-      {isPresenter && raiseHandToasts.length > 0 && (
-        <div className="rh-toasts">
-          {raiseHandToasts.map((t) => (
-            <div key={t.id} className="rh-toast">
-              <strong>{t.identity}</strong> raised their hand
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* LEFT COLUMN: video + control bar */}
+      {/* LEFT COLUMN */}
       <div className="classroom-main">
-
-        {/* VIDEO */}
         <div className="main-stage">
           <VideoTrack trackRef={mainTrack} />
-
           {pipTrack && (
             <div className="pip-camera">
               <VideoTrack trackRef={pipTrack} />
             </div>
           )}
-
-          {isPresenter && (
-            <TeacherControls sessionId={sessionId} onLeave={onLeave} />
-          )}
-
           <button
             className="video-fs-btn"
             onClick={toggleFullscreen}
@@ -226,7 +218,6 @@ export default function ClassroomUI({
           </button>
         </div>
 
-        {/* CONTROL BAR */}
         <ControlBar
           onLeave={onLeave}
           role={role}
@@ -238,13 +229,14 @@ export default function ClassroomUI({
       {activePanel && (
         <div className="right-sidebar">
 
+          {/* CHAT */}
           {activePanel === "chat" && (
             <>
               <ChatPanel
                 role={role}
                 messages={chatMessages}
                 onSendMessage={sendMessage}
-                participants={participantsList}
+                participants={peopleList}
               />
               {!isPresenter && (
                 <div className="chat-raise-hand-wrap">
@@ -254,30 +246,52 @@ export default function ClassroomUI({
             </>
           )}
 
+          {/* PEOPLE */}
           {activePanel === "people" && (
-            <div className="side-panel">
-              <div className="side-panel__header">
-                <h3>People ({participantsList.length})</h3>
-                <button
-                  className="side-panel__close"
-                  onClick={() => setActivePanel(null)}
-                  aria-label="Close"
-                >
-                  ✕
-                </button>
+            <div className="ppl-panel">
+              <div className="ppl-header">
+                Participants ({peopleList.length})
               </div>
-              <div className="side-panel__body">
-                {participantsList.length === 0 ? (
-                  <p className="side-panel__empty">No participants yet.</p>
+              <div className="ppl-list">
+                {peopleList.length === 0 ? (
+                  <p className="ppl-empty">No participants yet.</p>
                 ) : (
-                  participantsList.map((p, i) => (
-                    <div className="side-panel__row" key={i}>
-                      <div className="side-panel__avatar">
-                        {p.name?.charAt(0)?.toUpperCase() || "?"}
+                  peopleList.map((p, i) => (
+                    <div
+                      key={p.identity || i}
+                      className={"ppl-card" + (p.isTeacher ? " ppl-card--teacher" : "")}
+                    >
+                      <div className="ppl-avatar">
+                        {p.avatarUrl ? (
+                          <img src={p.avatarUrl} alt={p.name} />
+                        ) : (
+                          p.name?.charAt(0)?.toUpperCase() || "?"
+                        )}
                       </div>
-                      <div className="side-panel__info">
-                        <div className="side-panel__name">{p.name}</div>
-                        <div className="side-panel__role">{p.role}</div>
+                      <div className="ppl-info">
+                        <div className="ppl-name">{p.isMe ? "You" : p.name}</div>
+                        <div className="ppl-role">{p.role}</div>
+                      </div>
+                      <div className="ppl-actions">
+                        {/* Mic indicator only — no controls for student */}
+                        <div className={`ppl-mic ${p.micOn ? "ppl-mic--on" : "ppl-mic--off"}`}>
+                          {p.micOn ? (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                              <line x1="12" y1="19" x2="12" y2="23"/>
+                              <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
+                          ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="1" y1="1" x2="23" y2="23"/>
+                              <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+                              <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/>
+                              <line x1="12" y1="19" x2="12" y2="23"/>
+                              <line x1="8" y1="23" x2="16" y2="23"/>
+                            </svg>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))
@@ -286,6 +300,7 @@ export default function ClassroomUI({
             </div>
           )}
 
+          {/* INFO */}
           {activePanel === "info" && (
             <div className="side-panel">
               <div className="side-panel__header">
@@ -294,9 +309,7 @@ export default function ClassroomUI({
                   className="side-panel__close"
                   onClick={() => setActivePanel(null)}
                   aria-label="Close"
-                >
-                  ✕
-                </button>
+                >✕</button>
               </div>
               <div className="side-panel__body">
                 <div className="side-panel__field">
@@ -305,15 +318,11 @@ export default function ClassroomUI({
                 </div>
                 <div className="side-panel__field">
                   <div className="side-panel__field-label">Your role</div>
-                  <div className="side-panel__field-value">
-                    {isPresenter ? "Teacher" : "Student"}
-                  </div>
+                  <div className="side-panel__field-value">Student</div>
                 </div>
                 <div className="side-panel__field">
                   <div className="side-panel__field-label">Participants</div>
-                  <div className="side-panel__field-value">
-                    {participantsList.length + 1}
-                  </div>
+                  <div className="side-panel__field-value">{peopleList.length}</div>
                 </div>
               </div>
             </div>
@@ -321,7 +330,6 @@ export default function ClassroomUI({
 
         </div>
       )}
-
     </div>
   );
 }
