@@ -1,6 +1,7 @@
 import { useTracks, VideoTrack, useRoomContext } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import ChatPanel from "./ChatPanel";
+import ParticipantsPanel from "./ParticipantsPanel";
 import RaiseHandButton from "./RaiseHandButton";
 import ControlBar from "./ControlBar";
 import React, { useState, useRef, useEffect } from "react";
@@ -100,7 +101,6 @@ export default function StudentPrivateClassroomUI({
       try {
         const text = new TextDecoder().decode(payload);
         const msg = JSON.parse(text);
-
         if (msg.type === "raise-hand") {
           setRaisedHands((prev) => ({ ...prev, [participant.identity]: true }));
         }
@@ -141,34 +141,8 @@ export default function StudentPrivateClassroomUI({
     );
   }
 
-  /* ───── PARTICIPANTS LIST ───── */
-  const remoteParticipants = room.remoteParticipants
-    ? Array.from(room.remoteParticipants.values()).map((p) => ({
-        identity: p.identity,
-        name: p.name || p.identity,
-        role: "Teacher",
-        micOn: p.isMicrophoneEnabled,
-        camOn: p.isCameraEnabled,
-        isTeacher: true,
-        isMe: false,
-      }))
-    : [];
-
   const localId = room.localParticipant?.identity;
-  const localName = room.localParticipant?.name || localId || "You";
-
-  const peopleList = [
-    ...remoteParticipants,
-    {
-      identity: localId,
-      name: localName,
-      role: "Student",
-      micOn: room.localParticipant?.isMicrophoneEnabled,
-      camOn: room.localParticipant?.isCameraEnabled,
-      isTeacher: false,
-      isMe: true,
-    },
-  ];
+  const sessionIdFinal = sessionId;
 
   /* ───── MAIN UI ───── */
   return (
@@ -223,7 +197,6 @@ export default function StudentPrivateClassroomUI({
                 role={role}
                 messages={chatMessages}
                 onSendMessage={sendMessage}
-                participants={peopleList}
               />
               <div className="chat-raise-hand-wrap">
                 <RaiseHandButton />
@@ -233,48 +206,7 @@ export default function StudentPrivateClassroomUI({
 
           {/* PEOPLE PANEL */}
           {activePanel === "people" && (
-            <div className="ppl-panel">
-              <div className="ppl-header">
-                Participants ({peopleList.length})
-              </div>
-              <div className="ppl-list">
-                {peopleList.map((p, i) => (
-                  <div
-                    key={p.identity || i}
-                    className={"ppl-card" + (p.isTeacher ? " ppl-card--teacher" : "")}
-                  >
-                    <div className="ppl-avatar">
-                      {p.name?.charAt(0)?.toUpperCase() || "?"}
-                    </div>
-                    <div className="ppl-info">
-                      <div className="ppl-name">{p.isMe ? "You" : p.name}</div>
-                      <div className="ppl-role">{p.role}</div>
-                    </div>
-                    <div className="ppl-actions">
-                      {/* Mic indicator only — no controls for student */}
-                      <div className={`ppl-mic ${p.micOn ? "ppl-mic--on" : "ppl-mic--off"}`}>
-                        {p.micOn ? (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                            <line x1="12" y1="19" x2="12" y2="23"/>
-                            <line x1="8" y1="23" x2="16" y2="23"/>
-                          </svg>
-                        ) : (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="1" y1="1" x2="23" y2="23"/>
-                            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
-                            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/>
-                            <line x1="12" y1="19" x2="12" y2="23"/>
-                            <line x1="8" y1="23" x2="16" y2="23"/>
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ParticipantsPanel raisedHands={raisedHands} />
           )}
 
           {/* SESSION INFO PANEL */}
@@ -293,15 +225,11 @@ export default function StudentPrivateClassroomUI({
               <div className="side-panel__body">
                 <div className="side-panel__field">
                   <div className="side-panel__field-label">Session ID</div>
-                  <div className="side-panel__field-value">{sessionId}</div>
+                  <div className="side-panel__field-value">{sessionIdFinal}</div>
                 </div>
                 <div className="side-panel__field">
                   <div className="side-panel__field-label">Your role</div>
                   <div className="side-panel__field-value">Student</div>
-                </div>
-                <div className="side-panel__field">
-                  <div className="side-panel__field-label">Participants</div>
-                  <div className="side-panel__field-value">{peopleList.length}</div>
                 </div>
               </div>
             </div>
