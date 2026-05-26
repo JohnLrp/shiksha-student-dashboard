@@ -21,21 +21,23 @@ export default function PageHeader({ title, onSearch }) {
     <div className="pageHeader">
       <h2 className="pageHeaderTitle">{title}</h2>
 
-      <div className="pageHeaderSearch">
-        <input
-          placeholder="Search..."
-          value={term}
-          onChange={handleChange}
-          onKeyDown={handleKeyDown}
-        />
-        <button
-          className="pageHeaderSearchIcon"
-          onClick={handleSubmit}
-          aria-label="Search"
-        >
-          🔍
-        </button>
-      </div>
+      {onSearch && (
+        <div className="pageHeaderSearch">
+          <input
+            placeholder="Search..."
+            value={term}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+          />
+          <button
+            className="pageHeaderSearchIcon"
+            onClick={handleSubmit}
+            aria-label="Search"
+          >
+            🔍
+          </button>
+        </div>
+      )}
     </div>
   );
 }

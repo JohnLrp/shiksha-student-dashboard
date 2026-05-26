@@ -11,7 +11,6 @@ export default function RecordingsList() {
 
   const [recordingsData, setRecordingsData] = useState([]);
   const [progressMap, setProgressMap]       = useState({});
-  const [searchTerm, setSearchTerm]         = useState("");
   const [loading, setLoading]               = useState(true);
 
   useEffect(() => {
@@ -51,9 +50,6 @@ export default function RecordingsList() {
     fetchAll();
   }, [subjectId]);
 
-  const filteredRecordings = recordingsData.filter((item) =>
-    (item.title || "").toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   return (
     <div className="recordingsPage">
@@ -62,19 +58,19 @@ export default function RecordingsList() {
       </button>
 
       <div className="recordingsHeaderBox">
-        <PageHeader title="Subject Recordings" onSearch={setSearchTerm} />
+        <PageHeader title="Subject Recordings" />
       </div>
 
       <div className="recordingsBodyBox">
 
         {loading && <p style={{ padding: "20px", opacity: 0.6 }}>Loading recordings...</p>}
 
-        {!loading && filteredRecordings.length === 0 && (
+        {!loading && recordingsData.length === 0 && (
           <p style={{ padding: "20px", opacity: 0.6 }}>No recordings found.</p>
         )}
 
         <div className="recordingsGrid">
-          {filteredRecordings.map((item) => {
+          {recordingsData.map((item) => {
             const prog = progressMap[item.id];
             const pct  = prog?.percent_complete ?? null;
             const done = prog?.completed ?? false;
