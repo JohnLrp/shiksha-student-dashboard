@@ -10,7 +10,6 @@ export default function StudyMaterialList() {
   const { subjectId } = useParams();
 
   const [chaptersData, setChaptersData] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
   const [sortCol, setSortCol] = useState(null);
   const [sortDir, setSortDir] = useState(1);
   const [highlightedRow, setHighlightedRow] = useState(null);
@@ -81,12 +80,7 @@ export default function StudyMaterialList() {
     });
   };
 
-  const filteredChapters = sorted(
-    chaptersData.filter((item) =>
-      item.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.chapter.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  const filteredChapters = sorted(chaptersData);
 
   return (
     <div className="studyMaterialPage">
@@ -99,7 +93,7 @@ export default function StudyMaterialList() {
       </button>
 
       <div className="studyMaterialHeaderBox">
-        <PageHeader title="Study Material" onSearch={setSearchTerm} />
+        <PageHeader title="Study Material" />
       </div>
 
       <div className="studyMaterialBodyBox">
@@ -136,7 +130,7 @@ export default function StudyMaterialList() {
                     <td colSpan={5}>
                       <div className="emptyState">
                         <div className="emptyIcon">📭</div>
-                        <p>No materials match your search</p>
+                        <p>No materials found</p>
                       </div>
                     </td>
                   </tr>

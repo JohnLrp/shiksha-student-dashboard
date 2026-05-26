@@ -1,877 +1,277 @@
-/**
- * FILE: STUDENT_DASHBOARD/src/components/live/PrivateClassroomUI.jsx
- *
- * Peer-only classroom UI — same look as the teacher's UI but with
- * NO power controls (no record, no mute-all, no mute-individual, no
- * remove, no end-for-all). Used by:
- *   * Private sessions (student side) — chat enabled, default URLs
- *   * Study group sessions (any role: host / invited teacher / invitee)
- *     — chat enabled, study-group chat URLs passed via chatConfig
- *
- * Props:
- *   role        — "student" | "teacher" | "host"
- *                 (no UI behaviour branches off this — it's only used for
- *                  the local chat sender pill colour)
- *   session     — { id, subject, topic, ... }
- *   noChat      — when true, chat REST + WS init are skipped, and the
- *                 chat sidebar tab + bottom-bar chat button are hidden.
- *                 Use for any session that genuinely has no chat backend.
- *   chatConfig  — optional override of the default private-session chat
- *                 endpoints. Shape:
- *                   {
- *                     restGetPath:  "/sessions/<id>/chat/",
- *                     restPostPath: "/sessions/<id>/chat/send/",
- *                     wsPath:       "/ws/private-session/<id>/chat/",
- *                   }
- *                 If undefined, the private-session paths above are used.
- *                 Study groups pass:
- *                   restGetPath:  "/sessions/study-groups/<id>/chat/"
- *                   restPostPath: "/sessions/study-groups/<id>/chat/send/"
- *                   wsPath:       "/ws/study-group/<id>/chat/"
- */
-
-import {
-  useTracks,
-  useParticipants,
-  useLocalParticipant,
-  useRoomContext,
-  VideoTrack,
-} from "@livekit/components-react";
+import { useTracks, VideoTrack, useRoomContext } from "@livekit/components-react";
 import { Track } from "livekit-client";
-import { useState, useEffect, useCallback, useRef } from "react";
-
-/* Local helper — formats a remaining-time number (ms) as MM:SS.
-   Mirrors the helper in pages/StudyGroupLive.jsx; kept inline so the
-   classroom UI is self-contained when callers pass remainingMs. */
-function formatRemaining(ms) {
-  if (ms == null || ms < 0) return "--:--";
-  const total = Math.floor(ms / 1000);
-  const mm = String(Math.floor(total / 60)).padStart(2, "0");
-  const ss = String(total % 60).padStart(2, "0");
-  return `${mm}:${ss}`;
-}
-
-import "./privateClassroom.css";
 import ChatPanel from "./ChatPanel";
-import api from "../../api/apiClient";
-import { useAuth } from "../../contexts/AuthContext";
-import soundManager from "../../utils/soundManager";
+import RaiseHandButton from "./RaiseHandButton";
+import ControlBar from "./ControlBar";
+import React, { useState, useRef, useEffect } from "react";
+import "../../styles/live.css";
+import useLiveSessionChat from "../../hooks/useLiveSessionChat";
+import { MdFullscreen, MdFullscreenExit } from "react-icons/md";
 
-/* ═══════════════════════════════════════════════════════════
-   HOOKS
-═══════════════════════════════════════════════════════════ */
+export default function PrivateClassroomUI({
+  role = "STUDENT",
+  sessionId: sessionIdProp,
+  onLeave,
+}) {
+  const [raisedHands, setRaisedHands] = useState({});
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [activePanel, setActivePanel] = useState(null);
+  const [, setTick] = useState(0);
+  const bump = () => setTick((t) => t + 1);
 
-function useTimer() {
-  const [s, setS] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setS((x) => x + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-}
+  const containerRef = useRef(null);
+  const room = useRoomContext();
 
-function useToast() {
-  const [toasts, setToasts] = useState([]);
-  const show = useCallback((text, type = "info") => {
-    const id = Date.now() + Math.random();
-    setToasts((p) => [...p, { id, text, type }]);
-    setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 2800);
-  }, []);
-  return { toasts, show };
-}
+  const sessionId =
+    sessionIdProp ||
+    window.location.pathname.split("/").filter(Boolean).pop();
 
-function useSpeakingDetect(participant) {
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  useEffect(() => {
-    if (!participant) return;
-    const onSpeaking = (speaking) => setIsSpeaking(speaking);
-    participant.on("isSpeakingChanged", onSpeaking);
-    return () => participant.off("isSpeakingChanged", onSpeaking);
-  }, [participant]);
-  return isSpeaking;
-}
+  const { messages: chatMessages, sendMessage } = useLiveSessionChat(sessionId);
 
-function SpeakingTile({ track, children }) {
-  const isSpeaking = useSpeakingDetect(track.participant);
-  return children(isSpeaking);
-}
-
-/* ═══════════════════════════════════════════════════════════
-   VIDEO TILE — identical to Teacher UI
-═══════════════════════════════════════════════════════════ */
-
-function Tile({ track, localId, pinned, onPin, raisedHands, large, isScreenShare }) {
-  const p = track.participant;
-  const name = p.name || p.identity || "?";
-  const isLocal = p.identity === localId;
-  let metadata = {};
-  try { metadata = JSON.parse(p.metadata || "{}"); } catch {}
-  const isTeacher = metadata.role === "teacher";
-  const isMuted = !p.isMicrophoneEnabled;
-  const isCamOff = !p.isCameraEnabled;
-  const hasHand = raisedHands[p.identity];
-
-  // Click-to-spotlight: clicking the tile toggles pin (spotlight). Clicking
-  // a spotlighted tile pins it off and returns to grid view.
-  const handleTileClick = () => onPin(p.identity);
-
-  // Fullscreen toggle for shared screens (and any tile, optionally).
-  const tileRef = useRef(null);
-  const enterFullscreen = (e) => {
-    e.stopPropagation();
-    const el = tileRef.current;
-    if (!el) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen?.();
-    } else {
-      (el.requestFullscreen ||
-        el.webkitRequestFullscreen ||
-        el.msRequestFullscreen)?.call(el);
-    }
+  const togglePanel = (panel) => {
+    setActivePanel((current) => (current === panel ? null : panel));
   };
 
-  // Screen share tiles always show the video track
-  if (isScreenShare) {
+  /* ───── FULLSCREEN ───── */
+  const toggleFullscreen = async () => {
+    try {
+      if (!document.fullscreenElement) {
+        const el = containerRef.current;
+        if (el?.requestFullscreen) await el.requestFullscreen();
+        else if (el?.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+        else if (el?.msRequestFullscreen) await el.msRequestFullscreen();
+      } else {
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) await document.msExitFullscreen();
+      }
+    } catch (e) { console.error("Fullscreen failed:", e); }
+  };
+
+  useEffect(() => {
+    const onFSChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFSChange);
+    document.addEventListener("webkitfullscreenchange", onFSChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFSChange);
+      document.removeEventListener("webkitfullscreenchange", onFSChange);
+    };
+  }, []);
+
+  /* ───── RE-RENDER ON TRACK CHANGES ───── */
+  useEffect(() => {
+    if (!room) return;
+    const events = [
+      "trackMuted", "trackUnmuted", "trackPublished", "trackUnpublished",
+      "trackSubscribed", "trackUnsubscribed", "participantConnected",
+      "participantDisconnected", "localTrackPublished", "localTrackUnpublished",
+    ];
+    events.forEach((evt) => room.on(evt, bump));
+    return () => { events.forEach((evt) => room.off(evt, bump)); };
+  }, [room]);
+
+  /* ───── LOCAL RAISE HAND ───── */
+  useEffect(() => {
+    const handleLocal = (e) => {
+      const { type, identity } = e.detail;
+      if (type === "raise-hand") setRaisedHands((prev) => ({ ...prev, [identity]: true }));
+      if (type === "lower-hand") setRaisedHands((prev) => { const u = { ...prev }; delete u[identity]; return u; });
+    };
+    window.addEventListener("raise-hand-local", handleLocal);
+    return () => window.removeEventListener("raise-hand-local", handleLocal);
+  }, []);
+
+  /* ───── REMOTE DATA ───── */
+  useEffect(() => {
+    const handleData = (payload, participant) => {
+      try {
+        const msg = JSON.parse(new TextDecoder().decode(payload));
+        if (msg.type === "raise-hand") setRaisedHands((prev) => ({ ...prev, [participant.identity]: true }));
+        if (msg.type === "lower-hand") setRaisedHands((prev) => { const u = { ...prev }; delete u[participant.identity]; return u; });
+      } catch {}
+    };
+    room.on("dataReceived", handleData);
+    return () => room.off("dataReceived", handleData);
+  }, [room]);
+
+  /* ───── TRACKS ───── */
+  const tracks = useTracks([
+    { source: Track.Source.Camera, withPlaceholder: false },
+    { source: Track.Source.ScreenShare, withPlaceholder: false },
+  ]);
+
+  const screenTrack = tracks.find((t) => t.source === Track.Source.ScreenShare);
+  const cameraTrack = tracks.find((t) => t.source === Track.Source.Camera);
+  const mainTrack = screenTrack || cameraTrack;
+  const pipTrack = screenTrack ? cameraTrack : null;
+
+  /* ───── WAITING ───── */
+  if (!mainTrack) {
     return (
-      <div
-        ref={tileRef}
-        className={`pvt-tile pvt-tile-screenshare ${pinned ? "pvt-tile-pinned" : ""}`}
-        onClick={handleTileClick}
-        role="button"
-        tabIndex={0}
-        title={pinned ? "Click to exit spotlight" : "Click to spotlight"}
-      >
-        <VideoTrack trackRef={track} />
-        <div className="pvt-tile-label">
-          🖥️ {isLocal ? `${name} (You)` : name}'s Screen
+      <div className="waiting-screen">
+        <div className="waiting-card">
+          <div className="waiting-pulse" />
+          <h2>Waiting for teacher to start...</h2>
+          <p>You will be connected as soon as the session begins</p>
         </div>
-        <button
-          className="pvt-fullscreen-btn"
-          onClick={enterFullscreen}
-          title="Fullscreen"
-          type="button"
-        >
-          ⛶
-        </button>
-        <button
-          className={`pvt-pin-btn ${pinned ? "pvt-pin-active" : ""}`}
-          onClick={(e) => { e.stopPropagation(); onPin(p.identity); }}
-          title={pinned ? "Unpin" : "Pin"}
-          type="button"
-        >
-          {pinned ? "📌" : "📍"}
-        </button>
       </div>
     );
   }
 
+  /* ───── PARTICIPANTS ───── */
+  const remoteParticipants = room.remoteParticipants
+    ? Array.from(room.remoteParticipants.values()).map((p) => ({
+        identity: p.identity,
+        name: p.name || p.identity,
+        role: "Teacher",
+        micOn: p.isMicrophoneEnabled,
+        isTeacher: true,
+        isMe: false,
+      }))
+    : [];
+
+  const localId = room.localParticipant?.identity;
+  const localName = room.localParticipant?.name || localId || "You";
+
+  const peopleList = [
+    ...remoteParticipants,
+    {
+      identity: localId,
+      name: localName,
+      role: "Student",
+      micOn: room.localParticipant?.isMicrophoneEnabled,
+      isTeacher: false,
+      isMe: true,
+    },
+  ];
+
+  /* ───── MAIN UI ───── */
   return (
-    <SpeakingTile track={track}>
-      {(isSpeaking) => (
-        <div
-          ref={tileRef}
-          className={`pvt-tile ${isSpeaking ? "pvt-tile-speaking" : ""} ${pinned ? "pvt-tile-pinned" : ""}`}
-          onClick={handleTileClick}
-          role="button"
-          tabIndex={0}
-          title={pinned ? "Click to exit spotlight" : "Click to spotlight"}
-        >
-          {!isCamOff && (track.publication?.isSubscribed || isLocal) ? (
-            <VideoTrack trackRef={track} />
-          ) : (
-            <ParticipantPlaceholder name={name} large={large} />
+    <div
+      className={
+        "classroom-layout" +
+        (isFullscreen ? " fs-mode" : "") +
+        (!activePanel ? " panel-closed" : "")
+      }
+      ref={containerRef}
+    >
+      <div className="classroom-main">
+        <div className="main-stage">
+          <VideoTrack trackRef={mainTrack} />
+          {pipTrack && (
+            <div className="pip-camera">
+              <VideoTrack trackRef={pipTrack} />
+            </div>
           )}
-
-          {isMuted && <div className="pvt-muted-bar">🔇 Muted</div>}
-          {hasHand && <div className="pvt-hand-indicator">🖐</div>}
-
-          <div className="pvt-tile-label">
-            {isTeacher && <span className="pvt-host-badge">HOST</span>}
-            {isLocal ? `${name} (You)` : name}
-            {isSpeaking && <span className="pvt-speaking-dot">●</span>}
-          </div>
-
           <button
-            className={`pvt-pin-btn ${pinned ? "pvt-pin-active" : ""}`}
-            onClick={(e) => { e.stopPropagation(); onPin(p.identity); }}
-            title={pinned ? "Unpin" : "Pin"}
-            type="button"
+            className="video-fs-btn"
+            onClick={toggleFullscreen}
+            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
           >
-            {pinned ? "📌" : "📍"}
+            {isFullscreen ? <MdFullscreenExit size={22} /> : <MdFullscreen size={22} />}
           </button>
         </div>
-      )}
-    </SpeakingTile>
-  );
-}
 
-/* ═══════════════════════════════════════════════════════════
-   PLACEHOLDER (cam off)
-═══════════════════════════════════════════════════════════ */
-
-function ParticipantPlaceholder({ name, large }) {
-  const initial = (name || "?").charAt(0).toUpperCase();
-  const size = large ? 80 : 56;
-  return (
-    <div className="pvt-placeholder">
-      <div className="pvt-placeholder-avatar" style={{ width: size, height: size, fontSize: size * 0.38 }}>
-        {initial}
-      </div>
-      <div className="pvt-placeholder-name">{name}</div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   PARTICIPANTS LIST (sidebar) — no mute/remove controls
-═══════════════════════════════════════════════════════════ */
-
-function ParticipantsList({ participants, localId, raisedHands }) {
-  return (
-    <div className="pvt-participants-list">
-      {participants.map((p) => {
-        const name = p.name || p.identity;
-        const isLocal = p.identity === localId;
-        let metadata = {};
-        try { metadata = JSON.parse(p.metadata || "{}"); } catch {}
-        const isTeacher = metadata.role === "teacher";
-
-        return (
-          <div key={p.identity} className="pvt-participant-item">
-            <div className="pvt-participant-avatar">
-              {name.charAt(0).toUpperCase()}
-            </div>
-            <div className="pvt-participant-info">
-              <div className="pvt-participant-name">
-                {name} {isLocal && "(You)"}
-              </div>
-              <div className="pvt-participant-role">
-                {isTeacher ? "👑 Host" : "Student"}
-              </div>
-            </div>
-            <div className="pvt-participant-icons">
-              <span>{p.isMicrophoneEnabled ? "🎤" : "🔇"}</span>
-              <span>{p.isCameraEnabled ? "📹" : "📷"}</span>
-              {raisedHands[p.identity] && <span>🖐</span>}
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════
-   MAIN COMPONENT
-═══════════════════════════════════════════════════════════ */
-
-export default function PrivateClassroomUI({
-  role,
-  session,
-  noChat = false,
-  chatConfig,
-  onLeave,
-  // Study-group integration (optional — set by StudyGroupLive.jsx):
-  //   studyGroup            : when true, renders the "STUDY GROUP" pill
-  //                           in the topbar.
-  //   studyGroupRemainingMs : remaining hard-duration of the group in ms.
-  //                           When provided, a ⏳ MM:SS-left chip appears
-  //                           in the topbar-right next to the elapsed timer.
-  //   autoSpotlightLocal    : on first render after the local participant
-  //                           is known, pin the local tile so the layout
-  //                           defaults to spotlight (main + 180px strip)
-  //                           instead of an equal-share grid. Fixes the
-  //                           "membrane" issue where a videoless host
-  //                           tile took half the page in pvt-grid-2.
-  studyGroup = false,
-  studyGroupRemainingMs = null,
-  autoSpotlightLocal = false,
-}) {
-  const room = useRoomContext();
-  const { user } = useAuth();
-  const myUserId = user?.id ? String(user.id) : null;
-  const { localParticipant } = useLocalParticipant();
-  const participants = useParticipants();
-  const timer = useTimer();
-  const { toasts, show } = useToast();
-
-  // Resolve chat endpoints. Defaults to the private-session paths so
-  // existing callers (PrivateSessionLive) keep working unchanged.
-  const _chatCfg = chatConfig || (session?.id ? {
-    restGetPath:  `/sessions/${session.id}/chat/`,
-    restPostPath: `/sessions/${session.id}/chat/send/`,
-    wsPath:       `/ws/private-session/${session.id}/chat/`,
-  } : null);
-
-  // Leave-confirmation modal: shown when user clicks the bottom Leave
-  // button, requires explicit confirmation before disconnecting.
-  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-
-  // When chat is disabled, default the sidebar to the participants tab so
-  // we don't render an empty "Chat" panel that the user can't escape from.
-  const [sidebarTab, setSidebarTab] = useState(noChat ? "participants" : "chat");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
-  const [screenSharing, setScreenSharing] = useState(false);
-  const [handRaised, setHandRaised] = useState(false);
-  const [raisedHands, setRaisedHands] = useState({});
-  const [pinnedIds, setPinnedIds] = useState(new Set());
-  // Tracks whether we've already applied the one-shot auto-spotlight so we
-  // don't fight a user's later unpin. Stays false when autoSpotlightLocal
-  // is false (default).
-  const autoSpotlightAppliedRef = useRef(false);
-  const [chatMessages, setChatMessages] = useState([]);
-  const [soundMuted, setSoundMuted] = useState(soundManager.isMuted());
-  const prevParticipantCountRef = useState({ current: null })[0];
-
-  // ── One-shot auto-spotlight for study-group rooms ──
-  // When the parent opts in (autoSpotlightLocal=true), pin the local
-  // participant the first time we have an identity. Without this, study
-  // groups in pvt-grid-2 render the videoless host tile at half-page width
-  // — covering the view ("the membrane"). With it, the layout switches to
-  // pvt-screen-layout (large main + 180px strip), matching the teacher UI.
-  useEffect(() => {
-    if (!autoSpotlightLocal) return;
-    if (autoSpotlightAppliedRef.current) return;
-    const id = localParticipant?.identity;
-    if (!id) return;
-    setPinnedIds(new Set([id]));
-    autoSpotlightAppliedRef.current = true;
-  }, [autoSpotlightLocal, localParticipant?.identity]);
-
-  // ── Participant join/leave sound detection ──
-  useEffect(() => {
-    const count = participants.length;
-    if (prevParticipantCountRef.current === null) {
-      prevParticipantCountRef.current = count;
-      return;
-    }
-    if (count > prevParticipantCountRef.current) {
-      soundManager.participantJoin();
-    } else if (count < prevParticipantCountRef.current) {
-      soundManager.participantLeave();
-    }
-    prevParticipantCountRef.current = count;
-  }, [participants.length]);
-
-  // ── Load persisted chat messages on mount ──
-  useEffect(() => {
-    if (noChat) return;
-    if (!session?.id || !_chatCfg) return;
-    api.get(_chatCfg.restGetPath).then((res) => {
-      const msgs = (res.data || []).map((m) => {
-        const isMe = myUserId && String(m.sender_id) === myUserId;
-        return {
-          id: m.id,
-          sender: m.sender_name,
-          text: m.message,
-          isTeacher: m.sender_role === "teacher",
-          isMe,
-          time: new Date(m.created_at),
-        };
-      });
-      setChatMessages(msgs);
-    }).catch(() => {});
-  }, [session?.id, myUserId, noChat]);
-
-  // ── WebSocket for real-time chat — with token auth + auto-reconnect ──
-  useEffect(() => {
-    if (noChat) return;
-    if (!session?.id || !_chatCfg) return;
-    let ws = null;
-    let reconnectTimer = null;
-    let unmounted = false;
-
-    const connect = () => {
-      if (unmounted) return;
-      // Always force wss in production — the API host runs https, while
-      // `window.location.protocol` reflects the dashboard host. Defaulting
-      // wsHost to the dashboard host (window.location.host) was the bug
-      // that made chat one-way: the WS would never reach the backend.
-      const isLocalDev =
-        window.location.hostname === "localhost" ||
-        window.location.hostname === "127.0.0.1";
-      const wsHost =
-        import.meta.env.VITE_WS_HOST ||
-        (isLocalDev ? window.location.host : "api.shikshacom.com");
-      const protocol = isLocalDev && window.location.protocol !== "https:" ? "ws:" : "wss:";
-      const token = localStorage.getItem("access") || sessionStorage.getItem("access") || "";
-      const wsUrl = `${protocol}//${wsHost}${_chatCfg.wsPath}${token ? `?token=${token}` : ""}`;
-      try {
-        ws = new WebSocket(wsUrl);
-        ws.onmessage = (event) => {
-          try {
-            const { data } = JSON.parse(event.data);
-            if (data) {
-              setChatMessages((prev) => {
-                if (prev.some((m) => m.id === data.id)) return prev;
-                const isMe = myUserId && String(data.sender_id) === myUserId;
-                if (!isMe) soundManager.messageReceive();
-                return [...prev, {
-                  id: data.id,
-                  sender: data.sender_name,
-                  text: data.message,
-                  isTeacher: data.sender_role === "teacher",
-                  isMe,
-                  time: new Date(data.created_at),
-                }];
-              });
-            }
-          } catch {}
-        };
-        ws.onclose = () => {
-          if (!unmounted) reconnectTimer = setTimeout(connect, 3000);
-        };
-        ws.onerror = () => ws.close();
-      } catch {}
-    };
-
-    connect();
-    return () => {
-      unmounted = true;
-      clearTimeout(reconnectTimer);
-      if (ws) ws.close();
-    };
-  }, [session?.id, myUserId, noChat]);
-
-  // Get all tracks
-  const tracks = useTracks([
-    { source: Track.Source.Camera, withPlaceholder: true },
-    { source: Track.Source.ScreenShare, withPlaceholder: false },
-  ]);
-
-  const screenTracks = tracks.filter((t) => t.source === Track.Source.ScreenShare);
-  const cameraTracks = tracks.filter((t) => t.source === Track.Source.Camera);
-
-  // ── Screen share detection sound (when others share) ──
-  const prevScreenCountRef = useState({ current: 0 })[0];
-  useEffect(() => {
-    const count = screenTracks.length;
-    if (count > prevScreenCountRef.current) soundManager.screenShareStart();
-    else if (count < prevScreenCountRef.current && prevScreenCountRef.current > 0) soundManager.screenShareStop();
-    prevScreenCountRef.current = count;
-  }, [screenTracks.length]);
-
-  // Listen for data messages: raise/lower hand + teacher force mute/disconnect + chat
-  useEffect(() => {
-    const decoder = new TextDecoder();
-    const CONTROL_TYPES = ["raise-hand", "RAISE_HAND", "LOWER_HAND", "FORCE_MUTE", "FORCE_DISCONNECT"];
-
-    const handleData = (payload, participant) => {
-      const text = decoder.decode(payload);
-      let isControl = false;
-
-      try {
-        const msg = JSON.parse(text);
-        const id = participant?.identity || msg.sender;
-
-        if (CONTROL_TYPES.includes(msg.type)) isControl = true;
-
-        if (msg.type === "RAISE_HAND" && id) {
-          setRaisedHands((prev) => ({ ...prev, [id]: true }));
-          show(`${participant?.name || id} raised their hand 🖐`, "info");
-        }
-        if (msg.type === "LOWER_HAND" && id) {
-          setRaisedHands((prev) => { const u = { ...prev }; delete u[id]; return u; });
-        }
-
-        // Teacher force-muted you
-        if (msg.type === "FORCE_MUTE" && msg.target === localParticipant.identity) {
-          localParticipant.setMicrophoneEnabled(false);
-          setMicOn(false);
-          show("You were muted by the teacher", "warn");
-        }
-
-        // Teacher removed you from session
-        if (msg.type === "FORCE_DISCONNECT" && msg.target === localParticipant.identity) {
-          show("You were removed from the session", "warn");
-          setTimeout(() => room.disconnect(), 1000);
-        }
-      } catch {}
-
-      // Chat messages are now handled via REST API + WebSocket — no longer via LiveKit data channel
-    };
-
-    room.on("dataReceived", handleData);
-    return () => room.off("dataReceived", handleData);
-  }, [room, show, localParticipant]);
-
-  // ── Controls ──
-
-  const toggleMic = async () => {
-    soundManager.buttonClick();
-    const next = !micOn;
-    await localParticipant.setMicrophoneEnabled(next);
-    setMicOn(next);
-    show(next ? "Mic on" : "Mic muted", "info");
-  };
-
-  const toggleCam = async () => {
-    soundManager.buttonClick();
-    const next = !camOn;
-    await localParticipant.setCameraEnabled(next);
-    setCamOn(next);
-    show(next ? "Camera on" : "Camera off", "info");
-  };
-
-  const toggleScreen = async () => {
-    soundManager.buttonClick();
-    const next = !screenSharing;
-    await localParticipant.setScreenShareEnabled(next);
-    setScreenSharing(next);
-    if (next) soundManager.screenShareStart();
-    else soundManager.screenShareStop();
-    show(next ? "Screen sharing started" : "Screen share stopped", "info");
-  };
-
-  const toggleHand = async () => {
-    soundManager.buttonClick();
-    const next = !handRaised;
-    const type = next ? "RAISE_HAND" : "LOWER_HAND";
-    const encoder = new TextEncoder();
-    await localParticipant.publishData(
-      encoder.encode(JSON.stringify({ type })),
-      { reliable: true }
-    );
-    setHandRaised(next);
-    show(next ? "Hand raised 🖐" : "Hand lowered", "info");
-  };
-
-  const sendChatMessage = async (text) => {
-    soundManager.messageSend();
-    if (!_chatCfg) return;
-    // Persist to backend — WebSocket will broadcast to other participants
-    try {
-      const res = await api.post(_chatCfg.restPostPath, { message: text });
-      const msg = res.data;
-      setChatMessages((prev) => {
-        // Avoid duplicate if WebSocket already delivered it
-        if (prev.some((m) => m.id === msg.id)) return prev;
-        return [...prev, {
-          id: msg.id,
-          sender: "You",
-          text: msg.message,
-          isMe: true,
-          isTeacher: role === "teacher",
-          time: new Date(msg.created_at),
-        }];
-      });
-    } catch (e) {
-      console.error("Failed to send message:", e);
-      setChatMessages((prev) => [...prev, { sender: "You", text, isMe: true, time: new Date() }]);
-    }
-  };
-
-  // Leave button now opens an in-room confirmation modal (handled in JSX
-  // below) instead of the OS-native window.confirm() — the modal is
-  // mobile-friendly, themable, and matches the room aesthetic.
-  const leaveRoom = () => {
-    soundManager.buttonClick();
-    setShowLeaveConfirm(true);
-  };
-
-  const confirmLeave = async () => {
-    setShowLeaveConfirm(false);
-    show("You left", "info");
-    setTimeout(async () => {
-      await room.disconnect();
-      // Optional caller hook (e.g. for navigation or cleanup); unused
-      // by the existing PrivateSessionLive flow which redirects via
-      // RoomContext disconnect, but available for future callers.
-      if (typeof onLeave === "function") onLeave();
-    }, 400);
-  };
-
-  const cancelLeave = () => setShowLeaveConfirm(false);
-
-  // ── Pin logic ──
-
-  const togglePin = (identity) => {
-    setPinnedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(identity)) next.delete(identity);
-      else if (next.size < 4) next.add(identity);
-      return next;
-    });
-  };
-
-  // ── Grid layout — Google Meet style ──
-  const allTracks = [...screenTracks, ...cameraTracks];
-  const totalTiles = allTracks.length;
-
-  const gridClass =
-    totalTiles <= 1 ? "pvt-grid-1" :
-    totalTiles === 2 ? "pvt-grid-2" :
-    totalTiles <= 4 ? "pvt-grid-4" :
-    totalTiles <= 6 ? "pvt-grid-6" :
-    totalTiles <= 9 ? "pvt-grid-9" : "pvt-grid-many";
-
-  const sortedAllTracks = [...allTracks].sort((a, b) => {
-    const aPin = pinnedIds.has(a.participant.identity) ? 0 : 1;
-    const bPin = pinnedIds.has(b.participant.identity) ? 0 : 1;
-    if (aPin !== bPin) return aPin - bPin;
-    const aScreen = a.source === Track.Source.ScreenShare ? 0 : 1;
-    const bScreen = b.source === Track.Source.ScreenShare ? 0 : 1;
-    return aScreen - bScreen;
-  });
-
-  const pinnedTracks = sortedAllTracks.filter(t => pinnedIds.has(t.participant.identity));
-  const unpinnedTracks = sortedAllTracks.filter(t => !pinnedIds.has(t.participant.identity));
-  const showSpotlight = pinnedTracks.length === 1 && totalTiles > 1;
-
-  return (
-    <div className={`pvt-room ${sidebarOpen && sidebarTab === "chat" ? "pvt-mobile-chat-open" : ""}`}>
-      {/* ── Top Bar ──
-          For study-group rooms (studyGroup=true) we render the STUDY GROUP
-          pill on the left and the ⏳ remaining-time chip on the right.
-          Previously these lived in a separate position:fixed banner
-          (.sgLive__banner) which was rendered inside the LiveKit tree and
-          sometimes got captured by an ancestor's transform → it floated
-          mid-page and looked like a "membrane" over the host's tile.
-          Inlining them here keeps them in normal flow and pinned to the
-          actual top of the room. */}
-      <div className="pvt-topbar">
-        <div className="pvt-topbar-left">
-          {studyGroup && (
-            <span className="pvt-sg-badge" title="Study Group session">
-              STUDY GROUP
-            </span>
-          )}
-          <div className="pvt-session-name">{session?.subject || (studyGroup ? "Study Group" : "Private Session")}</div>
-          <div className="pvt-session-sub">{session?.topic || session?.subject || (studyGroup ? "Study Group" : "Private Session")}</div>
-        </div>
-        <div className="pvt-topbar-right">
-          {studyGroup && studyGroupRemainingMs != null && (
-            <span className="pvt-sg-countdown" title="Time remaining for this study group">
-              ⏳ {formatRemaining(studyGroupRemainingMs)} left
-            </span>
-          )}
-          <span className="pvt-timer">⏱ {timer}</span>
-          <span className="pvt-count">👥 {participants.length}</span>
-        </div>
+        <ControlBar
+          onLeave={onLeave}
+          role={role}
+          activePanel={activePanel}
+          onTogglePanel={togglePanel}
+        />
       </div>
 
-      {/* ── Raised hand banner (visible to all) ── */}
-      {Object.keys(raisedHands).length > 0 && (
-        <div className="pvt-hand-banner">
-          🖐 {Object.keys(raisedHands).length} participant{Object.keys(raisedHands).length !== 1 ? "s" : ""} raised hand
-        </div>
-      )}
+      {activePanel && (
+        <div className="right-sidebar">
 
-      {/* ── Main Area ── */}
-      <div className="pvt-main">
-        <div className="pvt-video-area">
-          {showSpotlight ? (
-            /* ── Spotlight layout: 1 pinned large + rest in strip ── */
-            <div className="pvt-screen-layout">
-              <div className="pvt-screen-main">
-                <Tile
-                  key={pinnedTracks[0].participant.identity + "-pin"}
-                  track={pinnedTracks[0]}
-                  localId={localParticipant.identity}
-                  pinned={true} onPin={togglePin}
-                  raisedHands={raisedHands} large={true}
-                  isScreenShare={pinnedTracks[0].source === Track.Source.ScreenShare}
-                />
+          {/* CHAT */}
+          {activePanel === "chat" && (
+            <>
+              <ChatPanel
+                role={role}
+                messages={chatMessages}
+                onSendMessage={sendMessage}
+              />
+              <div className="chat-raise-hand-wrap">
+                <RaiseHandButton />
               </div>
-              <div className="pvt-screen-strip">
-                {unpinnedTracks.map((track) => (
-                  <Tile
-                    key={track.participant.identity + "-" + track.source}
-                    track={track}
-                    localId={localParticipant.identity}
-                    pinned={false} onPin={togglePin}
-                    raisedHands={raisedHands} large={false}
-                    isScreenShare={track.source === Track.Source.ScreenShare}
-                  />
+            </>
+          )}
+
+          {/* PEOPLE */}
+          {activePanel === "people" && (
+            <div className="ppl-panel">
+              <div className="ppl-header">
+                Participants ({peopleList.length})
+              </div>
+              <div className="ppl-list">
+                {peopleList.map((p, i) => (
+                  <div
+                    key={p.identity || i}
+                    className={"ppl-card" + (p.isTeacher ? " ppl-card--teacher" : "")}
+                  >
+                    <div className="ppl-avatar">
+                      {p.name?.charAt(0)?.toUpperCase() || "?"}
+                    </div>
+                    <div className="ppl-info">
+                      <div className="ppl-name">{p.isMe ? "You" : p.name}</div>
+                      <div className="ppl-role">{p.role}</div>
+                    </div>
+                    <div className="ppl-actions">
+                      <div className={`ppl-mic ${p.micOn ? "ppl-mic--on" : "ppl-mic--off"}`}>
+                        {p.micOn ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                            <line x1="12" y1="19" x2="12" y2="23"/>
+                            <line x1="8" y1="23" x2="16" y2="23"/>
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="1" y1="1" x2="23" y2="23"/>
+                            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"/>
+                            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"/>
+                            <line x1="12" y1="19" x2="12" y2="23"/>
+                            <line x1="8" y1="23" x2="16" y2="23"/>
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
-          ) : (
-            /* ── Grid layout: all tiles in even Google Meet grid ── */
-            <div className={`pvt-video-grid ${gridClass}`}>
-              {sortedAllTracks.map((track) => (
-                <Tile
-                  key={track.participant.identity + "-" + track.source}
-                  track={track}
-                  localId={localParticipant.identity}
-                  pinned={pinnedIds.has(track.participant.identity)}
-                  onPin={togglePin}
-                  raisedHands={raisedHands}
-                  large={totalTiles <= 2}
-                  isScreenShare={track.source === Track.Source.ScreenShare}
-                />
-              ))}
+          )}
+
+          {/* INFO */}
+          {activePanel === "info" && (
+            <div className="side-panel">
+              <div className="side-panel__header">
+                <h3>Session Info</h3>
+                <button
+                  className="side-panel__close"
+                  onClick={() => setActivePanel(null)}
+                  aria-label="Close"
+                >✕</button>
+              </div>
+              <div className="side-panel__body">
+                <div className="side-panel__field">
+                  <div className="side-panel__field-label">Session ID</div>
+                  <div className="side-panel__field-value">{sessionId}</div>
+                </div>
+                <div className="side-panel__field">
+                  <div className="side-panel__field-label">Your role</div>
+                  <div className="side-panel__field-value">Student</div>
+                </div>
+                <div className="side-panel__field">
+                  <div className="side-panel__field-label">Participants</div>
+                  <div className="side-panel__field-value">{peopleList.length}</div>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* ── Control Bar — Student controls only ── */}
-          <div className="pvt-controls">
-            <div className="pvt-ctrl-left">
-              <button
-                className={`pvt-ctrl-btn ${handRaised ? "pvt-ctrl-active" : ""}`}
-                onClick={toggleHand}
-                title={handRaised ? "Lower Hand" : "Raise Hand"}
-              >
-                🖐
-              </button>
-            </div>
-            <div className="pvt-ctrl-center">
-              <button className={`pvt-ctrl-btn ${micOn ? "" : "pvt-ctrl-off"}`} onClick={toggleMic} title={micOn ? "Mute" : "Unmute"}>
-                {micOn ? "🎤" : "🔇"}
-              </button>
-              <button className={`pvt-ctrl-btn ${camOn ? "" : "pvt-ctrl-off"}`} onClick={toggleCam} title={camOn ? "Stop Camera" : "Start Camera"}>
-                {camOn ? "📹" : "📷"}
-              </button>
-              <button className={`pvt-ctrl-btn ${screenSharing ? "pvt-ctrl-active" : ""}`} onClick={toggleScreen} title={screenSharing ? "Stop Share" : "Share Screen"}>
-                🖥️
-              </button>
-              <button
-                className={`pvt-ctrl-btn ${sidebarTab === "participants" && sidebarOpen ? "pvt-ctrl-active" : ""}`}
-                onClick={() => { setSidebarTab("participants"); setSidebarOpen((o) => sidebarTab === "participants" ? !o : true); }}
-                title="Participants"
-              >
-                👥
-              </button>
-              {!noChat && (
-                <button
-                  className={`pvt-ctrl-btn ${sidebarTab === "chat" && sidebarOpen ? "pvt-ctrl-active" : ""}`}
-                  onClick={() => {
-                    if (window.innerWidth <= 768) {
-                      if (sidebarTab === "chat" && sidebarOpen) {
-                        setSidebarOpen(false);
-                      } else {
-                        setSidebarTab("chat");
-                        setSidebarOpen(true);
-                      }
-                      return;
-                    }
-
-                    setSidebarTab("chat");
-                    setSidebarOpen((o) => sidebarTab === "chat" ? !o : true);
-                  }}
-                  title="Chat"
-                >
-                  💬
-                </button>
-              )}
-            </div>
-            <div className="pvt-ctrl-right">
-              <button
-                className={`pvt-ctrl-btn ${soundMuted ? "pvt-ctrl-off" : ""}`}
-                onClick={() => { const m = soundManager.toggleMute(); setSoundMuted(m); }}
-                title={soundMuted ? "Unmute Sounds" : "Mute Sounds"}
-              >{soundMuted ? "🔇" : "🔊"}</button>
-              <button className="pvt-leave-btn" onClick={leaveRoom}>
-                ← Leave
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {sidebarOpen && sidebarTab === "chat" && (
-          <div
-            className="pvt-mobile-chat-backdrop"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* ── Sidebar ── */}
-        {sidebarOpen && (
-          <div className="pvt-sidebar">
-            {sidebarTab === "chat" && (
-              <div className="pvt-mobile-chat-close-wrap">
-                <button
-                  className="pvt-mobile-chat-close-btn"
-                  onClick={() => setSidebarOpen(false)}
-                  type="button"
-                  aria-label="Close chat"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-            <div className="pvt-sidebar-tabs">
-              <button
-                className={`pvt-sidebar-tab ${sidebarTab === "participants" ? "active" : ""}`}
-                onClick={() => setSidebarTab("participants")}
-              >
-                Participants ({participants.length})
-              </button>
-              {!noChat && (
-                <button
-                  className={`pvt-sidebar-tab ${sidebarTab === "chat" ? "active" : ""}`}
-                  onClick={() => setSidebarTab("chat")}
-                >
-                  Chat
-                </button>
-              )}
-            </div>
-            <div className="pvt-sidebar-body">
-              {sidebarTab === "participants" || noChat ? (
-                <ParticipantsList
-                  participants={participants}
-                  localId={localParticipant.identity}
-                  raisedHands={raisedHands}
-                />
-              ) : (
-                <ChatPanel role={role} messages={chatMessages} onSendMessage={sendChatMessage} />
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Leave-confirmation modal ──
-          Centered overlay with Stay / Leave buttons. Mobile-friendly
-          (max-width caps + responsive in CSS). Pure peer action — does
-          NOT end the room for anyone else (only disconnects local). */}
-      {showLeaveConfirm && (
-        <div
-          className="pvt-leave-modal-overlay"
-          onClick={cancelLeave}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="pvt-leave-title"
-        >
-          <div
-            className="pvt-leave-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 id="pvt-leave-title" className="pvt-leave-title">
-              Leave this room?
-            </h3>
-            <p className="pvt-leave-body">
-              You can rejoin while the session is still live.
-            </p>
-            <div className="pvt-leave-actions">
-              <button
-                type="button"
-                className="pvt-leave-btn-cancel"
-                onClick={cancelLeave}
-                autoFocus
-              >
-                Stay
-              </button>
-              <button
-                type="button"
-                className="pvt-leave-btn-confirm"
-                onClick={confirmLeave}
-              >
-                Leave
-              </button>
-            </div>
-          </div>
         </div>
       )}
-
-      {/* ── Toasts ── */}
-      <div className="pvt-toast-wrap">
-        {toasts.map((t) => (
-          <div key={t.id} className={`pvt-toast pvt-toast-${t.type}`}>{t.text}</div>
-        ))}
-      </div>
     </div>
   );
 }

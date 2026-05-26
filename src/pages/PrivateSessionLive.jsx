@@ -1,16 +1,3 @@
-/**
- * FILE: STUDENT_DASHBOARD/src/pages/PrivateSessionLive.jsx
- *
- * Uses @livekit/components-react (already installed) with
- * PrivateClassroomUI for multi-participant video.
- *
- * Flow:
- * 1. Fetches session detail
- * 2. Calls /sessions/{id}/join/ to get LiveKit token
- * 3. Connects to LiveKit room via <LiveKitRoom>
- * 4. Renders PrivateClassroomUI inside
- */
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
@@ -18,6 +5,36 @@ import { useAuth } from "../contexts/AuthContext";
 import privateSession from "../api/privateSessionService";
 import PrivateClassroomUI from "../components/live/PrivateClassroomUI";
 import "../styles/privateSessions.css";
+
+const fullscreenWrap = {
+  width: "100vw",
+  height: "100vh",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+  background: "#c9dde1",
+  boxSizing: "border-box",
+  padding: "14px",
+};
+
+const liveKitWrap = {
+  flex: 1,
+  minHeight: 0,
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+};
+
+const centerMsg = {
+  width: "100vw",
+  height: "100vh",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexDirection: "column",
+  gap: 16,
+  background: "#c9dde1",
+};
 
 export default function PrivateSessionLive() {
   const { id } = useParams();
@@ -31,7 +48,6 @@ export default function PrivateSessionLive() {
 
   useEffect(() => {
     let cancelled = false;
-
     const load = async () => {
       try {
         const detail = await privateSession.getSessionDetail(id);
@@ -54,42 +70,37 @@ export default function PrivateSessionLive() {
         if (!cancelled) setLoading(false);
       }
     };
-
     load();
     return () => { cancelled = true; };
   }, [id]);
 
+  const handleLeave = () => navigate("/private-sessions");
+
   if (loading) {
     return (
-      <div className="tps__live-loading">
-        <div className="tps__live-spinner" />
-        <p>Joining private session...</p>
+      <div style={centerMsg}>
+        <p style={{ fontSize: 16, color: "#102a2a", margin: 0 }}>
+          Joining private session...
+        </p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="tps__live-error">
-        <h2>Unable to join session</h2>
-        <p>{error}</p>
-        <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
+      <div style={centerMsg}>
+        <h2 style={{ margin: 0, color: "#102a2a" }}>Unable to join session</h2>
+        <p style={{ color: "#475569", margin: 0 }}>{error}</p>
+        <div style={{ display: "flex", gap: 12 }}>
           <button
             onClick={() => navigate("/private-sessions")}
-            style={{
-              padding: "10px 24px", borderRadius: 8, border: "none",
-              background: "#015865", color: "#fff", fontWeight: 600, cursor: "pointer",
-            }}
+            style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: "#015865", color: "#fff", fontWeight: 600, cursor: "pointer" }}
           >
             Back to Private Sessions
           </button>
           <button
-            onClick={() => { setError(null); setLoading(true); window.location.reload(); }}
-            style={{
-              padding: "10px 24px", borderRadius: 8,
-              border: "2px solid #94a3b8", background: "transparent",
-              color: "#475569", fontWeight: 600, cursor: "pointer",
-            }}
+            onClick={() => window.location.reload()}
+            style={{ padding: "10px 24px", borderRadius: 8, border: "2px solid #94a3b8", background: "transparent", color: "#475569", fontWeight: 600, cursor: "pointer" }}
           >
             Retry
           </button>
@@ -100,15 +111,14 @@ export default function PrivateSessionLive() {
 
   if (!livekitData) {
     return (
-      <div className="tps__live-error">
-        <h2>Session not started yet</h2>
-        <p>The teacher hasn't started this session. Please wait and try again.</p>
+      <div style={centerMsg}>
+        <h2 style={{ margin: 0, color: "#102a2a" }}>Session not started yet</h2>
+        <p style={{ color: "#475569", margin: 0 }}>
+          The teacher hasn't started this session. Please wait and try again.
+        </p>
         <button
           onClick={() => navigate("/private-sessions")}
-          style={{
-            padding: "10px 24px", borderRadius: 8, border: "none",
-            background: "#015865", color: "#fff", fontWeight: 600, cursor: "pointer",
-          }}
+          style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: "#015865", color: "#fff", fontWeight: 600, cursor: "pointer" }}
         >
           Back to Private Sessions
         </button>
@@ -117,19 +127,23 @@ export default function PrivateSessionLive() {
   }
 
   return (
-    <LiveKitRoom
-      serverUrl={livekitData.livekit_url}
-      token={livekitData.token}
-      connect={true}
-      video={true}
-      audio={true}
-      onDisconnected={() => navigate("/private-sessions")}
-    >
-      <PrivateClassroomUI
-        role={livekitData.role?.toLowerCase() || "student"}
-        session={sessionData}
-      />
-      <RoomAudioRenderer />
-    </LiveKitRoom>
+    <div style={fullscreenWrap}>
+      <LiveKitRoom
+        serverUrl={livekitData.livekit_url}
+        token={livekitData.token}
+        connect={true}
+        video={true}
+        audio={true}
+        style={liveKitWrap}
+        onDisconnected={() => navigate("/private-sessions")}
+      >
+        <PrivateClassroomUI
+          role="STUDENT"
+          sessionId={id}
+          onLeave={handleLeave}
+        />
+        <RoomAudioRenderer />
+      </LiveKitRoom>
+    </div>
   );
 }

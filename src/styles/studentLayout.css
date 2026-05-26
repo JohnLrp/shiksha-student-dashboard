@@ -97,3 +97,38 @@
     padding: 14px 16px 16px;
   }
 }
+
+
+
+/* ───── LIVE SESSION FULLSCREEN ───── */
+.studentLayout--live {
+  width: 100vw;
+  height: 100vh;
+  min-height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  background: #c9dde1;
+  display: flex;
+  flex-direction: column;
+}
+
+.studentLayout__page--live {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  padding: 14px;
+  box-sizing: border-box;
+  display: flex;
+  overflow: hidden;
+}
+
+/* LiveKitRoom is the direct child — make it fill the page */
+.studentLayout__page--live > .lk-room-container,
+.studentLayout__page--live > div {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+}

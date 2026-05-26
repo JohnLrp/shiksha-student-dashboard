@@ -15,7 +15,6 @@ export default function QuizList() {
   const [completedQuizzes, setCompletedQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
@@ -120,14 +119,6 @@ export default function QuizList() {
       <div className="quizListHeaderBox">
         <div className="quizListHeaderRow">
           <h2 className="quizListTitle">Quizzes</h2>
-          <div className="quizSearch">
-            <input
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <span className="quizSearchIcon">🔍</span>
-          </div>
         </div>
 
         <div className="quizTabs">
@@ -149,19 +140,14 @@ export default function QuizList() {
       <div className="quizListBodyBox">
         <div className="quizGrid">
           {(() => {
-            const filtered = quizzes.filter((quiz) =>
-              quiz.title.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            return filtered.length === 0 ? (
+            return quizzes.length === 0 ? (
               <div className="quizEmpty">
-                {searchTerm
-                  ? "No matching quizzes."
-                  : activeTab === "pending"
-                    ? "No pending quizzes — check the Completed tab to re-attempt."
-                    : "No completed quizzes yet."}
+                {activeTab === "pending"
+                  ? "No pending quizzes — check the Completed tab to re-attempt."
+                  : "No completed quizzes yet."}
               </div>
             ) : (
-              filtered.map((quiz) => (
+              quizzes.map((quiz) => (
                 <QuizCard
                   key={quiz.id}
                   title={quiz.title}
