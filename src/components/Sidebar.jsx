@@ -65,6 +65,7 @@ export default function Sidebar({ setMenuOpen }) {
         <NavLink
           className="sidebar__link"
           to="/subjects"
+          end
           onClick={() => setMenuOpen(false)}
         >
           <span className="sidebar__icon">
