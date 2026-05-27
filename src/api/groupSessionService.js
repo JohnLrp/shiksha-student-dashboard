@@ -147,6 +147,16 @@ const groupSessionService = {
     return transformGroupSession(res.data);
   },
 
+  // Resolve a room code (or UUID) to a session id so the user can navigate
+  // into the live room. Auth + paywall are enforced by the backend; this
+  // wrapper just normalises the response shape.
+  async joinByCode(code) {
+    const res = await api.post("/sessions/group-sessions/join-by-code/", {
+      code: (code || "").trim(),
+    });
+    return res.data; // { session_id, short_code, status, session_type, host_id }
+  },
+
   async endSession(sessionId) {
     const res = await api.post(
       `/sessions/group-sessions/${sessionId}/end/`
@@ -298,6 +308,7 @@ export const {
   unacceptInvite,
   joinRoom,
   createInstant,
+  joinByCode,
   endSession,
   setAdmitMode,
   hideFromHistory,
