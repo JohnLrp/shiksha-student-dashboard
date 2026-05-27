@@ -20,6 +20,7 @@ import SubjectsQuiz from "./pages/SubjectsQuiz";
 import QuizList from "./pages/QuizList";
 import QuizDetail from "./pages/QuizDetail";
 import QuizResult from "./pages/QuizResult";
+import QuizAttempts from "./pages/QuizAttempts";
 
 import SubjectsRecordings from "./pages/SubjectsRecordings";
 import RecordingsList from "./pages/RecordingsList";
@@ -108,6 +109,11 @@ export default function App() {
               <Route
                 path="subjects/quiz/:subjectId/result/:quizId"
                 element={<QuizResult />}
+              />
+
+              <Route
+                path="subjects/quiz/:subjectId/attempts/:quizId"
+                element={<QuizAttempts />}
               />
 
               <Route
