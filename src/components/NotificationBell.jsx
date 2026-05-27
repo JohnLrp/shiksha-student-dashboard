@@ -4,8 +4,8 @@
 // NOTE: this file and the teacher dashboard's NotificationBell.jsx
 // share the same render markup but have INTENTIONALLY DIVERGENT
 // click handlers, because the student app routes live at root
-// (e.g. /study-groups) while the teacher app is mounted under
-// /teacher (e.g. /teacher/study-groups). If you change handler
+// (e.g. /group-sessions) while the teacher app is mounted under
+// /teacher (e.g. /teacher/group-sessions). If you change handler
 // behaviour here, mirror the equivalent change in
 // shiksha-teacher-dashboard/src/components/NotificationBell.jsx.
 // ============================================================
@@ -68,7 +68,7 @@ export default function NotificationBell() {
   };
 
   const handleNotifClick = (notif) => {
-    const { type, subject_id, id, is_private_session, is_study_group } = notif;
+    const { type, subject_id, id, is_private_session, is_group_session } = notif;
     if (id) markOneRead(id);
 
     // Private session notifications always go to /private-sessions
@@ -79,11 +79,11 @@ export default function NotificationBell() {
       return;
     }
 
-    // Study group notifications (sent with type === "SESSION" + the
-    // is_study_group flag from study_group_views._notify_user) must route to
-    // the Study Groups page, not /live-sessions.
-    if (is_study_group) {
-      navigate("/study-groups");
+    // Group session notifications (sent with type === "SESSION" + the
+    // is_group_session flag from group_session_views._notify_user) must route to
+    // the Group Sessions page, not /live-sessions.
+    if (is_group_session) {
+      navigate("/group-sessions");
       setOpen(false);
       return;
     }

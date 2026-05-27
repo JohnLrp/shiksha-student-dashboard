@@ -1,7 +1,7 @@
 /**
  * FILE: STUDENT_DASHBOARD/src/components/ConfirmDialog.jsx
  *
- * A small, centered confirmation modal used across the Study Groups flow
+ * A small, centered confirmation modal used across the Group Sessions flow
  * (and anywhere else that needs a confirm step) so we never have to fall
  * back to the browser's native `window.confirm()` dialog, which renders
  * at the top of the page and looks unpolished.
@@ -9,7 +9,7 @@
  * Usage:
  *   const [dlg, setDlg] = useState(null);
  *   setDlg({
- *     title: "Cancel study group?",
+ *     title: "Cancel group session?",
  *     message: "Invitees will be notified. This cannot be undone.",
  *     confirmLabel: "Yes, cancel",
  *     danger: true,
@@ -17,7 +17,7 @@
  *   });
  *   // render <ConfirmDialog dialog={dlg} onClose={() => setDlg(null)} />
  *
- * The dialog stays visually consistent with the sg__* Study Group theme
+ * The dialog stays visually consistent with the sg__* Group Session theme
  * but uses its own `cd__*` classes so it can be dropped in anywhere
  * without interfering with existing page styles.
  */
