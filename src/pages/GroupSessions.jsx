@@ -243,6 +243,134 @@ function InviteePicker({ subjectId, excludeUserIds, onSelect }) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   INSTANT MEETING DIALOG
+   ─────────────────────────────────────────────────────────────
+   Two-mode popup shown when the user clicks "Instant Meeting":
+     mode="menu"   → Create Instant Meeting | Enter Room ID
+     mode="enter"  → input + Join Room
+   X close button lives in the top-right of the modal.
+═══════════════════════════════════════════════════════════ */
+function InstantMeetingDialog({ open, busy, error, onClose, onCreate, onEnter }) {
+  const [mode, setMode] = useState("menu");
+  const [code, setCode] = useState("");
+
+  // Reset back to the menu whenever the dialog is reopened — otherwise a
+  // user who closed mid-"enter" would see the input on next open.
+  useEffect(() => {
+    if (open) {
+      setMode("menu");
+      setCode("");
+    }
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div className="sg__modalOverlay" onClick={() => !busy && onClose()}>
+      <div
+        className="sg__modal"
+        style={{ maxWidth: 420, position: "relative" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={() => !busy && onClose()}
+          aria-label="Close"
+          title="Close"
+          style={{
+            position: "absolute",
+            top: 10,
+            right: 10,
+            border: "none",
+            background: "transparent",
+            cursor: busy ? "not-allowed" : "pointer",
+            fontSize: 20,
+            color: "#475569",
+            lineHeight: 1,
+            padding: 4,
+          }}
+        >
+          ✕
+        </button>
+
+        <div className="sg__modalHead">
+          <h3 className="sg__modalTitle" style={{ paddingRight: 24 }}>
+            Instant Meeting
+          </h3>
+        </div>
+
+        {mode === "menu" && (
+          <div className="sg__step" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            <p className="sg__hint" style={{ margin: 0 }}>
+              Start a brand-new room right now, or join one with a room code shared by the host.
+            </p>
+            <button
+              type="button"
+              className="sg__btnPrimary"
+              disabled={busy}
+              onClick={onCreate}
+              style={{ background: "#1a73e8" }}
+            >
+              {busy ? "Starting…" : "+ Create Instant Meeting"}
+            </button>
+            <button
+              type="button"
+              className="sg__btnGhost"
+              disabled={busy}
+              onClick={() => setMode("enter")}
+            >
+              Enter Room ID
+            </button>
+            {error && <div className="sg__errorBox" style={{ marginTop: 4 }}>{error}</div>}
+          </div>
+        )}
+
+        {mode === "enter" && (
+          <div className="sg__step" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <label className="sg__label" htmlFor="im-code-input">Room ID</label>
+            <input
+              id="im-code-input"
+              className="sg__input"
+              placeholder="e.g. xyz-abcd-efg"
+              value={code}
+              autoFocus
+              autoComplete="off"
+              spellCheck="false"
+              onChange={(e) => setCode(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && code.trim() && !busy) onEnter(code.trim());
+              }}
+            />
+            <p className="sg__hint" style={{ margin: 0 }}>
+              Paste a Group Session room code or the full link the host sent you.
+            </p>
+            {error && <div className="sg__errorBox" style={{ marginTop: 4 }}>{error}</div>}
+            <div style={{ display: "flex", gap: 8, justifyContent: "space-between", marginTop: 4 }}>
+              <button
+                type="button"
+                className="sg__btnGhost"
+                disabled={busy}
+                onClick={() => setMode("menu")}
+              >
+                ‹ Back
+              </button>
+              <button
+                type="button"
+                className="sg__btnPrimary"
+                disabled={busy || !code.trim()}
+                onClick={() => onEnter(code.trim())}
+              >
+                {busy ? "Joining…" : "Join Room"}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════
    CREATE MODAL
 ═══════════════════════════════════════════════════════════ */
 function CreateGroupSessionModal({ onClose, onCreated }) {
@@ -1145,22 +1273,43 @@ export default function GroupSessions() {
   const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
-  const [showInstantConfirm, setShowInstantConfirm] = useState(false);
+  const [showInstantMenu, setShowInstantMenu] = useState(false);
   const [instantBusy, setInstantBusy] = useState(false);
+  const [instantError, setInstantError] = useState("");
   const [selected, setSelected] = useState(null);
   const [pendingInvites, setPendingInvites] = useState(0);
 
-  // Google-Meet-style "Create Instant Meeting" flow: confirm → POST →
-  // navigate into the freshly-created live room.
+  // "+ Create Instant Meeting" inside the Instant Meeting popup.
+  // POSTs to /group-sessions/instant/ and walks the host straight into
+  // the live room — no invitees required (backend bypass already in place).
   const startInstantMeeting = async () => {
     setInstantBusy(true);
+    setInstantError("");
     try {
       const sg = await groupSessionService.createInstant({});
-      setShowInstantConfirm(false);
+      setShowInstantMenu(false);
       navigate(`/group-session/live/${sg.id}`);
     } catch (err) {
-      // eslint-disable-next-line no-alert
-      alert(extractApiError(err, "Could not start an instant meeting."));
+      setInstantError(extractApiError(err, "Could not start an instant meeting."));
+    } finally {
+      setInstantBusy(false);
+    }
+  };
+
+  // "Enter Room ID" inside the Instant Meeting popup.
+  // Looks up the session by short_code (or UUID), then navigates into the
+  // live room with the resolved session id. The actual LiveKit token is
+  // still issued by /join/ when the live route mounts.
+  const enterRoomByCode = async (code) => {
+    if (!code) return;
+    setInstantBusy(true);
+    setInstantError("");
+    try {
+      const { session_id } = await groupSessionService.joinByCode(code);
+      setShowInstantMenu(false);
+      navigate(`/group-session/live/${session_id}`);
+    } catch (err) {
+      setInstantError(extractApiError(err, "Couldn't join that room."));
     } finally {
       setInstantBusy(false);
     }
@@ -1357,11 +1506,11 @@ export default function GroupSessions() {
           </button>
           <button
             className="sg__btnPrimary"
-            onClick={() => setShowInstantConfirm(true)}
+            onClick={() => { setInstantError(""); setShowInstantMenu(true); }}
             style={{ background: "#1a73e8" }}
-            title="Start an instant meeting right now (Google-Meet style)"
+            title="Start a new instant meeting or join one with a room code"
           >
-            + Create Instant Meeting
+            Instant Meeting
           </button>
         </div>
       </div>
@@ -1448,23 +1597,14 @@ export default function GroupSessions() {
         onClose={() => (historyBusy ? null : setHistoryDlg(null))}
       />
 
-      {/* "You are starting a New session" confirmation for instant meetings */}
-      <ConfirmDialog
-        dialog={
-          showInstantConfirm
-            ? {
-                title: "You are starting a New session",
-                message:
-                  "An instant meeting room will open right now with a unique session ID and a shareable link. Continue?",
-                confirmLabel: instantBusy ? "Starting…" : "Okay",
-                cancelLabel: "No",
-                danger: false,
-                busy: instantBusy,
-                onConfirm: startInstantMeeting,
-              }
-            : null
-        }
-        onClose={() => (instantBusy ? null : setShowInstantConfirm(false))}
+      {/* Instant Meeting popup — Create | Enter Room ID | ✕ */}
+      <InstantMeetingDialog
+        open={showInstantMenu}
+        busy={instantBusy}
+        error={instantError}
+        onClose={() => { if (!instantBusy) { setShowInstantMenu(false); setInstantError(""); } }}
+        onCreate={startInstantMeeting}
+        onEnter={enterRoomByCode}
       />
     </div>
   );
