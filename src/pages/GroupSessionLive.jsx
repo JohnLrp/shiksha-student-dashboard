@@ -4,6 +4,9 @@ import { LiveKitRoom, RoomAudioRenderer } from "@livekit/components-react";
 import groupSessionService, { extractApiError } from "../api/groupSessionService";
 import GroupSessionClassroomUI from "../components/live/GroupSessionClassroomUI";
 import { useAuth } from "../contexts/AuthContext";
+// Google-Meet-style theme overrides for the Group Session live room.
+// Scoped under .classroom-layout--meet so other live rooms are untouched.
+import "../styles/groupSessionLiveTheme.css";
 
 const fullscreenWrap = {
   width: "100vw",
@@ -11,9 +14,10 @@ const fullscreenWrap = {
   display: "flex",
   flexDirection: "column",
   overflow: "hidden",
-  background: "#c9dde1",
+  background: "#202124",
   boxSizing: "border-box",
   padding: "14px",
+  color: "#e8eaed",
 };
 
 const liveKitWrap = {
@@ -32,7 +36,8 @@ const centerMsg = {
   justifyContent: "center",
   flexDirection: "column",
   gap: 16,
-  background: "#c9dde1",
+  background: "#202124",
+  color: "#e8eaed",
 };
 
 export default function GroupSessionLive() {
@@ -139,7 +144,7 @@ export default function GroupSessionLive() {
   if (loading) {
     return (
       <div style={centerMsg}>
-        <p style={{ fontSize: 16, color: "#102a2a", margin: 0 }}>Joining group session…</p>
+        <p style={{ fontSize: 16, color: "#e8eaed", margin: 0 }}>Joining group session…</p>
       </div>
     );
   }
@@ -147,18 +152,18 @@ export default function GroupSessionLive() {
   if (error) {
     return (
       <div style={centerMsg}>
-        <h2 style={{ margin: 0, color: "#102a2a" }}>Unable to join group session</h2>
-        <p style={{ color: "#475569", margin: 0 }}>{error}</p>
+        <h2 style={{ margin: 0, color: "#e8eaed" }}>Unable to join group session</h2>
+        <p style={{ color: "#9aa0a6", margin: 0 }}>{error}</p>
         <div style={{ display: "flex", gap: 12 }}>
           <button
             onClick={() => navigate("/group-sessions")}
-            style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: "#015865", color: "#fff", fontWeight: 600, cursor: "pointer" }}
+            style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: "#1a73e8", color: "#fff", fontWeight: 600, cursor: "pointer" }}
           >
             Back to Group Sessions
           </button>
           <button
             onClick={() => window.location.reload()}
-            style={{ padding: "10px 24px", borderRadius: 8, border: "2px solid #94a3b8", background: "transparent", color: "#475569", fontWeight: 600, cursor: "pointer" }}
+            style={{ padding: "10px 24px", borderRadius: 8, border: "1px solid rgba(232,234,237,0.24)", background: "transparent", color: "#e8eaed", fontWeight: 600, cursor: "pointer" }}
           >
             Retry
           </button>
@@ -170,13 +175,13 @@ export default function GroupSessionLive() {
   if (!livekitData) {
     return (
       <div style={centerMsg}>
-        <h2 style={{ margin: 0, color: "#102a2a" }}>Group session not open yet</h2>
-        <p style={{ color: "#475569", margin: 0 }}>
+        <h2 style={{ margin: 0, color: "#e8eaed" }}>Group session not open yet</h2>
+        <p style={{ color: "#9aa0a6", margin: 0 }}>
           The room hasn't started. Please wait for someone to accept and try again.
         </p>
         <button
           onClick={() => navigate("/group-sessions")}
-          style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: "#015865", color: "#fff", fontWeight: 600, cursor: "pointer" }}
+          style={{ padding: "10px 24px", borderRadius: 8, border: "none", background: "#1a73e8", color: "#fff", fontWeight: 600, cursor: "pointer" }}
         >
           Back to Group Sessions
         </button>
