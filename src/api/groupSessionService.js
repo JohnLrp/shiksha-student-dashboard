@@ -1,20 +1,20 @@
 /**
- * FILE: src/api/studyGroupService.js
+ * FILE: src/api/groupSessionService.js
  *
- * Service for Study Group sessions.
- * Connects to the sessions_app study-group endpoints:
- *   /api/sessions/study-groups/...
+ * Service for Group Session sessions.
+ * Connects to the sessions_app group-session endpoints:
+ *   /api/sessions/group-sessions/...
  */
 
 import api from "./apiClient";
 
-const studyGroupService = {
+const groupSessionService = {
 
   // ─────────────────────────────────────────────
   // Subjects grouped by student's enrolled courses
   // ─────────────────────────────────────────────
   async getMySubjects() {
-    const res = await api.get("/sessions/study-groups/my-subjects/");
+    const res = await api.get("/sessions/group-sessions/my-subjects/");
     return res.data || [];
   },
 
@@ -38,7 +38,7 @@ const studyGroupService = {
   // ─────────────────────────────────────────────
   // Create / list / detail
   // ─────────────────────────────────────────────
-  async createStudyGroup(payload) {
+  async createGroupSession(payload) {
     // Only forward the teacher id if it actually looks like a UUID;
     // drops any accidental name-string / empty-string from a buggy dropdown.
     const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -56,20 +56,20 @@ const studyGroupService = {
       duration_minutes: payload.duration_minutes,
       topic: payload.topic || "",
     };
-    const res = await api.post("/sessions/study-groups/create/", body);
-    return transformStudyGroup(res.data);
+    const res = await api.post("/sessions/group-sessions/create/", body);
+    return transformGroupSession(res.data);
   },
 
-  async getMyStudyGroups(tab = "upcoming") {
+  async getMyGroupSessions(tab = "upcoming") {
     const res = await api.get(
-      `/sessions/study-groups/mine/?tab=${encodeURIComponent(tab)}`
+      `/sessions/group-sessions/mine/?tab=${encodeURIComponent(tab)}`
     );
-    return (res.data || []).map(transformStudyGroup);
+    return (res.data || []).map(transformGroupSession);
   },
 
   async getDetail(sessionId) {
-    const res = await api.get(`/sessions/study-groups/${sessionId}/`);
-    return transformStudyGroup(res.data);
+    const res = await api.get(`/sessions/group-sessions/${sessionId}/`);
+    return transformGroupSession(res.data);
   },
 
   // ─────────────────────────────────────────────
@@ -77,26 +77,26 @@ const studyGroupService = {
   // ─────────────────────────────────────────────
   async inviteMore(sessionId, userIds = []) {
     const res = await api.post(
-      `/sessions/study-groups/${sessionId}/invite/`,
+      `/sessions/group-sessions/${sessionId}/invite/`,
       { invited_user_ids: userIds }
     );
-    return transformStudyGroup(res.data);
+    return transformGroupSession(res.data);
   },
 
   async reinvite(sessionId, userId) {
     const res = await api.post(
-      `/sessions/study-groups/${sessionId}/reinvite/`,
+      `/sessions/group-sessions/${sessionId}/reinvite/`,
       { user_id: userId }
     );
-    return transformStudyGroup(res.data);
+    return transformGroupSession(res.data);
   },
 
-  async cancelStudyGroup(sessionId, reason = "") {
+  async cancelGroupSession(sessionId, reason = "") {
     const res = await api.post(
-      `/sessions/study-groups/${sessionId}/cancel/`,
+      `/sessions/group-sessions/${sessionId}/cancel/`,
       { reason }
     );
-    return transformStudyGroup(res.data);
+    return transformGroupSession(res.data);
   },
 
   // ─────────────────────────────────────────────
@@ -104,25 +104,25 @@ const studyGroupService = {
   // ─────────────────────────────────────────────
   async acceptInvite(sessionId) {
     const res = await api.post(
-      `/sessions/study-groups/${sessionId}/accept/`
+      `/sessions/group-sessions/${sessionId}/accept/`
     );
-    return transformStudyGroup(res.data);
+    return transformGroupSession(res.data);
   },
 
   async declineInvite(sessionId) {
     const res = await api.post(
-      `/sessions/study-groups/${sessionId}/decline/`
+      `/sessions/group-sessions/${sessionId}/decline/`
     );
-    return transformStudyGroup(res.data);
+    return transformGroupSession(res.data);
   },
 
   // Accepted invitee takes back their response — allowed any time before
   // the room has actually opened. Keeps decline_count intact.
   async unacceptInvite(sessionId) {
     const res = await api.post(
-      `/sessions/study-groups/${sessionId}/unaccept/`
+      `/sessions/group-sessions/${sessionId}/unaccept/`
     );
-    return transformStudyGroup(res.data);
+    return transformGroupSession(res.data);
   },
 
   // ─────────────────────────────────────────────
@@ -130,9 +130,36 @@ const studyGroupService = {
   // ─────────────────────────────────────────────
   async joinRoom(sessionId) {
     const res = await api.post(
-      `/sessions/study-groups/${sessionId}/join/`
+      `/sessions/group-sessions/${sessionId}/join/`
     );
     return res.data; // { livekit_url, token, room, role, remaining_ms, ... }
+  },
+
+
+  // ─────────────────────────────────────────────
+  // Instant Meeting + host controls (Google-Meet-style flow)
+  // ─────────────────────────────────────────────
+  async createInstant({ duration_minutes = 180, topic = "" } = {}) {
+    const res = await api.post("/sessions/group-sessions/instant/", {
+      duration_minutes,
+      topic,
+    });
+    return transformGroupSession(res.data);
+  },
+
+  async endSession(sessionId) {
+    const res = await api.post(
+      `/sessions/group-sessions/${sessionId}/end/`
+    );
+    return res.data;
+  },
+
+  async setAdmitMode(sessionId, mode) {
+    const res = await api.post(
+      `/sessions/group-sessions/${sessionId}/admit-mode/`,
+      { admit_mode: mode }
+    );
+    return res.data;
   },
 
   // ─────────────────────────────────────────────
@@ -143,7 +170,7 @@ const studyGroupService = {
   // and the host are unaffected.
   async hideFromHistory(sessionId) {
     const res = await api.post(
-      `/sessions/study-groups/${sessionId}/hide/`
+      `/sessions/group-sessions/${sessionId}/hide/`
     );
     return res.data; // { ok: true }
   },
@@ -154,7 +181,7 @@ const studyGroupService = {
   async clearHistory({ all = false, sessionIds = null } = {}) {
     const body = all ? { all: true } : { session_ids: sessionIds || [] };
     const res = await api.post(
-      "/sessions/study-groups/history/clear/",
+      "/sessions/group-sessions/history/clear/",
       body,
     );
     return res.data; // { ok: true, hidden_count: N }
@@ -187,17 +214,20 @@ const studyGroupService = {
     { label: "8:00 PM",  value: "20:00" },
   ],
 
-  MAX_INVITEES: 20,
+  MAX_INVITEES: 50,
 };
 
 // ─────────────────────────────────────────────
 // Transform
 // ─────────────────────────────────────────────
-function transformStudyGroup(sg) {
+function transformGroupSession(sg) {
   if (!sg) return sg;
   return {
     ...sg,
     id: sg.id,
+    shortCode: sg.short_code || "",
+    sessionType: sg.session_type || "scheduled",
+    admitMode: sg.admit_mode || "open",
     subjectId: sg.subject_id || null,
     subjectName: sg.subject_name,
     courseId: sg.course_id || null,
@@ -257,21 +287,24 @@ export const {
   getMySubjects,
   getTeachers,
   getCourseStudents,
-  createStudyGroup,
-  getMyStudyGroups,
+  createGroupSession,
+  getMyGroupSessions,
   getDetail,
   inviteMore,
   reinvite,
-  cancelStudyGroup,
+  cancelGroupSession,
   acceptInvite,
   declineInvite,
   unacceptInvite,
   joinRoom,
+  createInstant,
+  endSession,
+  setAdmitMode,
   hideFromHistory,
   clearHistory,
   DURATIONS,
   TIME_SLOTS,
   MAX_INVITEES,
-} = studyGroupService;
+} = groupSessionService;
 
-export default studyGroupService;
+export default groupSessionService;

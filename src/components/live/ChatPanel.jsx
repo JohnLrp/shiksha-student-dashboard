@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { IoSend } from "react-icons/io5";
-import { BsChatDotsFill } from "react-icons/bs";
-import { HiQuestionMarkCircle } from "react-icons/hi2";
 import { HiMicrophone } from "react-icons/hi2";
 import { HiDotsVertical } from "react-icons/hi";
 import "./ChatPanel.css";
@@ -15,7 +13,12 @@ export default function ChatPanel({
   onSendQA,
 }) {
   const [input, setInput] = useState("");
-  const [activeTab, setActiveTab] = useState("chat");
+  // The chat panel no longer renders its own tab row — the outer sidebar
+  // (.pvt-sidebar-tabs in PrivateClassroomUI / GroupSessionClassroomUI)
+  // already handles Chat vs Participants switching. Keeping a single
+  // hard-coded mode here so callers (and the participants view) still
+  // work without changing their props contract.
+  const activeTab = "chat";
   const containerRef = useRef(null);
 
   /* ── Auto-scroll ── */
@@ -31,9 +34,8 @@ export default function ChatPanel({
     if (!input.trim()) return;
     const text = input.trim();
     setInput("");
-    const handler = activeTab === "qa" ? onSendQA : onSendMessage;
-    if (handler) {
-      try { await handler(text); }
+    if (onSendMessage) {
+      try { await onSendMessage(text); }
       catch (e) { console.error("send failed", e); }
     }
   };
@@ -44,40 +46,22 @@ export default function ChatPanel({
       ? new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "";
 
-  const currentMessages = activeTab === "qa" ? qaMessages : messages;
-  const isChatView = activeTab === "chat" || activeTab === "qa";
+  const currentMessages = messages;
+  const isChatView = true;
 
   return (
     <div className="cp-outer">
 
-      {/* ─── TOP CARD: tabs + messages ─── */}
+      {/* ─── TOP CARD: messages only (tabs moved to outer sidebar) ─── */}
       <div className="cp-wrap">
 
-        {/* TABS */}
-        <div className="cp-tabs">
-          <button
-            className={`cp-tab ${activeTab === "chat" ? "cp-tab--active" : ""}`}
-            onClick={() => setActiveTab("chat")}
-          >
-            <BsChatDotsFill size={15} />
-            Chat
-          </button>
-          <button
-            className={`cp-tab ${activeTab === "qa" ? "cp-tab--active" : ""}`}
-            onClick={() => setActiveTab("qa")}
-          >
-            <HiQuestionMarkCircle size={16} />
-            Q &amp; A
-          </button>
-        </div>
-
-        {/* CHAT / Q&A MESSAGES */}
+        {/* CHAT MESSAGES */}
         {isChatView && (
           <div className="cp-chat-body">
             <div className="cp-messages" ref={containerRef}>
               {currentMessages.length === 0 && (
                 <p className="cp-empty">
-                  {activeTab === "qa" ? "No questions yet." : "No messages yet."}
+                  No messages yet. Say hello!
                 </p>
               )}
 
@@ -148,9 +132,7 @@ export default function ChatPanel({
             className="cp-input"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={
-              activeTab === "qa" ? "Ask a question..." : "Your message here"
-            }
+            placeholder="Type a message..."
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
           />
 
