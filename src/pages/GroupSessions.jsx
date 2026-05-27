@@ -1315,7 +1315,7 @@ export default function GroupSessions() {
   if (selected) {
     return (
       <div className="sg__page">
-        <PageHeader title="Group Sessions" onSearch={() => {}} />
+        <PageHeader title="Group Sessions" />
         <GroupSessionDetail
           group={selected}
           onBack={() => { setSelected(null); handleChanged(); }}
@@ -1329,7 +1329,7 @@ export default function GroupSessions() {
 
   return (
     <div className="sg__page">
-      <PageHeader title="Group Sessions" onSearch={() => {}} />
+      <PageHeader title="Group Sessions" />
 
       <div className="sg__header">
         <div className="sg__tabs">

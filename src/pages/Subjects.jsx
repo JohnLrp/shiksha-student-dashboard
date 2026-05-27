@@ -80,7 +80,6 @@ export default function Subjects({ mode }) {
       <div className="subjectsHeaderBox">
         <PageHeader
           title={mode === "assignments" ? "All Assignments" : "Subjects"}
-          onSearch={mode !== "assignments" ? setSearchTerm : undefined}
         />
       </div>
 

@@ -1278,16 +1278,6 @@ export default function PrivateSessions() {
             </button>
           ))}
         </div>
-        <div className="ps__searchWrap">
-          <span className="ps__searchIcon">🔍</span>
-          <input
-            type="text"
-            className="ps__searchInput"
-            placeholder="Search by subject, teacher, or topic..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
         <div className="ps__tabContent">
           {activeTab === "scheduled" && <ScheduledTab onEnterRoom={handleEnterRoom} searchTerm={searchTerm} registerRefresh={(fn) => registerRefresh("scheduled", fn)} />}
           {activeTab === "requests"  && <RequestsTab onUnreadChange={setRequestsUnread} searchTerm={searchTerm} registerRefresh={(fn) => registerRefresh("requests", fn)} />}
