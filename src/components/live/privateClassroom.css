@@ -47,7 +47,7 @@ body,
 .pvt-session-name { font-size: 14px; font-weight: 700; color: #e8eaf2; }
 .pvt-session-sub { font-size: 11px; color: #6b7591; margin-top: 1px; }
 
-/* Study-group pill in the topbar-left. Replaces the old floating
+/* Group-session pill in the topbar-left. Replaces the old floating
    .sgLive__banner — same orange brand colour, just inlined into the
    topbar so it can't drift on top of the video tiles. */
 .pvt-sg-badge {
@@ -66,7 +66,7 @@ body,
 }
 
 .pvt-topbar-right { display: flex; align-items: center; gap: 10px; }
-/* Study-group remaining-time chip — sits next to .pvt-timer when active. */
+/* Group-session remaining-time chip — sits next to .pvt-timer when active. */
 .pvt-sg-countdown {
   display: inline-flex;
   align-items: center;
@@ -1109,7 +1109,7 @@ body,
    LEAVE-CONFIRMATION MODAL
    Centered overlay with Stay / Leave buttons, replaces the OS
    window.confirm() previously used. Mobile-first — caps with vw.
-   Used by both private sessions and study groups.
+   Used by both private sessions and group sessions.
    ────────────────────────────────────────────────────────────── */
 .pvt-leave-modal-overlay {
   position: fixed;

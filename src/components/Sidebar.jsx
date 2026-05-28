@@ -65,6 +65,7 @@ export default function Sidebar({ setMenuOpen }) {
         <NavLink
           className="sidebar__link"
           to="/subjects"
+          end
           onClick={() => setMenuOpen(false)}
         >
           <span className="sidebar__icon">
@@ -139,16 +140,16 @@ export default function Sidebar({ setMenuOpen }) {
           Private Sessions
         </NavLink>
 
-        {/* Study Groups */}
+        {/* Group Sessions */}
         <NavLink
           className="sidebar__link"
-          to="/study-groups"
+          to="/group-sessions"
           onClick={() => setMenuOpen(false)}
         >
           <span className="sidebar__icon">
             <RiGroupLine />
           </span>
-          Study Groups
+          Group Sessions
         </NavLink>
 
         {/* Teachers */}

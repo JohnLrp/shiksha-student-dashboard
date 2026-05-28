@@ -20,6 +20,7 @@ import SubjectsQuiz from "./pages/SubjectsQuiz";
 import QuizList from "./pages/QuizList";
 import QuizDetail from "./pages/QuizDetail";
 import QuizResult from "./pages/QuizResult";
+import QuizAttempts from "./pages/QuizAttempts";
 
 import SubjectsRecordings from "./pages/SubjectsRecordings";
 import RecordingsList from "./pages/RecordingsList";
@@ -33,8 +34,8 @@ import LiveSessionDetail from "./pages/LiveSessionDetail";
 import LiveSessions from "./pages/LiveSessions";
 import PrivateSessions from "./pages/PrivateSessions";
 import PrivateSessionLive from "./pages/PrivateSessionLive";
-import StudyGroups from "./pages/StudyGroups";
-import StudyGroupLive from "./pages/StudyGroupLive";
+import GroupSessions from "./pages/GroupSessions";
+import GroupSessionLive from "./pages/GroupSessionLive";
 
 import Quiz from "./pages/Quiz";
 import Teachers from "./pages/Teachers";
@@ -111,6 +112,11 @@ export default function App() {
               />
 
               <Route
+                path="subjects/quiz/:subjectId/attempts/:quizId"
+                element={<QuizAttempts />}
+              />
+
+              <Route
                 path="subjects/recordings"
                 element={<SubjectsRecordings />}
               />
@@ -151,7 +157,7 @@ export default function App() {
                 element={<PrivateSessions />}
               />
 
-              <Route path="study-groups" element={<StudyGroups />} />
+              <Route path="group-sessions" element={<GroupSessions />} />
 
               <Route path="quiz" element={<Quiz />} />
 
@@ -167,8 +173,8 @@ export default function App() {
             />
 
             <Route
-              path="/study-group/live/:id"
-              element={<StudyGroupLive />}
+              path="/group-session/live/:id"
+              element={<GroupSessionLive />}
             />
           </Routes>
         </BrowserRouter>
