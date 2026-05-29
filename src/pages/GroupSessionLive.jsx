@@ -37,10 +37,22 @@ const centerMsg = {
   background: "#c9dde1",
 };
 
+// UUIDs from the backend look like 8-4-4-4-12 hex. Anything else in the
+// URL :id slot is treated as a short_code that we resolve via join-by-code
+// before issuing the detail / token requests (which are UUID-only routes).
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export default function GroupSessionLive() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  // The :id param from the URL might be a UUID (normal case) OR a short_code
+  // pasted from a shared link. resolvedId is the real session UUID we use for
+  // every API call. It starts equal to id; if id isn't a UUID we resolve it
+  // through join-by-code before doing anything else.
+  const [resolvedId, setResolvedId] = useState(
+    UUID_RE.test(String(id || "")) ? String(id) : null
+  );
   const [livekitData, setLivekitData] = useState(null);
   const [sessionDetail, setSessionDetail] = useState(null);
   const [error, setError] = useState(null);
@@ -83,7 +95,7 @@ export default function GroupSessionLive() {
     );
     if (!ok) return;
     try {
-      await groupSessionService.endSession(id);
+      await groupSessionService.endSession(resolvedId || id);
     } catch (e) {
       console.error("endSession failed", e);
     } finally {
@@ -91,15 +103,44 @@ export default function GroupSessionLive() {
     }
   };
 
+  // Resolve a short_code → UUID before touching detail/join. Runs once per
+  // :id change. UUIDs short-circuit and become resolvedId immediately.
   useEffect(() => {
     let cancelled = false;
+    if (!id) return undefined;
+    if (UUID_RE.test(String(id))) {
+      setResolvedId(String(id));
+      return undefined;
+    }
+    (async () => {
+      try {
+        const res = await groupSessionService.joinByCode(id);
+        if (cancelled) return;
+        if (res?.session_id) {
+          setResolvedId(String(res.session_id));
+        } else {
+          setError("No room found for that code.");
+          setLoading(false);
+        }
+      } catch (err) {
+        if (cancelled) return;
+        setError(extractApiError(err, "No room found for that code."));
+        setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!resolvedId) return undefined;
     const load = async () => {
       try {
-        const detail = await groupSessionService.getDetail(id);
+        const detail = await groupSessionService.getDetail(resolvedId);
         if (cancelled) return;
         setSessionDetail(detail);
 
-        const joinData = await groupSessionService.joinRoom(id);
+        const joinData = await groupSessionService.joinRoom(resolvedId);
         if (cancelled) return;
         setLivekitData(joinData);
         setRemainingMs(joinData.remaining_ms ?? null);
@@ -112,7 +153,7 @@ export default function GroupSessionLive() {
     };
     load();
     return () => { cancelled = true; };
-  }, [id]);
+  }, [resolvedId]);
 
   useEffect(() => {
     if (remainingMs == null || remainingMs <= 0) return;
@@ -193,10 +234,18 @@ export default function GroupSessionLive() {
         onDisconnected={() => navigate("/group-sessions")}
       >
         <GroupSessionClassroomUI
-          role="STUDENT"
+          // Instant meetings are peer-to-peer: every participant gets full
+          // mic/cam/screen-share control like Google Meet. For scheduled
+          // group sessions the student is gated by the host (raise-hand /
+          // teacher-grant) just like the original ClassroomUI flow.
+          role={
+            sessionDetail?.sessionType === "instant" || isHost
+              ? "PRESENTER"
+              : "STUDENT"
+          }
           session={{
             ...sessionDetail,
-            id,
+            id: resolvedId || id,
             subject: sessionDetail?.subjectName,
             topic: sessionDetail?.topic,
             shortCode: sessionDetail?.shortCode,
@@ -204,9 +253,9 @@ export default function GroupSessionLive() {
             admitMode: sessionDetail?.admitMode,
           }}
           chatConfig={{
-            restGetPath:  `/sessions/group-sessions/${id}/chat/`,
-            restPostPath: `/sessions/group-sessions/${id}/chat/send/`,
-            wsPath:       `/ws/group-session/${id}/chat/`,
+            restGetPath:  `/sessions/group-sessions/${resolvedId || id}/chat/`,
+            restPostPath: `/sessions/group-sessions/${resolvedId || id}/chat/send/`,
+            wsPath:       `/ws/group-session/${resolvedId || id}/chat/`,
           }}
           groupSession={true}
           groupSessionRemainingMs={remainingMs}
