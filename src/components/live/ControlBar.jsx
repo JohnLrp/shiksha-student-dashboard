@@ -28,6 +28,18 @@ export default function ControlBar({ onLeave, role, activePanel, onTogglePanel }
     setVideoOn(false);
   }, [isStudent, localParticipant]);
 
+  /* ── presenter / instant-meeting host: sync real state from LiveKit ──
+     Mirrors the teacher dashboard's ControlBar so when GroupSessionLive
+     bumps role → "PRESENTER" for instant meetings the UI doesn't sit on
+     a stale {micOn:false, videoOn:false} while LiveKit has already auto-
+     published both tracks (LiveKitRoom video={true} audio={true}). */
+  useEffect(() => {
+    if (isStudent || !localParticipant) return;
+    setMicOn(!!localParticipant.isMicrophoneEnabled);
+    setVideoOn(!!localParticipant.isCameraEnabled);
+    setScreenOn(!!localParticipant.isScreenShareEnabled);
+  }, [isStudent, localParticipant]);
+
   /* ── timer ── */
   useEffect(() => {
     const id = setInterval(() => {
